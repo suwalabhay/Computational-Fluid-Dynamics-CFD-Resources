@@ -1,63 +1,111 @@
-import numpy as np
+"""Side-view sketch of a ship hull and its free-surface wave, with the Froude number.
+
+The wave is a sinusoid whose wavelength is tied to the ship speed through the
+deep-water dispersion relation (phase speed = ship speed), so the sketch also
+reports the speed and Froude number that the drawn wave corresponds to.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+G = 9.81  # m/s^2
+HULL_LENGTH = 10.0  # waterline length L, m
+WAVE_LENGTH = 4.0  # free-surface wavelength lambda, m
+WAVE_AMPLITUDE = 0.1  # m
 
 
-def draw_ship_hull_and_waves():
+def ship_speed_from_wavelength(wavelength, g=G):
+    """Speed (m/s) of a ship whose transverse waves have ``wavelength`` (m).
+
+    Deep-water gravity waves travel at c = sqrt(g lambda / 2 pi); steady ship
+    waves move with the ship, so U = c.
     """
-    Draws a simple representation of a ship hull and waves at the free surface.
-    """
+    return np.sqrt(g * wavelength / (2 * np.pi))
 
-    # Create a figure for the hull visualization
-    plt.figure(figsize=(7, 5))
 
-    # ---------------------------
-    # Wave pattern at the surface
-    # ---------------------------
-    x_wave = np.linspace(-2, 12, 300)  # Extend beyond the hull region for clarity
-    # A small sine wave representing free-surface undulation
-    y_wave = 0.1 * np.sin(2.0 * np.pi * x_wave / 4.0)
+def froude_number(speed, length, g=G):
+    """Length-based Froude number Fr = U / sqrt(g L)."""
+    return speed / np.sqrt(g * length)
 
-    # Plot the free surface wave
+
+def draw_ship_hull_and_waves(
+    hull_length=HULL_LENGTH, wavelength=WAVE_LENGTH, amplitude=WAVE_AMPLITUDE
+):
+    """Draw the hull profile, the free-surface wave and annotations; return the figure."""
+    speed = ship_speed_from_wavelength(wavelength)
+    fr = froude_number(speed, hull_length)
+
+    fig = plt.figure(figsize=(7, 5))
+
+    # Free-surface wave, extended beyond the hull for clarity
+    x_wave = np.linspace(-2, hull_length + 2, 300)
+    y_wave = amplitude * np.sin(2.0 * np.pi * x_wave / wavelength)
     plt.plot(x_wave, y_wave, label="Free Surface Wave")
 
-    # ---------------
-    # Hull geometry
-    # ---------------
-    # A simple, stylized hull (2D cross-section) from x=0 (bow) to x=10 (stern).
-    # This shape is purely illustrative and does not represent a specific vessel.
-    x_hull = np.array([0.0, 1.5, 4.0, 6.0, 8.5, 10.0])
+    # Stylised hull profile (side view) from x = 0 (bow) to x = L (stern).
+    # Purely illustrative; it does not represent a specific vessel.
+    x_hull = hull_length * np.array([0.0, 0.15, 0.4, 0.6, 0.85, 1.0])
     y_hull = np.array([0.0, -0.5, -0.7, -0.7, -0.5, 0.0])
-
-    # Fill the hull
     plt.fill(x_hull, y_hull, alpha=0.5, label="Ship Hull")
 
-    # -----------------------------
-    # Velocity vector (arrow) & text
-    # -----------------------------
-    # Place an arrow above the hull, indicating direction of flow (to the right).
+    # Arrow for the oncoming flow in the ship's frame of reference (to the right)
     plt.arrow(1, 0.5, 2.0, 0.0, width=0.02, head_width=0.1, length_includes_head=True)
     plt.text(1, 0.65, "Velocity U", fontsize=10)
 
-    # -----------------------------
-    # Annotations
-    # -----------------------------
-    # Show the waterline level (y=0) as a reference
+    # Still water level
     plt.axhline(0, linestyle="--", label="Still Water Level")
 
-    # Add the Froude number formula as a reminder
-    plt.text(5, 0.7, r"$Fr = \frac{U}{\sqrt{g \, L}}$", fontsize=12, ha="center")
+    plt.text(
+        hull_length / 2,
+        0.7,
+        r"$Fr = \frac{U}{\sqrt{g \, L}}$",
+        fontsize=12,
+        ha="center",
+    )
+    plt.text(
+        hull_length / 2,
+        -1.6,
+        (
+            f"$L$ = {hull_length:.0f} m, $\\lambda$ = {wavelength:.0f} m  →  "
+            f"$U = \\sqrt{{g\\lambda / 2\\pi}}$ = {speed:.2f} m/s, $Fr$ = {fr:.2f}"
+        ),
+        fontsize=10,
+        ha="center",
+    )
 
-    # -----------------------------
-    # Plot settings
-    # -----------------------------
     plt.title("Ship Hull and Wave Pattern – Froude Number Concept")
     plt.xlabel("x (m)")
     plt.ylabel("y (m)")
-    plt.axis("equal")  # Same scale for x and y
+    plt.axis("equal")
     plt.grid(True)
     plt.legend(loc="upper right")
-    plt.show()
+    return fig
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open a plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = draw_ship_hull_and_waves()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "ship_hull_in_water.png", dpi=100, bbox_inches="tight")
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":
-    draw_ship_hull_and_waves()
+    main()

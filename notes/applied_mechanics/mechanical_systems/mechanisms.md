@@ -19,6 +19,7 @@ A **mechanism** is a system of rigid bodies connected by joints that produces a 
 
 ### Grübler's Equation
 For planar mechanisms:
+
 $$DOF = 3(n-1) - 2j_1 - j_2$$
 
 where:
@@ -27,6 +28,7 @@ where:
 - $j_2$ = number of two-DOF joints (rare in practice)
 
 For spatial mechanisms:
+
 $$DOF = 6(n-1) - \sum_{i=1}^{j} C_i$$
 
 where $C_i$ is the constraint count for joint $i$.
@@ -77,12 +79,13 @@ where $C_i$ is the constraint count for joint $i$.
 
 The four-bar linkage is the most basic closed-loop mechanism:
 - **Ground link**: Fixed base
-- **Input link (crank)**: Driven link
+- **Input link (crank)**: Driving link
 - **Coupler**: Connecting link
 - **Output link (rocker)**: Driven link
 
 #### Grashof Condition
 For continuous rotation capability:
+
 $$s + l \leq p + q$$
 
 where $s$ = shortest link, $l$ = longest link, $p$ and $q$ = intermediate links.
@@ -94,15 +97,20 @@ where $s$ = shortest link, $l$ = longest link, $p$ and $q$ = intermediate links.
 
 #### Position Analysis
 Using vector loop equation:
+
 $$\mathbf{r}_1 + \mathbf{r}_2 + \mathbf{r}_3 + \mathbf{r}_4 = 0$$
 
 In component form:
+
 $$a\cos\theta_1 + b\cos\theta_2 + c\cos\theta_3 + d\cos\theta_4 = 0$$
+
 $$a\sin\theta_1 + b\sin\theta_2 + c\sin\theta_3 + d\sin\theta_4 = 0$$
 
 #### Velocity Analysis
 Differentiating position equations:
+
 $$-a\omega_1\sin\theta_1 - b\omega_2\sin\theta_2 - c\omega_3\sin\theta_3 - d\omega_4\sin\theta_4 = 0$$
+
 $$a\omega_1\cos\theta_1 + b\omega_2\cos\theta_2 + c\omega_3\cos\theta_3 + d\omega_4\cos\theta_4 = 0$$
 
 ### Slider-Crank Mechanism
@@ -114,19 +122,23 @@ Fundamental mechanism in engines and pumps:
 
 #### Position Analysis
 For crank angle $\theta$ and connecting rod length $l$:
+
 $$x = r\cos\theta + l\cos\phi$$
 
 where $\sin\phi = \frac{r\sin\theta}{l}$ (exact solution)
 
-**Approximate solution** (for $r << l$):
-$$x \approx r\cos\theta + \frac{r^2\sin^2\theta}{2l}$$
+**Approximate solution** (for $r \ll l$):
+
+$$x \approx r\cos\theta + l - \frac{r^2\sin^2\theta}{2l}$$
 
 #### Velocity and Acceleration
 **Velocity**:
+
 $$v = -r\omega\sin\theta - \frac{r^2\omega\cos\theta\sin\theta}{l\cos\phi}$$
 
-**Acceleration**:
-$$a = -r\omega^2\cos\theta - \frac{r^2\omega^2\sin^2\theta}{l\cos\phi} - \frac{r^2\omega^2\cos^2\theta}{l\cos^3\phi}$$
+**Acceleration** (constant $\omega$):
+
+$$a = -r\omega^2\cos\theta - \frac{r^2\omega^2\cos 2\theta}{l\cos\phi} - \frac{r^4\omega^2\sin^2\theta\cos^2\theta}{l^3\cos^3\phi}$$
 
 ### Example 1: Four-Bar Linkage Design
 
@@ -137,7 +149,7 @@ Design a four-bar linkage to approximate straight-line motion.
 - 90° of straight-line motion
 - Compact size
 
-**Watt's Linkage Solution:**
+**Candidate proportions** (a Grashof crank-rocker; note that the classical Watt straight-line linkage is a double-rocker, not this mechanism):
 - Ground link: 100 mm
 - Crank: 25 mm  
 - Coupler: 100 mm
@@ -154,12 +166,14 @@ The coupler point traces a path with a nearly straight segment over about 90° o
 ### Gear Fundamentals
 
 #### Gear Ratio
+
 $$i = \frac{N_2}{N_1} = \frac{\omega_1}{\omega_2} = \frac{R_2}{R_1}$$
 
 where $N$ = number of teeth, $\omega$ = angular velocity, $R$ = pitch radius.
 
 #### Gear Train Value
 For compound gear trains:
+
 $$GTV = \frac{\text{Product of driven gear teeth}}{\text{Product of driver gear teeth}}$$
 
 ### Types of Gears
@@ -182,7 +196,7 @@ $$GTV = \frac{\text{Product of driven gear teeth}}{\text{Product of driver gear 
 **Helix angle effects:**
 - Axial thrust forces
 - Smoother operation
-- Higher efficiency
+- Slightly lower efficiency than spur gears (extra sliding and thrust-bearing losses)
 
 #### Bevel Gears
 - **Intersecting axes**: Typically 90°
@@ -198,6 +212,7 @@ $$GTV = \frac{\text{Product of driven gear teeth}}{\text{Product of driver gear 
 - **Carrier**: Holds planet gears
 
 **Speed relationships:**
+
 $$\omega_s + \alpha \omega_r = (1 + \alpha)\omega_c$$
 
 where $\alpha = \frac{N_r}{N_s}$ (ring-to-sun teeth ratio).
@@ -221,6 +236,7 @@ A planetary gearbox has:
 **Gear ratio**: $\alpha = \frac{80}{20} = 4$
 
 **Carrier speed** (ring fixed):
+
 $$\omega_c = \frac{\omega_s}{1 + \alpha} = \frac{1000}{1 + 4} = 200 \text{ rpm}$$
 
 **Torque multiplication**: $T_c = (1 + \alpha)T_s = 5T_s$
@@ -244,12 +260,16 @@ $$\omega_c = \frac{\omega_s}{1 + \alpha} = \frac{1000}{1 + 4} = 200 \text{ rpm}$
 Define follower displacement $s(\theta)$ vs. cam angle $\theta$.
 
 #### 2. Velocity and Acceleration
+
 $$v = \omega \frac{ds}{d\theta}$$
+
 $$a = \omega^2 \frac{d^2s}{d\theta^2}$$
 
 #### 3. Cam Profile Generation
 For disk cam with offset roller follower:
+
 $$x_c = (R_b + s + r)\sin(\phi + \beta) - e\cos(\phi + \beta)$$
+
 $$y_c = -(R_b + s + r)\cos(\phi + \beta) - e\sin(\phi + \beta)$$
 
 where:
@@ -262,11 +282,13 @@ where:
 ### Common Motion Laws
 
 #### Simple Harmonic Motion
+
 $$s = \frac{h}{2}(1 - \cos(\pi\theta/\beta))$$
 
-**Characteristics**: Smooth acceleration, finite jerk
+**Characteristics**: Smooth within the rise, but the acceleration is not zero at the start and end of the rise, so it jumps where the rise meets a dwell (infinite jerk)
 
 #### Cycloidal Motion  
+
 $$s = h(\theta/\beta - \frac{1}{2\pi}\sin(2\pi\theta/\beta))$$
 
 **Characteristics**: Zero acceleration at endpoints
@@ -286,12 +308,14 @@ Design a cam for valve actuation:
 **Solution:**
 
 **Rise phase** (0° to 90°): Use simple harmonic motion
-$$s = 5(1 - \cos(\pi\theta/90°))$$
+
+$$s = 5(1 - \cos(\pi\theta/90^\circ))$$
 
 **Dwell phase** (90° to 150°): $s = 10$ mm
 
 **Fall phase** (150° to 240°): Use simple harmonic motion
-$$s = 5(1 + \cos(\pi(\theta-150°)/90°))$$
+
+$$s = 5(1 + \cos(\pi(\theta-150^\circ)/90^\circ))$$
 
 **Remaining dwell** (240° to 360°): $s = 0$ mm
 
@@ -366,3 +390,87 @@ Understanding mechanisms and linkages is fundamental to:
 - Robotics and automation
 
 These concepts provide the foundation for creating efficient, reliable mechanical systems across all engineering disciplines.
+
+## Exercises
+
+**Exercise 1.** Use Grübler's equation to find the degrees of freedom of (a) a slider-crank (4 links including ground, 3 pin joints and 1 slider), (b) a Watt six-bar chain (6 links, 7 pin joints), and (c) a planar five-bar linkage (5 links, 5 pin joints).
+
+<details>
+<summary>Answer</summary>
+
+- (a) $DOF = 3(4-1) - 2(4) = 1$
+- (b) $DOF = 3(6-1) - 2(7) = 1$
+- (c) $DOF = 3(5-1) - 2(5) = 2$
+
+The five-bar needs two independent inputs, which is why it is used in two-motor planar robots and plotters.
+
+</details>
+
+**Exercise 2.** A four-bar linkage has link lengths 40, 90, 110 and 120 mm. Is it a Grashof linkage? What kinds of motion are possible depending on which link is fixed?
+
+<details>
+<summary>Answer</summary>
+
+$s + l = 40 + 120 = 160$ and $p + q = 90 + 110 = 200$. Since $160 \leq 200$ it is a Grashof linkage, so at least one link can rotate fully relative to the others.
+
+- Fixing a link adjacent to the 40 mm link gives a crank-rocker, with the 40 mm link as the crank.
+- Fixing the 40 mm link gives a double-crank (drag link).
+- Fixing the link opposite the 40 mm link gives a double-rocker, in which the short coupler can still rotate fully.
+
+</details>
+
+**Exercise 3.** A slider-crank has $r = 50$ mm and $l = 200$ mm, and the crank turns at a constant 3000 rpm. At $\theta = 60^\circ$ find $\phi$, the slider position, velocity and acceleration. Also find the acceleration at top dead centre ($\theta = 0$).
+
+<details>
+<summary>Answer</summary>
+
+$\omega = 314.16$ rad/s, $\sin\phi = r\sin\theta/l = 0.2165$, so $\phi = 12.50^\circ$ and $l\cos\phi = 0.1953$ m.
+
+Position: $x = 0.05\cos 60^\circ + 0.1953 = 0.2203$ m. The approximate formula gives 0.2203 m as well.
+
+Velocity:
+
+$$v = -r\omega\sin\theta - \frac{r^2\omega\cos\theta\sin\theta}{l\cos\phi} = -13.60 - 1.74 = -15.35 \text{ m/s}$$
+
+Acceleration, term by term:
+
+$$a = -2467.4 + 631.8 - 15.5 = -1851 \text{ m/s}^2$$
+
+At top dead centre, $\phi = 0$ and $a = -r\omega^2(1 + r/l) = -4934.8 \times 1.25 = -6169$ m/s², about 630 g. This is the source of the large inertia forces in high-speed engines.
+
+</details>
+
+**Exercise 4.** The valve cam of Example 3 (lift 10 mm over a 90° rise) turns at 1500 rpm. Find the maximum follower velocity and acceleration during the simple harmonic rise, and compare them with a cycloidal rise over the same angle.
+
+<details>
+<summary>Answer</summary>
+
+$\omega = 157.08$ rad/s, $\beta = \pi/2$ rad, $h = 10$ mm.
+
+Simple harmonic: $v = \omega\,\dfrac{h}{2}\dfrac{\pi}{\beta}\sin(\pi\theta/\beta)$ and $a = \omega^2\,\dfrac{h}{2}\left(\dfrac{\pi}{\beta}\right)^2\cos(\pi\theta/\beta)$.
+
+- $v_{max} = 157.08 \times 5 \times 2 = 1571$ mm/s = 1.57 m/s
+- $a_{max} = 157.08^2 \times 5 \times 4 = 493.5$ m/s², at $\theta = 0$ and $\theta = \beta$, where the acceleration jumps from zero (dwell) to its peak
+
+Cycloidal: $v_{max} = 2h\omega/\beta = 2.0$ m/s and $a_{max} = 2\pi h\omega^2/\beta^2 = 628.3$ m/s², at $\theta = \beta/4$. The acceleration is zero at both ends, so there is no jump.
+
+The cycloidal law has the higher peak acceleration but finite jerk, which is why it is preferred for high-speed cams.
+
+</details>
+
+**Exercise 5.** In the planetary gearbox of Example 2 ($\alpha = N_r/N_s = 4$), the sun turns at 1000 rpm and the ring is driven at 200 rpm in the opposite direction. Find the carrier speed. What ring speed would hold the carrier stationary?
+
+<details>
+<summary>Answer</summary>
+
+$$\omega_c = \frac{\omega_s + \alpha\omega_r}{1 + \alpha} = \frac{1000 + 4(-200)}{5} = 40 \text{ rpm}$$
+
+The carrier is stationary when $\omega_s + \alpha\omega_r = 0$, i.e. $\omega_r = -1000/4 = -250$ rpm. This two-input behaviour is the basis of power-split and differential drives.
+
+</details>
+
+## References
+
+- Norton, R. L., *Design of Machinery*, 5th ed., McGraw-Hill, 2012.
+- Uicker, J. J., Pennock, G. R., and Shigley, J. E., *Theory of Machines and Mechanisms*, 5th ed., Oxford University Press, 2017.
+- Erdman, A. G., Sandor, G. N., and Kota, S., *Mechanism Design: Analysis and Synthesis*, Vol. 1, 4th ed., Prentice Hall, 2001.

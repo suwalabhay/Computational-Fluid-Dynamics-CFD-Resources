@@ -109,12 +109,15 @@ When a shaft is fixed at both ends or supported by redundant constraints, equili
 **Example — shaft fixed at both ends with applied torque $T_0$ at an intermediate point:**
 
 Equilibrium:
+
 $$T_A + T_B = T_0$$
 
 Compatibility (no net rotation):
+
 $$\frac{T_A L_1}{GJ} - \frac{T_B L_2}{GJ} = 0$$
 
 Solving:
+
 $$T_A = T_0 \frac{L_2}{L_1 + L_2}, \quad T_B = T_0 \frac{L_1}{L_1 + L_2}$$
 
 ## Example Problems
@@ -132,9 +135,11 @@ A motor delivers 50 kW at 1500 rpm through a solid steel shaft. The allowable sh
 **Solution:**
 
 **Torque:**
-$$T = \frac{60P}{2\pi n} = \frac{60 \times 50\,000}{2\pi \times 1500} = 318.3 \text{ N·m}$$
+
+$$T = \frac{60P}{2\pi n} = \frac{60 \times 50\,000}{2\pi \times 1500} = 318.3 \text{ N}\cdot\text{m}$$
 
 **Required diameter:**
+
 $$d \geq \left(\frac{16T}{\pi \tau_{allow}}\right)^{1/3} = \left(\frac{16 \times 318.3}{\pi \times 80 \times 10^6}\right)^{1/3}$$
 
 $$d \geq \left(\frac{5093}{251.3 \times 10^6}\right)^{1/3} = (2.027 \times 10^{-5})^{1/3} = 0.0273 \text{ m} = 27.3 \text{ mm}$$
@@ -154,16 +159,19 @@ Compare a solid shaft of diameter 60 mm with a hollow shaft of outer diameter 70
 **Solution:**
 
 **Polar moments of inertia:**
+
 $$J_{solid} = \frac{\pi (60)^4}{32} = 1.272 \times 10^6 \text{ mm}^4$$
 
 $$J_{hollow} = \frac{\pi}{32}(70^4 - 50^4) = \frac{\pi}{32}(24.01 \times 10^6 - 6.25 \times 10^6) = 1.743 \times 10^6 \text{ mm}^4$$
 
 **Stress ratio (for the same torque):**
+
 $$\frac{\tau_{solid}}{\tau_{hollow}} = \frac{T \times 30 / J_{solid}}{T \times 35 / J_{hollow}} = \frac{30 / 1.272 \times 10^6}{35 / 1.743 \times 10^6} = \frac{23.58}{20.08} = 1.17$$
 
 The solid shaft has 17% higher stress for the same torque.
 
 **Weight ratio:**
+
 $$\frac{A_{solid}}{A_{hollow}} = \frac{\pi(60)^2/4}{\pi(70^2 - 50^2)/4} = \frac{2827}{1885} = 1.50$$
 
 The solid shaft weighs 50% more. The hollow shaft is both lighter and stronger.
@@ -189,18 +197,20 @@ $$\phi = \frac{T_1 L_1}{G J_1} + \frac{T_2 L_2}{G J_2}$$
 
 $$\phi = \frac{500 \times 600}{80\,000 \times 2.513 \times 10^5} + \frac{200 \times 400}{80\,000 \times 7.952 \times 10^4}$$
 
-$$\phi = 0.01493 + 0.01257 = 0.0275 \text{ rad} = 1.58°$$
+$$\phi = 0.01493 + 0.01257 = 0.0275 \text{ rad} = 1.58^\circ$$
 
 ## Torsion of Non-Circular Sections
 
 For non-circular cross-sections, plane sections do **not** remain plane — warping occurs. Approximate solutions exist:
 
 **Rectangular cross-section** ($a \times b$, $a > b$):
+
 $$\tau_{max} = \frac{T}{\alpha a b^2}, \quad \phi = \frac{TL}{\beta a b^3 G}$$
 
 where $\alpha$ and $\beta$ are coefficients depending on $a/b$ (tabulated values).
 
 **Thin-walled closed sections** (Bredt–Batho formula):
+
 $$\tau = \frac{T}{2 A_m t}$$
 
 where $A_m$ is the area enclosed by the median line and $t$ is the wall thickness.
@@ -230,3 +240,77 @@ where $A_m$ is the area enclosed by the median line and $t$ is the wall thicknes
 - Ensure proper alignment to avoid combined bending and torsion
 
 Torsion analysis is essential for the safe and efficient design of rotating machinery and power transmission systems.
+
+## Exercises
+
+**Exercise 1.** Check the claim that a hollow shaft with $d_i/d_o = 0.8$ has 59% of the polar moment of a solid shaft with the same outer diameter but 36% of its weight. For the same torque, how do the maximum stresses compare, and what is the gain in strength per unit weight?
+
+<details>
+<summary>Answer</summary>
+
+$J_h/J_s = 1 - 0.8^4 = 0.590$ and $A_h/A_s = 1 - 0.8^2 = 0.360$, so the claim holds.
+
+For the same torque and outer radius, $\tau \propto 1/J$, so the hollow shaft is stressed $1/0.590 = 1.69$ times more. Its torque capacity per unit weight is $0.590/0.360 = 1.64$ times that of the solid shaft.
+
+</details>
+
+**Exercise 2.** The 30 mm shaft of Example 1 ($T = 318.3$ N·m, $G = 80$ GPa) is 1.2 m long. Find its angle of twist. If the twist must not exceed $1^\circ$ per metre, what diameter is needed?
+
+<details>
+<summary>Answer</summary>
+
+$J = \pi(0.030)^4/32 = 7.95 \times 10^{-8}$ m⁴:
+
+$$\phi = \frac{TL}{GJ} = \frac{318.3 \times 1.2}{80 \times 10^9 \times 7.95 \times 10^{-8}} = 0.0600 \text{ rad} = 3.44^\circ$$
+
+That is $2.87^\circ$/m, too much. For $1^\circ$/m $= 0.01745$ rad/m:
+
+$$J \geq \frac{318.3}{80 \times 10^9 \times 0.01745} = 2.28 \times 10^{-7} \text{ m}^4 \implies d \geq \left(\frac{32J}{\pi}\right)^{1/4} = 39.0 \text{ mm}$$
+
+Stiffness, not strength, governs here, so use a 40 mm shaft.
+
+</details>
+
+**Exercise 3.** A solid 50 mm shaft ($G = 80$ GPa) is fixed at both ends. A torque $T_0 = 1.5$ kN·m is applied 0.3 m from end A; the total length is 1.0 m. Find the end torques, the maximum shear stress in each segment and the rotation at the loaded section.
+
+<details>
+<summary>Answer</summary>
+
+$T_A = T_0 L_2/L = 1500 \times 0.7 = 1050$ N·m and $T_B = 450$ N·m. The shorter segment is stiffer and carries more torque.
+
+Shear stress $16T/(\pi d^3)$: 42.8 MPa in AC and 18.3 MPa in CB.
+
+$$\phi_C = \frac{T_A L_1}{GJ} = \frac{1050 \times 0.3}{80 \times 10^9 \times 6.14 \times 10^{-7}} = 6.42 \times 10^{-3} \text{ rad} = 0.37^\circ$$
+
+</details>
+
+**Exercise 4.** A thin-walled square tube has a median-line side length of 100 mm and a wall thickness of 4 mm. Use the Bredt–Batho formula to find the shear stress under a torque of 3 kN·m.
+
+<details>
+<summary>Answer</summary>
+
+$A_m = 0.1^2 = 0.01$ m²:
+
+$$\tau = \frac{T}{2A_m t} = \frac{3000}{2 \times 0.01 \times 0.004} = 37.5 \text{ MPa}$$
+
+Corners concentrate stress in practice, so generous corner radii are used.
+
+</details>
+
+**Exercise 5.** A shaft transmits 20 kW with an allowable shear stress of 60 MPa. Find the required solid diameter at 300 rpm and at 3000 rpm. What does this suggest about where to place a speed reducer in a drivetrain?
+
+<details>
+<summary>Answer</summary>
+
+- At 300 rpm: $T = 20\,000/31.42 = 636.6$ N·m, so $d = (16T/\pi\tau)^{1/3} = 37.8$ mm.
+- At 3000 rpm: $T = 63.7$ N·m, so $d = 17.5$ mm.
+
+For the same power, torque scales as $1/n$ and diameter as $n^{-1/3}$. High-speed shafts are therefore light, and the speed reduction is best placed as close to the driven machine as possible.
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Mechanics of Materials*, 10th ed., Pearson, 2017.
+- Gere, J. M., and Goodno, B. J., *Mechanics of Materials*, 8th ed., Cengage Learning, 2013.
+- Budynas, R. G., and Nisbett, J. K., *Shigley's Mechanical Engineering Design*, 10th ed., McGraw-Hill Education, 2015.

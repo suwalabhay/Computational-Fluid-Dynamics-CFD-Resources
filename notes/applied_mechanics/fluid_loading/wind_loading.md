@@ -92,9 +92,9 @@ The gust effect factor accounts for:
 1. **Background response** — quasi-static effect of turbulence gusts smaller than the building
 2. **Resonant response** — dynamic amplification near the fundamental frequency $f_1$
 
-$$G = 1 + 2 g_p \sqrt{B_s^2 + R^2}$$
+$$G = 1 + 2 g_p I_v \sqrt{B_s^2 + R^2}$$
 
-where $g_p \approx 3.5$ is the peak factor, $B_s$ is the background factor, and $R$ is the resonance factor:
+where $g_p \approx 3.5$ is the peak factor, $I_v$ is the turbulence intensity at the reference height, $B_s$ is the background factor, and $R$ is the resonance factor:
 
 $$R^2 = \frac{\pi}{4 \zeta} S_L(f_1) R_h R_b$$
 
@@ -201,7 +201,7 @@ Since $V_{cr} = 50$ m/s is within the design range, **lock-in is a concern**. A 
 
 Windward wall (net positive pressure):
 
-$$p_{net} = (0.8 - 0.3) \times 1.5 = 0.75 \text{ kPa (outward push)}$$
+$$p_{net} = (0.8 - 0.3) \times 1.5 = 0.75 \text{ kPa (pushing inward on the wall)}$$
 
 Roof corner zone (net suction):
 
@@ -250,3 +250,74 @@ The roof corner zone experiences the most severe cladding load — this governs 
 - Lateral drift limits: $H/400$ to $H/500$ under design wind
 
 Wind loading analysis links the atmospheric boundary layer physics to structural engineering design, forming a core competency for engineers working on exposed structures.
+
+## Exercises
+
+**Exercise 1.** The mean wind speed at 10 m is 30 m/s over suburban terrain ($\alpha = 0.22$). Use the power law to find the speed at 100 m, and the ratio of dynamic pressures at the two heights.
+
+<details>
+<summary>Answer</summary>
+
+$$V(100) = 30 \times 10^{0.22} = 49.8 \text{ m/s}$$
+
+$$\frac{q(100)}{q(10)} = \left(10^{0.22}\right)^2 = 2.75$$
+
+</details>
+
+**Exercise 2.** Repeat Exercise 1 with the logarithmic law and $z_0 = 0.3$ m: find the friction velocity $u_*$ and $V(100)$.
+
+<details>
+<summary>Answer</summary>
+
+$$u_* = \frac{\kappa V(10)}{\ln(10/0.3)} = \frac{0.41 \times 30}{3.51} = 3.51 \text{ m/s}$$
+
+$$V(100) = \frac{3.51}{0.41}\ln\frac{100}{0.3} = 8.56 \times 5.81 = 49.7 \text{ m/s}$$
+
+This is almost identical to the power-law result, as expected when the exponent is matched to the terrain.
+
+</details>
+
+**Exercise 3.** For the building of Example 3 ($q_{ref} = 1.5$ kPa), the internal pressure coefficient may be either $+0.3$ or $-0.3$ depending on where openings occur. Find the governing net pressures for the windward wall ($C_{p,ext} = +0.8$) and the roof corner ($C_{p,ext} = -2.0$).
+
+<details>
+<summary>Answer</summary>
+
+Windward wall: $(0.8 - 0.3) \times 1.5 = 0.75$ kPa or $(0.8 + 0.3) \times 1.5 = 1.65$ kPa. Internal suction governs, giving 1.65 kPa inward.
+
+Roof corner: $(-2.0 - 0.3) \times 1.5 = -3.45$ kPa or $(-2.0 + 0.3) \times 1.5 = -2.55$ kPa. Internal pressure governs, giving 3.45 kPa of uplift.
+
+Each cladding zone must be designed for the worst combination of external and internal pressure.
+
+</details>
+
+**Exercise 4.** A circular steel chimney 4 m in diameter has natural frequencies of 0.8 Hz (mode 1) and 5 Hz (mode 2). Taking $St = 0.2$ for a circular section, find the critical vortex-shedding wind speed for each mode. If the design wind speed at the top is 35 m/s, which mode is a concern, and what mitigation would you consider?
+
+<details>
+<summary>Answer</summary>
+
+$V_{cr,1} = 0.8 \times 4/0.2 = 16$ m/s and $V_{cr,2} = 5 \times 4/0.2 = 100$ m/s.
+
+Mode 1 locks in at 16 m/s, a wind speed that occurs frequently, so both fatigue and serviceability are concerns. Mode 2 would need 100 m/s, far above the design speed. Options for mode 1: helical strakes on the upper third, a tuned mass damper, or added damping to raise the Scruton number.
+
+</details>
+
+**Exercise 5.** A building of height $H = 100$ m and width $B = 30$ m has $C_D = 1.3$. The mean wind profile is $V(z) = 30(z/10)^{0.22}$ m/s with $\rho = 1.225$ kg/m³. Derive expressions for the mean base shear and base moment by integrating over the height, evaluate them, and find the effective height of the resultant.
+
+<details>
+<summary>Answer</summary>
+
+$$F = \int_0^H \frac{1}{2}\rho V_{ref}^2\left(\frac{z}{z_{ref}}\right)^{2\alpha}C_D B\,dz = \frac{\frac{1}{2}\rho V_{ref}^2 C_D B\,H^{2\alpha+1}}{(2\alpha+1)z_{ref}^{2\alpha}} = 4.11 \text{ MN}$$
+
+$$M = \int_0^H z\,q(z)C_D B\,dz = \frac{\frac{1}{2}\rho V_{ref}^2 C_D B\,H^{2\alpha+2}}{(2\alpha+2)z_{ref}^{2\alpha}} = 243 \text{ MN·m}$$
+
+The effective height is $M/F = 59.0$ m. It lies above mid-height (50 m) because pressure increases with height. These are mean values only; a gust effect factor must be applied for design.
+
+</details>
+
+## References
+
+- E. Simiu, R. H. Scanlan, *Wind Effects on Structures: Fundamentals and Applications to Design*, 3rd ed., Wiley, 1996.
+- J. D. Holmes, *Wind Loading of Structures*, 3rd ed., CRC Press, 2015.
+- S. O. Hansen, C. Dyrbye, *Wind Loads on Structures*, Wiley, 1997.
+- CEN, *EN 1991-1-4: Eurocode 1: Actions on Structures – Part 1-4: General Actions – Wind Actions*, European Committee for Standardization, 2005.
+- American Society of Civil Engineers, *Minimum Design Loads and Associated Criteria for Buildings and Other Structures* (ASCE/SEI 7-22), ASCE.

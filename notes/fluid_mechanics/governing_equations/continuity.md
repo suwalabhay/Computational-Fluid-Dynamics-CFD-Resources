@@ -29,12 +29,15 @@ where $\vec{n}$ is the outward unit normal vector.
 ### Conservation Statement
 
 For mass conservation:
+
 $$\int_V \frac{\partial \rho}{\partial t} \, dV + \int_S \rho \vec{v} \cdot \vec{n} \, dS = 0$$
 
 Using the divergence theorem:
+
 $$\int_S \rho \vec{v} \cdot \vec{n} \, dS = \int_V \nabla \cdot (\rho \vec{v}) \, dV$$
 
 Therefore:
+
 $$\int_V \left[\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \vec{v})\right] dV = 0$$
 
 Since this must hold for any arbitrary volume $V$, the integrand must be zero:
@@ -80,6 +83,7 @@ The continuity equation simplifies to:
 $$\boxed{\nabla \cdot \vec{v} = 0}$$
 
 In Cartesian coordinates:
+
 $$\frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} + \frac{\partial w}{\partial z} = 0$$
 
 This states that the **volumetric flow rate** is conserved in incompressible flow.
@@ -97,9 +101,11 @@ For **one-dimensional flow** in a variable area duct:
 $$\frac{\partial \rho}{\partial t} + \frac{\partial (\rho u)}{\partial x} = 0$$
 
 For steady, one-dimensional flow:
+
 $$\frac{d(\rho u A)}{dx} = 0$$
 
 where $A(x)$ is the cross-sectional area. This gives:
+
 $$\rho u A = \text{constant} = \dot{m}$$
 
 where $\dot{m}$ is the mass flow rate.
@@ -109,9 +115,11 @@ where $\dot{m}$ is the mass flow rate.
 ### Mass Flow Rate
 
 The **mass flow rate** through a surface $S$ is:
+
 $$\dot{m} = \int_S \rho \vec{v} \cdot \vec{n} \, dS$$
 
 For incompressible flow through a pipe with uniform velocity:
+
 $$\dot{m} = \rho V A$$
 
 where $V$ is the average velocity and $A$ is the cross-sectional area.
@@ -119,6 +127,7 @@ where $V$ is the average velocity and $A$ is the cross-sectional area.
 ### Volume Flow Rate
 
 For incompressible flow, the **volume flow rate** (or discharge) is:
+
 $$Q = \int_S \vec{v} \cdot \vec{n} \, dS = VA$$
 
 ### Stream Function
@@ -142,9 +151,11 @@ This form shows that the density of a fluid particle changes due to the divergen
 ### Pipe Flow
 
 For steady flow in a pipe with varying diameter:
+
 $$\rho_1 V_1 A_1 = \rho_2 V_2 A_2$$
 
 For incompressible flow:
+
 $$V_1 A_1 = V_2 A_2$$
 
 This explains why water speeds up when flowing through a nozzle.
@@ -152,11 +163,13 @@ This explains why water speeds up when flowing through a nozzle.
 ### Channel Flow
 
 For steady, incompressible flow in an open channel:
+
 $$Q = VA = \text{constant}$$
 
 ### Compressible Flow in Nozzles
 
 For steady, one-dimensional compressible flow:
+
 $$\rho u A = \text{constant}$$
 
 Combined with other equations, this leads to important relationships for nozzle design.
@@ -166,6 +179,7 @@ Combined with other equations, this leads to important relationships for nozzle 
 ### Solid Boundaries
 
 At solid walls, the **no-penetration condition** requires:
+
 $$\vec{v} \cdot \vec{n} = 0$$
 
 This means no flow through solid boundaries.
@@ -180,6 +194,7 @@ This means no flow through solid boundaries.
 In computational fluid dynamics, the continuity equation is typically discretized using:
 
 ### Finite Volume Method
+
 $$\frac{\partial}{\partial t}\int_V \rho \, dV + \sum_{\text{faces}} (\rho \vec{v} \cdot \vec{n} A)_f = 0$$
 
 ### Finite Difference Method
@@ -206,3 +221,71 @@ The continuity equation is **coupled** with:
 - **1845**: Stokes provided rigorous mathematical foundation
 
 The continuity equation remains fundamental to all fluid flow analysis and is essential for understanding more complex phenomena in fluid mechanics.
+
+## Related Scripts
+
+- [Compressible vs. Incompressible Duct Flow](../../../scripts/plots/compressible_vs_incompressible/): draws prescribed incompressible and compressible velocity fields in a 2D duct side by side, so the constant downstream profile of the first can be compared with the accelerating profile of the second.
+- [Converging-Diverging Nozzle Flow](../../../scripts/plots/nozzle_flow/): plots quasi-one-dimensional isentropic flow through a converging-diverging (de Laval) nozzle, with streamlines coloured by Mach number.
+- [Eulerian Cylinder Flow](../../../scripts/simulations/eulerian_cylinder_flow/): simulates 2D incompressible, inviscid flow past a circular cylinder on a fixed Eulerian grid and renders a dye tracer in real time with Pygame.
+- [Flow Rate Through a Circular Pipe](../../../scripts/plots/flow_rate_pipe/): computes the volumetric flow rate $Q = \pi r^2 v$ of a circular pipe and draws a labelled side view of the pipe with flow arrows.
+- [Microscopic vs. Macroscopic View of a Fluid](../../../scripts/plots/microscopic_view/): draws two side-by-side panels that contrast the microscopic (molecular) and macroscopic (continuum) views of a fluid.
+
+## Exercises
+
+**Exercise 1.** Water ($\rho = 998$ kg/m³) flows at $V_1 = 2$ m/s in a pipe of diameter $D_1 = 0.1$ m that contracts to a nozzle of diameter $D_2 = 0.04$ m. Find $V_2$, the volume flow rate and the mass flow rate.
+
+<details>
+<summary>Answer</summary>
+
+- $V_2 = V_1 (D_1/D_2)^2 = 2 \times 6.25 = 12.5$ m/s.
+- $Q = \frac{\pi}{4}D_1^2 V_1 = 0.01571$ m³/s.
+- $\dot{m} = \rho Q = 15.7$ kg/s.
+
+</details>
+
+**Exercise 2.** Show that the two-dimensional field $u = 3x + y$, $v = 2x - 3y$ satisfies the incompressible continuity equation, and find its stream function $\psi$.
+
+<details>
+<summary>Answer</summary>
+
+$\partial u/\partial x + \partial v/\partial y = 3 - 3 = 0$.
+
+From $u = \partial\psi/\partial y = 3x + y$: $\psi = 3xy + y^2/2 + f(x)$.
+
+From $v = -\partial\psi/\partial x = -(3y + f'(x)) = 2x - 3y$: $f'(x) = -2x$, so $f = -x^2$.
+
+The stream function is $\psi = 3xy + \frac{1}{2}y^2 - x^2$, up to a constant.
+
+</details>
+
+**Exercise 3.** A steady, incompressible, two-dimensional flow is purely radial, $\vec{v} = v_r(r)\,\hat{e}_r$. Use the cylindrical form of the continuity equation to find $v_r(r)$, and relate the constant to the volume flow rate $Q$ per unit depth leaving a circle of radius $r$.
+
+<details>
+<summary>Answer</summary>
+
+With $\rho$ constant and only $v_r(r)$ nonzero, $\frac{1}{r}\frac{d}{dr}(r v_r) = 0$, so $r v_r = C$ and $v_r = C/r$.
+
+The flow rate through a circle is $Q = \oint v_r \, r\,d\theta = 2\pi C$, so
+
+$$v_r = \frac{Q}{2\pi r}$$
+
+This is the potential-flow line source. The velocity is singular at $r = 0$, where the source sits.
+
+</details>
+
+**Exercise 4.** Gas fills a cylinder of length $L(t)$ closed at $x = 0$ and compressed by a piston moving at speed $V_p$, so $dL/dt = -V_p$. Assume the velocity varies linearly, $u = -V_p x/L$, and the density is uniform. (a) Use the one-dimensional continuity equation to show that $\rho L$ stays constant. (b) For $L_0 = 0.2$ m, $\rho_0 = 1.2$ kg/m³ and $V_p = 0.5$ m/s, find $\rho$ and $d\rho/dt$ when $L = 0.1$ m.
+
+<details>
+<summary>Answer</summary>
+
+(a) Since $\partial\rho/\partial x = 0$, continuity gives $d\rho/dt + \rho\,\partial u/\partial x = 0$. With $\partial u/\partial x = -V_p/L$, this becomes $d\rho/dt = \rho V_p/L = -\rho\,(dL/dt)/L$. Therefore $d(\ln\rho + \ln L)/dt = 0$ and $\rho L$ is constant, which is just the statement that the mass per unit piston area is fixed.
+
+(b) $\rho = \rho_0 L_0/L = 1.2 \times 0.2/0.1 = 2.4$ kg/m³, and $d\rho/dt = \rho V_p/L = 2.4 \times 0.5/0.1 = 12$ kg/(m³ s).
+
+</details>
+
+## References
+
+- G. K. Batchelor, *An Introduction to Fluid Dynamics*, Cambridge University Press, 1967.
+- P. K. Kundu, I. M. Cohen, D. R. Dowling, *Fluid Mechanics*, 6th ed., Academic Press, 2016.
+- R. Aris, *Vectors, Tensors, and the Basic Equations of Fluid Mechanics*, Prentice-Hall, 1962.

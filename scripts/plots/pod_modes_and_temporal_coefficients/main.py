@@ -1,52 +1,117 @@
-import numpy as np
+"""First three POD spatial modes and their temporal coefficients for a synthetic 2-D field.
+
+A space-time field u(x, y, t) on a 50 x 30 x 100 grid is built from three
+separable structures with decreasing amplitude plus seeded noise. The field
+is reshaped into an (Nx Ny) x Nt snapshot matrix, the temporal mean is
+removed, and the SVD gives the spatial modes (contour plots) and temporal
+coefficients a_i(t) = sigma_i psi_i(t) (time series).
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.gridspec import GridSpec
 
-# Step 1: Generate Mock Data
-np.random.seed(42)
-n_samples = 100  # Number of time snapshots
-n_x = 50  # Number of spatial points in x-direction
-n_y = 30  # Number of spatial points in y-direction
+N_X, N_Y, N_T = 50, 30, 100  # grid points in x, y and number of snapshots
+X_RANGE = (1700.0, 2000.0)  # streamwise extent [mm]
+Y_RANGE = (0.0, 100.0)  # wall-normal extent [mm]
+T_END = 4.0  # duration of the record [s]
+# Separable structures A * sin(p pi xi) sin(q pi eta) * g(t), xi, eta in [0, 1]
+STRUCTURES = [
+    (1.0, 1, 1, lambda t: np.sin(np.pi * t)),
+    (0.6, 2, 1, lambda t: np.sin(2 * np.pi * t)),
+    (0.3, 1, 2, lambda t: np.cos(3 * np.pi * t)),
+]
+NOISE_STD = 0.02  # standard deviation of the random fluctuations [-]
+SEED = 42  # random seed
+N_MODES = 3  # number of modes to plot
 
-# Create synthetic flow data (spatio-temporal field)
-x = np.linspace(1700, 2000, n_x)
-y = np.linspace(0, 100, n_y)
-t = np.linspace(0, 4, n_samples)
 
-X, Y, T = np.meshgrid(x, y, t, indexing="ij")
-data = np.sin(0.02 * X) * np.cos(0.05 * Y) * np.sin(0.5 * T)
+def generate_field(noise_std=NOISE_STD, seed=SEED):
+    """Return x, y, t and the field u with shape (N_X, N_Y, N_T)."""
+    rng = np.random.default_rng(seed)
+    x = np.linspace(*X_RANGE, N_X)
+    y = np.linspace(*Y_RANGE, N_Y)
+    t = np.linspace(0.0, T_END, N_T)
+    X, Y, T = np.meshgrid(x, y, t, indexing="ij")
+    xi = (X - X_RANGE[0]) / (X_RANGE[1] - X_RANGE[0])
+    eta = (Y - Y_RANGE[0]) / (Y_RANGE[1] - Y_RANGE[0])
+    field = np.zeros_like(X)
+    for amplitude, p, q, g in STRUCTURES:
+        field += amplitude * np.sin(p * np.pi * xi) * np.sin(q * np.pi * eta) * g(T)
+    field += noise_std * rng.standard_normal(field.shape)
+    return x, y, t, field
 
-# Reshape data to 2D matrix for SVD (space-time)
-data_reshaped = data.reshape(n_x * n_y, n_samples)
 
-# Step 2: Perform POD using SVD
-U, S, Vt = np.linalg.svd(data_reshaped, full_matrices=False)
-modes = U[:, :3]  # First three spatial modes
-time_coeffs = Vt[:3, :]  # Corresponding time coefficients
+def pod(field, n_modes=N_MODES):
+    """SVD-based POD of the mean-subtracted (Nx Ny) x Nt snapshot matrix.
 
-# Reshape modes to 2D spatial structure
-modes_reshaped = modes.reshape(n_x, n_y, 3)
+    Returns the spatial modes reshaped to (N_X, N_Y, n_modes), the temporal
+    coefficients a_i(t) = sigma_i psi_i(t) with shape (n_modes, N_T), and the
+    fraction of energy in every mode.
+    """
+    nx, ny, nt = field.shape
+    snapshots = field.reshape(nx * ny, nt)
+    snapshots = snapshots - snapshots.mean(axis=1, keepdims=True)
+    Phi, S, PsiT = np.linalg.svd(snapshots, full_matrices=False)
+    modes = Phi[:, :n_modes].reshape(nx, ny, n_modes)
+    time_coeffs = S[:n_modes, None] * PsiT[:n_modes, :]
+    energy_fraction = S**2 / np.sum(S**2)
+    return modes, time_coeffs, energy_fraction
 
-# Step 3: Plot the Modes and Time Coefficients
-fig = plt.figure(figsize=(12, 10))
-gs = GridSpec(3, 2, width_ratios=[1, 1], height_ratios=[1, 1, 1])
 
-# Plot spatial modes
-for i in range(3):
-    ax = fig.add_subplot(gs[i, 0])
-    c = ax.contourf(x, y, modes_reshaped[:, :, i].T, cmap="jet", levels=50)
-    fig.colorbar(c, ax=ax)
-    ax.set_title(f"Mode {i+1}")
-    ax.set_xlabel("x (mm)")
-    ax.set_ylabel("y (mm)")
+def plot_modes(x, y, t, modes, time_coeffs, energy_fraction):
+    """Contour plots of the modes (left) and their time coefficients (right)."""
+    n_modes = modes.shape[2]
+    fig = plt.figure(figsize=(12, 10))
+    gs = GridSpec(n_modes, 2, width_ratios=[1, 1])
+    for i in range(n_modes):
+        title = f"Mode {i + 1} ({100 * energy_fraction[i]:.1f}% TKE)"
+        ax = fig.add_subplot(gs[i, 0])
+        c = ax.contourf(x, y, modes[:, :, i].T, cmap="jet", levels=50)
+        fig.colorbar(c, ax=ax)
+        ax.set_title(title)
+        ax.set_xlabel("x (mm)")
+        ax.set_ylabel("y (mm)")
 
-# Plot time coefficients
-for i in range(3):
-    ax = fig.add_subplot(gs[i, 1])
-    ax.plot(t, time_coeffs[i, :])
-    ax.set_title(f"Mode {i+1}")
-    ax.set_xlabel("t (s)")
-    ax.set_ylabel(f"$a_{i+1}$")
+        ax = fig.add_subplot(gs[i, 1])
+        ax.plot(t, time_coeffs[i, :])
+        ax.set_title(title)
+        ax.set_xlabel("t (s)")
+        ax.set_ylabel(f"$a_{i + 1}(t)$")
+    fig.tight_layout()
+    return fig
 
-plt.tight_layout()
-plt.show()
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open a plot window"
+    )
+    parser.add_argument(
+        "--output", type=Path, metavar="DIR", help="save the figure as PNG in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    x, y, t, field = generate_field()
+    modes, time_coeffs, energy_fraction = pod(field)
+    for i in range(N_MODES + 1):
+        print(f"mode {i + 1}: TKE = {100 * energy_fraction[i]:.2f} %")
+
+    fig = plot_modes(x, y, t, modes, time_coeffs, energy_fraction)
+
+    if args.output:
+        args.output.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            args.output / "pod_modes_and_temporal_coefficients.png",
+            dpi=100,
+            bbox_inches="tight",
+        )
+    if not args.no_show:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

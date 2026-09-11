@@ -100,9 +100,11 @@ A simply supported beam of length $L = 6$ m carries a uniform distributed load $
 **Solution:**
 
 **Reactions** (by symmetry):
+
 $$R_A = R_B = \frac{wL}{2} = \frac{10 \times 6}{2} = 30 \text{ kN}$$
 
 **Shear force:**
+
 $$V(x) = R_A - wx = 30 - 10x \text{ kN}$$
 
 $V = 0$ when $x = 3$ m (midspan).
@@ -110,9 +112,10 @@ $V = 0$ when $x = 3$ m (midspan).
 $$V_{max} = 30 \text{ kN (at supports)}$$
 
 **Bending moment:**
-$$M(x) = R_A x - \frac{wx^2}{2} = 30x - 5x^2 \text{ kN·m}$$
 
-$$M_{max} = M(3) = 30(3) - 5(3)^2 = 90 - 45 = 45 \text{ kN·m}$$
+$$M(x) = R_A x - \frac{wx^2}{2} = 30x - 5x^2 \text{ kN}\cdot\text{m}$$
+
+$$M_{max} = M(3) = 30(3) - 5(3)^2 = 90 - 45 = 45 \text{ kN}\cdot\text{m}$$
 
 **Diagram shapes:**
 - Shear: linear, from +30 kN to −30 kN
@@ -130,15 +133,18 @@ A cantilever beam of length $L = 3$ m has a point load $P = 12$ kN at the free e
 **Solution:**
 
 **Reactions at the fixed end:**
-$$R_A = 12 \text{ kN (upward)}, \quad M_A = -12 \times 3 = -36 \text{ kN·m (counterclockwise)}$$
+
+$$R_A = 12 \text{ kN (upward)}, \quad M_A = 12 \times 3 = 36 \text{ kN}\cdot\text{m (clockwise, fixed end on the right)}$$
 
 **Shear force** (measuring $x$ from the free end):
+
 $$V(x) = -P = -12 \text{ kN (constant along the beam)}$$
 
 **Bending moment** (measuring $x$ from the free end):
-$$M(x) = -Px = -12x \text{ kN·m}$$
 
-$$M_{max} = 36 \text{ kN·m (at fixed support)}$$
+$$M(x) = -Px = -12x \text{ kN}\cdot\text{m}$$
+
+$$M_{max} = 36 \text{ kN}\cdot\text{m (at fixed support)}$$
 
 **Diagram shapes:**
 - Shear: constant at −12 kN
@@ -159,9 +165,11 @@ A beam is supported at A ($x = 0$) and B ($x = 4$ m) with an overhang to C ($x =
 **Reactions:**
 
 $\sum M_A = 0$:
+
 $$R_B \times 4 - 18 \times 6 = 0 \implies R_B = 27 \text{ kN}$$
 
 $\sum F_y = 0$:
+
 $$R_A + 27 - 18 = 0 \implies R_A = -9 \text{ kN (downward)}$$
 
 **Shear diagram:**
@@ -193,9 +201,11 @@ A simply supported beam ($L = 8$ m) carries a point load $P_1 = 10$ kN at $x = 2
 **Reactions:**
 
 $\sum M_A = 0$:
+
 $$R_B \times 8 = 10 \times 2 + 20 \times 5 = 120 \implies R_B = 15 \text{ kN}$$
 
 $\sum F_y = 0$:
+
 $$R_A = 10 + 20 - 15 = 15 \text{ kN}$$
 
 **Shear diagram:**
@@ -208,7 +218,7 @@ $$R_A = 10 + 20 - 15 = 15 \text{ kN}$$
 - $M(5) = 15 \times 5 - 10 \times 3 = 75 - 30 = 45$ kN·m
 - $M(8) = 0$ ✓
 
-$$M_{max} = 45 \text{ kN·m at } x = 5 \text{ m}$$
+$$M_{max} = 45 \text{ kN}\cdot\text{m at } x = 5 \text{ m}$$
 
 ## Graphical Construction Tips
 
@@ -251,3 +261,82 @@ For moving loads (bridges, cranes), influence lines show how $V$ and $M$ at a sp
 - For complex loadings, break the beam into segments and analyze each separately
 
 Shear and moment diagrams are indispensable tools for structural analysis and form the basis for beam design in every branch of engineering.
+
+## Exercises
+
+**Exercise 1.** A cantilever of length $L$ carries a uniform load $w$. Without detailed calculation, state the shapes of the shear and moment diagrams, the maximum values and where they occur.
+
+<details>
+<summary>Answer</summary>
+
+Since $dV/dx = -w$ is constant, the shear is linear, from 0 at the free end to magnitude $wL$ at the wall. Since $dM/dx = V$, the moment is parabolic, with zero slope at the free end (where $V = 0$) and magnitude $wL^2/2$ at the wall. The moment is hogging (negative) in the sign convention of these notes.
+
+</details>
+
+**Exercise 2.** A simply supported 6 m beam carries a triangular load rising from zero at A to $w_0 = 12$ kN/m at B. Find the reactions, the location of zero shear and the maximum moment.
+
+<details>
+<summary>Answer</summary>
+
+The total load is $w_0L/2 = 36$ kN, acting at $2L/3 = 4$ m from A. Hence $R_B = 36 \times 4/6 = 24$ kN and $R_A = 12$ kN.
+
+With $w(x) = 2x$ kN/m, $V(x) = 12 - x^2$, which is zero at $x = \sqrt{12} = 3.46$ m.
+
+$$M(x) = 12x - \frac{x^3}{3} \implies M_{max} = 12(3.46) - \frac{3.46^3}{3} = 27.7 \text{ kN}\cdot\text{m}$$
+
+This agrees with the formula $w_0L^2/(9\sqrt{3})$.
+
+</details>
+
+**Exercise 3.** A simply supported 8 m beam has a single clockwise couple $M_0 = 40$ kN·m applied at $x = 3$ m and no other load. Find the reactions and sketch the shear and moment diagrams, giving the key values.
+
+<details>
+<summary>Answer</summary>
+
+$\sum M_A = -40 + 8R_B = 0$ gives $R_B = 5$ kN (up) and $R_A = -5$ kN (down).
+
+The shear is $V = -5$ kN everywhere; a couple does not change $V$.
+
+The moment is $M = -5x$ up to the couple, so $M(3^-) = -15$ kN·m. The clockwise couple makes it jump by $+40$, to $M(3^+) = +25$ kN·m. It then decreases linearly to $M(8) = 25 - 5(5) = 0$, as required.
+
+</details>
+
+**Exercise 4.** A beam is supported at A ($x = 0$) and B ($x = 6$ m) with an overhang to C ($x = 8$ m), and carries 10 kN/m over its whole length. Find the reactions, the maximum positive and negative moments, and the point of contraflexure between A and B.
+
+<details>
+<summary>Answer</summary>
+
+$\sum M_A$: $6R_B = 80(4)$, so $R_B = 53.3$ kN and $R_A = 26.7$ kN.
+
+In AB, $V = 26.7 - 10x$, which is zero at $x = 2.67$ m:
+
+$$M_{max}^+ = 26.7(2.67) - 5(2.67)^2 = 35.6 \text{ kN}\cdot\text{m}$$
+
+At B, $M_B = -10(2)^2/2 = -20$ kN·m (hogging, from the overhang).
+
+Contraflexure: $26.7x - 5x^2 = 0$ gives $x = 5.33$ m.
+
+</details>
+
+**Exercise 5.** Derive $dV/dx = -w$ and $dM/dx = V$ from the equilibrium of a beam element of length $dx$, using the sign conventions of these notes.
+
+<details>
+<summary>Answer</summary>
+
+On the element, $V$ and $M$ act on the left face and $V + dV$ and $M + dM$ on the right face, with a downward load $w\,dx$.
+
+Vertical equilibrium: $V - w\,dx - (V + dV) = 0$, so $dV/dx = -w$.
+
+Moments about the right face:
+
+$$-M + (M + dM) - V\,dx + w\,dx\,\frac{dx}{2} = 0$$
+
+Dropping the second-order term gives $dM/dx = V$.
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Mechanics of Materials*, 10th ed., Pearson, 2017.
+- Gere, J. M., and Goodno, B. J., *Mechanics of Materials*, 8th ed., Cengage Learning, 2013.
+- Hibbeler, R. C., *Structural Analysis*, Pearson.

@@ -1,66 +1,138 @@
-import numpy as np
+"""Compress a grayscale image with a truncated singular value decomposition.
+
+Loads a grayscale image (by default the "camera" sample bundled with
+scikit-image), reconstructs it from its 5, 25 and 100 largest singular values,
+and plots the singular value spectrum and the cumulative energy ratio.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
-from skimage import io, color
+import numpy as np
+from skimage import color, data, io
+from skimage.util import img_as_float
 
-# Load the grayscale image
-image_path = "/mnt/data/image.png"
-image = io.imread(image_path)
-gray_image = color.rgb2gray(image)
+RANKS = [5, 25, 100]  # truncation ranks shown next to the original
+ENERGY_LEVELS = [0.90, 0.95, 0.99]  # energy fractions marked on the energy plot
 
-# Compute the SVD of the image matrix
-U, S, Vt = np.linalg.svd(gray_image, full_matrices=False)
+
+def load_grayscale_image(path=None):
+    """Return a 2-D float image in [0, 1]; use the bundled sample if path is None."""
+    image = data.camera() if path is None else io.imread(path)
+    if image.ndim == 3:
+        if image.shape[-1] == 4:
+            image = color.rgba2rgb(image)
+        image = color.rgb2gray(image)
+    return img_as_float(image)
 
 
 def reconstruct_image(U, S, Vt, rank):
-    """
-    Reconstruct the image using the first 'rank' singular values.
-    """
-    S_truncated = np.zeros((rank, rank))
-    np.fill_diagonal(S_truncated, S[:rank])
-    return np.dot(U[:, :rank], np.dot(S_truncated, Vt[:rank, :]))
+    """Rank-r approximation A_r = U_r diag(S_r) V_r^T."""
+    return (U[:, :rank] * S[:rank]) @ Vt[:rank, :]
 
 
-# Ranks for the approximation
-ranks = [5, 25, 100]
+def compression_ratio(m, n, rank):
+    """Values stored by the full image divided by those of the rank-r factors."""
+    return m * n / (rank * (m + n + 1))
 
-# Plot the original and reconstructed images
-fig, axes = plt.subplots(1, len(ranks) + 1, figsize=(15, 5))
-axes[0].imshow(gray_image, cmap="gray")
-axes[0].set_title("Original image")
-axes[0].axis("off")
 
-for i, rank in enumerate(ranks):
-    reconstructed_image = reconstruct_image(U, S, Vt, rank)
-    axes[i + 1].imshow(reconstructed_image, cmap="gray")
-    axes[i + 1].set_title(f"Rank {rank} approximation")
-    axes[i + 1].axis("off")
+def energy_ratios(S):
+    """Cumulative energy ratio E(r) for r = 1, ..., p."""
+    return np.cumsum(S**2) / np.sum(S**2)
 
-plt.tight_layout()
-plt.savefig("/mnt/data/reconstructed_images.png")
-plt.close()
 
-# Plot the singular values
-plt.figure(figsize=(8, 6))
-plt.plot(S, "b-o")
-plt.yscale("log")
-plt.xlabel("Index $i$")
-plt.ylabel("Singular value $\sigma_i$")
-plt.title("Singular values of the image of the forest")
-plt.grid(True)
-plt.savefig("/mnt/data/singular_values.png")
-plt.close()
+def rank_for_energy(ratios, level):
+    """Smallest rank r with E(r) >= level."""
+    return int(np.searchsorted(ratios, level) + 1)
 
-# Calculate the energy ratio for different ranks
-total_energy = np.sum(S**2)
-energy_ratios = np.cumsum(S**2) / total_energy
 
-# Plot the energy ratio as a function of the truncated SVD size
-plt.figure(figsize=(8, 6))
-plt.plot(energy_ratios, "b-o")
-plt.xlabel("Truncated SVD size $r$")
-plt.ylabel("Energy ratio $\mathcal{E}(r)$")
-plt.title("Energy ratios in dependence on the size of the truncated SVD")
-plt.axhline(y=0.99, color="r", linestyle="--")
-plt.grid(True)
-plt.savefig("/mnt/data/energy_ratios.png")
-plt.close()
+def plot_reconstructions(image, U, S, Vt, ranks):
+    m, n = image.shape
+    fig, axes = plt.subplots(1, len(ranks) + 1, figsize=(12, 4))
+    axes[0].imshow(image, cmap="gray", vmin=0, vmax=1)
+    axes[0].set_title("Original image")
+    axes[0].axis("off")
+    for ax, rank in zip(axes[1:], ranks):
+        approx = np.clip(reconstruct_image(U, S, Vt, rank), 0.0, 1.0)
+        ax.imshow(approx, cmap="gray", vmin=0, vmax=1)
+        ratio = compression_ratio(m, n, rank)
+        ax.set_title(f"Rank {rank} approximation\ncompression ratio {ratio:.1f}")
+        ax.axis("off")
+    fig.tight_layout()
+    return fig
+
+
+def plot_singular_values(S):
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(np.arange(1, S.size + 1), S, "b-o", markersize=3)
+    ax.set_yscale("log")
+    ax.set_xlabel("Index $i$")
+    ax.set_ylabel(r"Singular value $\sigma_i$")
+    ax.set_title("Singular values of the image")
+    ax.grid(True)
+    return fig
+
+
+def plot_energy_ratios(ratios, levels):
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(np.arange(1, ratios.size + 1), ratios, "b-o", markersize=3)
+    for level, style in zip(levels, [":", "-.", "--"]):
+        r = rank_for_energy(ratios, level)
+        ax.axhline(
+            y=level, color="r", linestyle=style, label=f"{level:.0%} energy at r = {r}"
+        )
+    ax.set_xlabel("Truncated SVD size $r$")
+    ax.set_ylabel(r"Energy ratio $\mathcal{E}(r)$")
+    ax.set_title("Energy ratios in dependence on the size of the truncated SVD")
+    ax.legend(loc="lower right")
+    ax.grid(True)
+    return fig
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--image",
+        metavar="PATH",
+        help="image file to compress (default: scikit-image 'camera' sample)",
+    )
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot windows"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figures as PNGs in DIR"
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    image = load_grayscale_image(args.image)
+    U, S, Vt = np.linalg.svd(image, full_matrices=False)
+    ratios = energy_ratios(S)
+
+    print(f"Image size: {image.shape[0]} x {image.shape[1]}")
+    for level in ENERGY_LEVELS:
+        print(f"Rank needed for {level:.0%} energy: {rank_for_energy(ratios, level)}")
+
+    figures = {
+        "reconstructed_images": plot_reconstructions(image, U, S, Vt, RANKS),
+        "singular_values": plot_singular_values(S),
+        "energy_ratios": plot_energy_ratios(ratios, ENERGY_LEVELS),
+    }
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for name, fig in figures.items():
+            fig.savefig(out_dir / f"{name}.png", dpi=100, bbox_inches="tight")
+    if args.no_show:
+        plt.close("all")
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

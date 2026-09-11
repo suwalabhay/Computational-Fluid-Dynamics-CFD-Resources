@@ -152,7 +152,7 @@ Area: $A = \pi D^2/4 = \pi$ m²
 
 Resultant force:
 
-$$F = \rho g \bar{h} A = 1000 \times 9.81 \times 5 \times \pi = 154{,}066 \text{ N} \approx 154.1 \text{ kN}$$
+$$F = \rho g \bar{h} A = 1000 \times 9.81 \times 5 \times \pi = 154{,}095 \text{ N} \approx 154.1 \text{ kN}$$
 
 Second moment of area: $I_{xc} = \pi D^4/64 = \pi/4$ m⁴
 
@@ -234,3 +234,90 @@ Since $GM > 0$, the barge is **stable** with a comfortable margin.
 - Proof testing confirms structural adequacy before service
 
 Understanding hydrostatic pressure forces is a prerequisite for more advanced fluid loading topics such as wave loading and dynamic flow forces on structures.
+
+## Related Scripts
+
+- [Pressure Variation with Depth](../../../scripts/plots/pressure_variation_with_depth/): plots how hydrostatic pressure increases linearly with depth below the free surface of a fluid at rest.
+
+## Exercises
+
+**Exercise 1.** A vertical rectangular gate 2 m wide and 3 m tall has its top edge 1.5 m below the free surface of fresh water. Find the resultant force and the depth of the center of pressure.
+
+<details>
+<summary>Answer</summary>
+
+The centroid depth is $\bar{h} = 1.5 + 1.5 = 3$ m and $A = 6$ m².
+
+$$F = \rho g\bar{h}A = 1000 \times 9.81 \times 3 \times 6 = 176.6 \text{ kN}$$
+
+$$y_{cp} = \bar{y} + \frac{I_{xc}}{\bar{y}A} = 3 + \frac{2 \times 3^3/12}{3 \times 6} = 3 + 0.25 = 3.25 \text{ m}$$
+
+</details>
+
+**Exercise 2.** A rectangular plate 1.5 m wide and 2 m long (measured along its slope) lies in a plane inclined at $30^\circ$ to the horizontal, with its top edge 1 m below the surface of fresh water. Find the resultant force and the position of the center of pressure along the incline.
+
+<details>
+<summary>Answer</summary>
+
+Along the incline the top edge is $1/\sin 30^\circ = 2$ m from the surface, so $\bar{y} = 3$ m and $\bar{h} = 3\sin 30^\circ = 1.5$ m. The area is $A = 3$ m².
+
+$$F = 1000 \times 9.81 \times 1.5 \times 3 = 44.1 \text{ kN}$$
+
+$$I_{xc} = \frac{1.5 \times 2^3}{12} = 1.0 \text{ m}^4, \quad y_{cp} = 3 + \frac{1.0}{3 \times 3} = 3.11 \text{ m}$$
+
+The center of pressure is 3.11 m from the surface along the incline, i.e. 1.11 m below the top edge.
+
+</details>
+
+**Exercise 3.** A gate has the shape of a quarter circle of radius $R = 2$ m and is 4 m wide. Water lies above the gate, filling the quarter-circle region between the curved surface and the free surface, which is level with the top of the gate. Find the horizontal and vertical force components and the resultant.
+
+<details>
+<summary>Answer</summary>
+
+The vertical projection is 2 m high × 4 m wide, with centroid at 1 m depth:
+
+$$F_H = 1000 \times 9.81 \times 1 \times 8 = 78.5 \text{ kN}$$
+
+The water above the gate occupies a quarter disc of area $\pi R^2/4 = \pi$ m², so
+
+$$F_V = \rho g\mathcal{V} = 9810 \times 4\pi = 123.3 \text{ kN}$$
+
+$$F_R = \sqrt{78.5^2 + 123.3^2} = 146.1 \text{ kN}, \quad \alpha = \arctan\frac{123.3}{78.5} = 57.5^\circ$$
+
+For a circular surface the resultant passes through the centre of the circle.
+
+</details>
+
+**Exercise 4.** A solid wooden cube (side 0.5 m, density 600 kg/m³) floats in fresh water with one face horizontal. Find its draft and metacentric height. Is this orientation stable?
+
+<details>
+<summary>Answer</summary>
+
+Draft: $T = 0.5 \times 600/1000 = 0.3$ m, so $KB = 0.15$ m and $KG = 0.25$ m.
+
+$$BM = \frac{I_{wp}}{\mathcal{V}_{disp}} = \frac{0.5^4/12}{0.5 \times 0.5 \times 0.3} = \frac{0.005208}{0.075} = 0.069 \text{ m}$$
+
+$$GM = KB + BM - KG = 0.15 + 0.069 - 0.25 = -0.031 \text{ m}$$
+
+$GM < 0$, so this upright orientation is unstable and the cube will heel over to a tilted equilibrium.
+
+</details>
+
+**Exercise 5.** An empty steel pipeline (outer diameter 0.6 m, wall thickness 20 mm, $\rho_s = 7850$ kg/m³) is laid in seawater ($\rho = 1025$ kg/m³). Find the net vertical force per metre and state whether it needs additional weight.
+
+<details>
+<summary>Answer</summary>
+
+Steel area: $\frac{\pi}{4}(0.6^2 - 0.56^2) = 0.03644$ m², giving a mass of 286.1 kg/m.
+
+Displaced water: $\frac{\pi}{4}(0.6^2) \times 1025 = 289.8$ kg/m.
+
+The net force is $(289.8 - 286.1) \times 9.81 = 36.7$ N/m upward, so the empty pipe floats. A concrete weight coating or anchoring is required for on-bottom stability.
+
+</details>
+
+## References
+
+- F. M. White, *Fluid Mechanics*, 7th ed., McGraw-Hill, 2011.
+- B. R. Munson, D. F. Young, T. H. Okiishi, W. W. Huebsch, *Fundamentals of Fluid Mechanics*, Wiley.
+- K. J. Rawson, E. C. Tupper, *Basic Ship Theory*, 5th ed., Butterworth-Heinemann, 2001.

@@ -1,5 +1,20 @@
-import numpy as np
+"""Contrast Eulerian and Lagrangian descriptions of the time-dependent Double Gyre.
+
+The left panel is an Eulerian snapshot: the velocity field at t = 0 sampled on a
+fixed grid. The right panel is Lagrangian: the paths of 20 particles, released at
+random (seeded) positions and advected with a fourth-order Runge-Kutta scheme.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+DT = 0.01  # time step (non-dimensional time units)
+NUM_STEPS = 500  # default number of RK4 steps
+NUM_PARTICLES = 20
+SEED = 42
 
 
 def double_gyre_velocity(x, y, t, A=0.25, epsilon=0.25, omega=2 * np.pi):
@@ -30,7 +45,7 @@ def double_gyre_velocity(x, y, t, A=0.25, epsilon=0.25, omega=2 * np.pi):
     # df/dx
     dfdx = 2 * epsilon * np.sin(omega * t) * x + (1 - 2 * epsilon * np.sin(omega * t))
 
-    # Velocity field
+    # Velocity field, from the stream function psi = A sin(pi f) sin(pi y)
     u = -np.pi * A * np.sin(np.pi * f) * np.cos(np.pi * y)
     v = np.pi * A * np.cos(np.pi * f) * np.sin(np.pi * y) * dfdx
 
@@ -94,18 +109,19 @@ def compute_eulerian_field(nx=20, ny=10, t=0.0):
     return X, Y, U, V
 
 
-def compute_lagrangian_trajectories(num_particles=20, num_steps=500, dt=0.01):
+def compute_lagrangian_trajectories(
+    num_particles=NUM_PARTICLES, num_steps=NUM_STEPS, dt=DT, seed=SEED
+):
     """
     Compute Lagrangian trajectories using 4th-order Runge-Kutta in the Double Gyre.
+
+    Returns an array of shape (num_particles, num_steps + 1, 2).
     """
-    # Random initial positions in the domain [0,2]x[0,1]
-    #  (Alternatively, you could do something structured, or place them in a region.)
-    rng = np.random.default_rng(seed=42)
+    # Random (seeded) initial positions in the domain [0,2]x[0,1]
+    rng = np.random.default_rng(seed=seed)
     x0 = 2.0 * rng.random(num_particles)
     y0 = 1.0 * rng.random(num_particles)
 
-    # Storage for trajectories
-    # shape: (num_particles, num_steps+1, 2)
     trajectories = np.zeros((num_particles, num_steps + 1, 2))
     trajectories[:, 0, 0] = x0
     trajectories[:, 0, 1] = y0
@@ -127,20 +143,14 @@ def compute_lagrangian_trajectories(num_particles=20, num_steps=500, dt=0.01):
     return trajectories
 
 
-def main():
-    # Simulation parameters
-    dt = 0.01
-    num_steps = 500
-
-    # --- Eulerian field at a chosen time (say t=0 as an example) ---
+def make_figure(num_steps=NUM_STEPS, dt=DT):
+    """Build the side-by-side Eulerian / Lagrangian figure."""
+    # --- Eulerian field at t=0 ---
     X, Y, U, V = compute_eulerian_field(nx=20, ny=15, t=0.0)
 
     # --- Lagrangian trajectories ---
-    trajectories = compute_lagrangian_trajectories(
-        num_particles=20, num_steps=num_steps, dt=dt
-    )
+    trajectories = compute_lagrangian_trajectories(num_steps=num_steps, dt=dt)
 
-    # --- Plotting ---
     fig, (ax_euler, ax_lagrange) = plt.subplots(1, 2, figsize=(14, 6))
 
     # Plot Eulerian velocity field (snapshot at t=0)
@@ -152,23 +162,55 @@ def main():
     ax_euler.grid(True)
 
     # Plot Lagrangian trajectories
-    num_particles = trajectories.shape[0]
-    for i in range(num_particles):
-        ax_lagrange.plot(
-            trajectories[i, :, 0], trajectories[i, :, 1], label=f"Particle {i + 1}"
-        )
+    for i in range(trajectories.shape[0]):
+        ax_lagrange.plot(trajectories[i, :, 0], trajectories[i, :, 1])
         # Mark initial position
         ax_lagrange.plot(
             trajectories[i, 0, 0], trajectories[i, 0, 1], "ko", markersize=3
         )
-    ax_lagrange.set_title("Lagrangian View\n(Double Gyre Trajectories)")
+    ax_lagrange.set_title(
+        f"Lagrangian View\n(Double Gyre Trajectories, 0 ≤ t ≤ {num_steps * dt:g})"
+    )
     ax_lagrange.set_xlabel("X")
     ax_lagrange.set_ylabel("Y")
+    ax_lagrange.set_xlim(0, 2)
+    ax_lagrange.set_ylim(0, 1)
     ax_lagrange.set_aspect("equal")
     ax_lagrange.grid(True)
 
-    plt.tight_layout()
-    plt.show()
+    fig.tight_layout()
+    return fig
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=NUM_STEPS,
+        metavar="N",
+        help=f"number of RK4 time steps (default {NUM_STEPS})",
+    )
+    args = parser.parse_args(argv)
+
+    fig = make_figure(num_steps=args.steps)
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "eulerian_lagrangian_flows.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":

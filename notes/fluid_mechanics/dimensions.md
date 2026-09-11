@@ -27,11 +27,12 @@ Physical equations must be **dimensionally homogeneous** - all terms must have t
 - Identify errors in analysis
 
 ### Example: Newton's Second Law
+
 $$F = ma$$
 
 Checking dimensions:
 - Force: $[M L T^{-2}]$
-- Mass × acceleration: $[M] 	imes [L T^{-2}] = [M L T^{-2}]$ ✓
+- Mass × acceleration: $[M] \times [L T^{-2}] = [M L T^{-2}]$ ✓
 
 ## Buckingham Pi Theorem
 
@@ -57,19 +58,17 @@ $$f(\pi_1, \pi_2, ..., \pi_{n-k}) = 0$$
 - Drag force: $F_D$ $[M L T^{-2}]$
 - Sphere diameter: $D$ $[L]$
 - Fluid velocity: $V$ $[L T^{-1}]$
-- Fluid density: $
-ho$ $[M L^{-3}]$
+- Fluid density: $\rho$ $[M L^{-3}]$
 - Fluid viscosity: $\mu$ $[M L^{-1} T^{-1}]$
 
 **Analysis**: $n = 5$ variables, $k = 3$ dimensions → $(n-k) = 2$ dimensionless groups
 
 **Result**:
-$$\frac{F_D}{
-ho V^2 D^2} = f\left(\frac{
-ho V D}{\mu}
-ight)$$
+
+$$\frac{F_D}{\rho V^2 D^2} = f\left(\frac{\rho V D}{\mu}\right)$$
 
 This gives us the drag coefficient as a function of Reynolds number:
+
 $$C_D = f(Re)$$
 
 ## Major Dimensionless Numbers in Fluid Mechanics
@@ -77,18 +76,18 @@ $$C_D = f(Re)$$
 ### Flow Dynamics
 
 #### Reynolds Number (Re)
-$$Re = \frac{
-ho V L}{\mu} = \frac{V L}{
-u}$$
+
+$$Re = \frac{\rho V L}{\mu} = \frac{V L}{\nu}$$
 
 **Physical meaning**: Ratio of inertial forces to viscous forces
 
 **Applications**:
 - **Pipe flow**: $Re < 2300$ (laminar), $Re > 4000$ (turbulent)
-- **External flow**: Transition around $Re \approx 5 	imes 10^5$
+- **External flow**: Transition around $Re \approx 5 \times 10^5$
 - **Model scaling**: Matching $Re$ ensures dynamic similarity
 
 #### Mach Number (Ma)
+
 $$Ma = \frac{V}{a}$$
 
 where $a = \sqrt{\gamma R T}$ is the speed of sound.
@@ -103,6 +102,7 @@ where $a = \sqrt{\gamma R T}$ is the speed of sound.
 - $Ma > 5$: Hypersonic
 
 #### Strouhal Number (St)
+
 $$St = \frac{f L}{V}$$
 
 **Physical meaning**: Ratio of unsteady to convective time scales
@@ -113,6 +113,7 @@ $$St = \frac{f L}{V}$$
 - **Turbomachinery**: Blade passing frequencies
 
 #### Froude Number (Fr)
+
 $$Fr = \frac{V}{\sqrt{g L}}$$
 
 **Physical meaning**: Ratio of inertial forces to gravitational forces
@@ -125,8 +126,8 @@ $$Fr = \frac{V}{\sqrt{g L}}$$
 ### Heat Transfer
 
 #### Prandtl Number (Pr)
-$$Pr = \frac{\mu c_p}{k} = \frac{
-u}{\alpha}$$
+
+$$Pr = \frac{\mu c_p}{k} = \frac{\nu}{\alpha}$$
 
 **Physical meaning**: Ratio of momentum diffusivity to thermal diffusivity
 
@@ -137,6 +138,7 @@ u}{\alpha}$$
 - Liquid metals: $Pr \approx 0.01$
 
 #### Nusselt Number (Nu)
+
 $$Nu = \frac{h L}{k}$$
 
 **Physical meaning**: Ratio of convective to conductive heat transfer
@@ -146,16 +148,16 @@ $$Nu = \frac{h L}{k}$$
 - Correlations: $Nu = f(Re, Pr, ...)$
 
 #### Rayleigh Number (Ra)
-$$Ra = \frac{g \beta \Delta T L^3}{
-u \alpha}$$
+
+$$Ra = \frac{g \beta \Delta T L^3}{\nu \alpha}$$
 
 **Physical meaning**: Driving force for natural convection
 
 **Critical values**: $Ra_c \approx 1708$ (horizontal layer)
 
 #### Grashof Number (Gr)
-$$Gr = \frac{g \beta \Delta T L^3}{
-u^2}$$
+
+$$Gr = \frac{g \beta \Delta T L^3}{\nu^2}$$
 
 **Physical meaning**: Ratio of buoyancy to viscous forces
 
@@ -164,19 +166,21 @@ u^2}$$
 ### Mass Transfer
 
 #### Schmidt Number (Sc)
-$$Sc = \frac{
-u}{D} = \frac{\mu}{
-ho D}$$
+
+$$Sc = \frac{\nu}{D} = \frac{\mu}{\rho D}$$
 
 **Physical meaning**: Ratio of momentum diffusivity to mass diffusivity
 
 #### Sherwood Number (Sh)
+
 $$Sh = \frac{k_m L}{D}$$
 
 **Physical meaning**: Ratio of convective to diffusive mass transfer
 
 #### Peclet Number (Pe)
+
 $$Pe_{heat} = Re \cdot Pr = \frac{V L}{\alpha}$$
+
 $$Pe_{mass} = Re \cdot Sc = \frac{V L}{D}$$
 
 **Physical meaning**: Ratio of convective to diffusive transport
@@ -184,6 +188,7 @@ $$Pe_{mass} = Re \cdot Sc = \frac{V L}{D}$$
 ### Rotating Flows
 
 #### Rossby Number (Ro)
+
 $$Ro = \frac{V}{2 \Omega L}$$
 
 **Physical meaning**: Ratio of inertial to Coriolis forces
@@ -194,14 +199,15 @@ $$Ro = \frac{V}{2 \Omega L}$$
 - Atmospheric and oceanic flows
 
 #### Taylor Number (Ta)
-$$Ta = \frac{4 \Omega^2 h^4}{
-u^2}$$
+
+$$Ta = \frac{4 \Omega^2 h^4}{\nu^2}$$
 
 **Physical meaning**: Characterizes Taylor-Couette instability
 
 ### Compressible Flow
 
 #### Knudsen Number (Kn)
+
 $$Kn = \frac{\lambda}{L}$$
 
 where $\lambda$ is the mean free path.
@@ -213,6 +219,7 @@ where $\lambda$ is the mean free path.
 - $Kn > 10$: Free molecular flow
 
 #### Eckert Number (Ec)
+
 $$Ec = \frac{V^2}{c_p \Delta T}$$
 
 **Physical meaning**: Ratio of kinetic energy to thermal energy
@@ -220,8 +227,8 @@ $$Ec = \frac{V^2}{c_p \Delta T}$$
 ### Multiphase Flows
 
 #### Weber Number (We)
-$$We = \frac{
-ho V^2 L}{\sigma}$$
+
+$$We = \frac{\rho V^2 L}{\sigma}$$
 
 **Physical meaning**: Ratio of inertial forces to surface tension forces
 
@@ -231,25 +238,27 @@ ho V^2 L}{\sigma}$$
 - Spray atomization
 
 #### Capillary Number (Ca)
+
 $$Ca = \frac{\mu V}{\sigma}$$
 
 **Physical meaning**: Ratio of viscous forces to surface tension forces
 
 #### Bond Number (Bo)
-$$Bo = \frac{
-ho g L^2}{\sigma}$$
+
+$$Bo = \frac{\rho g L^2}{\sigma}$$
 
 **Physical meaning**: Ratio of gravitational forces to surface tension forces
 
 ### Turbulence
 
 #### Turbulent Reynolds Number
-$$Re_	au = \frac{u_	au \delta}{
-u}$$
 
-where $u_	au$ is friction velocity and $\delta$ is boundary layer thickness.
+$$Re_\tau = \frac{u_\tau \delta}{\nu}$$
+
+where $u_\tau$ is friction velocity and $\delta$ is boundary layer thickness.
 
 #### Richardson Number (Ri)
+
 $$Ri = \frac{g \beta \frac{dT}{dz}}{(\frac{dU}{dz})^2}$$
 
 **Physical meaning**: Ratio of buoyancy to shear effects in stratified flows
@@ -257,11 +266,13 @@ $$Ri = \frac{g \beta \frac{dT}{dz}}{(\frac{dU}{dz})^2}$$
 ### Plasma Flows
 
 #### Magnetic Reynolds Number (Re_m)
+
 $$Re_m = \frac{\mu_0 \sigma V L}{1}$$
 
 **Physical meaning**: Ratio of convective to diffusive magnetic effects
 
 #### Hartmann Number (Ha)
+
 $$Ha = B L \sqrt{\frac{\sigma}{\mu}}$$
 
 **Physical meaning**: Ratio of magnetic to viscous forces
@@ -278,16 +289,12 @@ For complete dynamic similarity between model and prototype:
 ### Scaling Laws
 
 When dimensionless numbers are matched:
-$$\left(\frac{F}{
-ho V^2 L^2}
-ight)_{model} = \left(\frac{F}{
-ho V^2 L^2}
-ight)_{prototype}$$
+
+$$\left(\frac{F}{\rho V^2 L^2}\right)_{model} = \left(\frac{F}{\rho V^2 L^2}\right)_{prototype}$$
 
 This allows force scaling:
-$$F_{prototype} = F_{model} 	imes \frac{
-ho_p V_p^2 L_p^2}{
-ho_m V_m^2 L_m^2}$$
+
+$$F_{prototype} = F_{model} \times \frac{\rho_p V_p^2 L_p^2}{\rho_m V_m^2 L_m^2}$$
 
 ### Practical Scaling Considerations
 
@@ -346,7 +353,9 @@ ho_m V_m^2 L_m^2}$$
 - **Data correlation**: Collapse data using appropriate scaling
 - **Model testing**: Achieve dynamic similarity
 
-Understanding dimensional analysis and dimensionless numbers is fundamental to fluid mechanics and enables engineers to design efficient experiments, develop general correlations, and scale results across different conditions and applications.```
+Understanding dimensional analysis and dimensionless numbers is fundamental to fluid mechanics and enables engineers to design efficient experiments, develop general correlations, and scale results across different conditions and applications.
+
+```
 Inertial forces     ~ ρ U^2
 Viscous forces      ~ μ (dU/dy) 
 So,  Re ~ (ρ U L) / μ
@@ -387,7 +396,7 @@ where:
 
 Ship hull in water:
 
-![ship_hull_in_water](https://github.com/user-attachments/assets/f1265bd2-3b3c-4860-87a2-7a90a9fdc064)
+![ship_hull_in_water](../../scripts/plots/ship_hull_in_water/ship_hull_in_water.png)
 
 
 Waves form along hull. The severity of wave drag depends on $Fr = \frac{U}{\sqrt{g L}}$.
@@ -579,3 +588,83 @@ Similarly, the Reynolds number ($Re$) and Strouhal number ($St$) are applied in 
 - Real flows can involve *Re, Ma, We, Fr,* etc. Deciding which to match in an experiment is often a design compromise.
 - Scaling length can inadvertently scale gravitational or surface tension effects differently (Froude or Weber mismatches).
 - Ensure measuring instruments can capture relevant frequencies or speeds. E.g., achieving full-scale Reynolds might require high-speed or high-density flows (cryogenic wind tunnels for aircraft models).
+
+## Related Scripts
+
+- [Froude Number vs. Flow Velocity](../../scripts/plots/froude_number/): plots the length-based Froude number $Fr = U/\sqrt{gL}$ against speed for hulls of 5, 10, 15, and 20 m, with reference lines at hull speed and at the approximate start of planing.
+- [Ship Hull in Water](../../scripts/plots/ship_hull_in_water/): draws a side-view sketch of a ship hull sitting in a sinusoidal free-surface wave and annotates it with the Froude number $Fr = U/\sqrt{gL}$.
+
+## Exercises
+
+**Exercise 1.** A water main carries water at $V = 0.1$ m/s through a pipe of diameter $D = 0.02$ m, and a car travels at $V = 30$ m/s with length $L = 4$ m. Using $\nu = 1.0 \times 10^{-6}$ m²/s for water and $\nu = 1.5 \times 10^{-5}$ m²/s for air, compute both Reynolds numbers and classify the pipe flow.
+
+<details>
+<summary>Answer</summary>
+
+$Re = VL/\nu$.
+
+- Pipe: $Re = (0.1)(0.02)/(1.0 \times 10^{-6}) = 2000$. This is below 2300, so the flow is laminar.
+- Car: $Re = (30)(4)/(1.5 \times 10^{-5}) = 8 \times 10^6$. Inertia dominates overall, although thin viscous boundary layers still matter at the body surface.
+
+</details>
+
+**Exercise 2.** The pressure drop $\Delta p$ over a length $L$ of a rough pipe depends on $\rho$, $V$, $D$, $\mu$, $L$ and the wall roughness height $\varepsilon$. Use the Buckingham Pi theorem to find how many dimensionless groups describe the problem, and write a suitable set.
+
+<details>
+<summary>Answer</summary>
+
+There are $n = 7$ variables ($\Delta p, \rho, V, D, \mu, L, \varepsilon$) and $k = 3$ fundamental dimensions ($M, L, T$), so there are $n - k = 4$ groups. Taking $\rho$, $V$ and $D$ as repeating variables:
+
+$$\frac{\Delta p}{\rho V^2} = f\left(\frac{\rho V D}{\mu}, \frac{L}{D}, \frac{\varepsilon}{D}\right)$$
+
+that is, a pressure coefficient as a function of $Re$, the length ratio and the relative roughness. Because $\Delta p$ grows in proportion to $L$ in fully developed flow, this reduces to the Darcy form $\Delta p/(\rho V^2) = (L/D)\, \phi(Re, \varepsilon/D)$.
+
+</details>
+
+**Exercise 3.** A cylinder of diameter $D = 0.05$ m sits in a wind of $U = 10$ m/s. Taking $St \approx 0.2$, estimate the vortex-shedding frequency.
+
+<details>
+<summary>Answer</summary>
+
+$f = St\, U / D = 0.2 \times 10 / 0.05 = 40$ Hz.
+
+</details>
+
+**Exercise 4.** A ship of length $L_p = 100$ m sails at $V_p = 10$ m/s. A 1:25 scale model ($L_m = 4$ m) is tested in a towing tank with water. (a) What model speed matches the Froude number? (b) What is the ratio $Re_m / Re_p$ at that speed, and what does it imply?
+
+<details>
+<summary>Answer</summary>
+
+(a) Matching $Fr = V/\sqrt{gL}$ gives $V_m = V_p \sqrt{L_m/L_p} = 10\sqrt{4/100} = 2$ m/s.
+
+(b) With the same water in both cases,
+
+$$\frac{Re_m}{Re_p} = \frac{V_m L_m}{V_p L_p} = \frac{2 \times 4}{10 \times 100} = 0.008 = \frac{1}{125}$$
+
+The model Reynolds number is 125 times too small, so Froude and Reynolds similarity cannot both hold. In practice wave resistance is scaled with $Fr$, and friction drag is corrected separately using a skin-friction correlation.
+
+</details>
+
+**Exercise 5.** A 1:10 scale model of a car is tested in the same air as the full-size car, which travels at $V_p = 20$ m/s. (a) What tunnel speed matches the Reynolds number? (b) Is that speed acceptable if $a = 343$ m/s? (c) With $Re$ matched, how does the prototype drag compare with the measured model drag?
+
+<details>
+<summary>Answer</summary>
+
+(a) Same fluid, so $V_m L_m = V_p L_p$ and $V_m = 10 V_p = 200$ m/s.
+
+(b) $Ma = 200/343 = 0.58$. That is well above 0.3, so compressibility effects would appear in the model but not in the prototype ($Ma = 0.06$). Matching $Re$ and $Ma$ at the same time is impossible here, which is why pressurized or cryogenic tunnels are used.
+
+(c) Using the scaling law from the note,
+
+$$F_p = F_m \frac{\rho_p V_p^2 L_p^2}{\rho_m V_m^2 L_m^2} = F_m \frac{20^2 \times 10^2}{200^2 \times 1^2} = F_m$$
+
+With $\rho$ and $\mu$ unchanged and $VL$ held fixed, the drag force is the same on the model and on the prototype.
+
+</details>
+
+## References
+
+- E. Buckingham, "On physically similar systems; illustrations of the use of dimensional equations", *Physical Review* 4(4), 345–376, 1914.
+- G. I. Barenblatt, *Scaling, Self-Similarity, and Intermediate Asymptotics*, Cambridge University Press, 1996.
+- F. M. White, *Fluid Mechanics*, 8th ed., McGraw-Hill Education, 2016.
+- B. R. Munson, D. F. Young, T. H. Okiishi, W. W. Huebsch, *Fundamentals of Fluid Mechanics*, 6th ed., Wiley, 2009.

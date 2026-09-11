@@ -1,51 +1,72 @@
-# Compressible vs. Incompressible Pipe Flow
+# Compressible vs. Incompressible Duct Flow
 
-This script presents a side-by-side comparison of incompressible and compressible pipe flow on a 40×10 computational grid. The incompressible case uses a parabolic velocity profile that remains identical at every streamwise cross-section, while the compressible case features an accelerating parabolic profile that grows in magnitude along the pipe to reflect the density changes caused by compressibility effects. Both panels use colour maps for velocity magnitude and quiver arrows for flow direction, making the fundamental difference between the two flow regimes immediately apparent.
+This script draws prescribed incompressible and compressible velocity fields in a 2D duct side by side, so the constant downstream profile of the first can be compared with the accelerating profile of the second. The incompressible panel shows a fully developed parabolic profile that is identical at every streamwise station. The compressible panel shows a schematic parabolic profile whose amplitude grows linearly from inlet to outlet, the behaviour expected when density falls along the duct. The fields are prescribed analytically, not computed from the flow equations.
 
 ## Overview
 
-- Generates a 40×10 grid representing a rectangular pipe cross-section
-- Implements a fully developed parabolic profile for the incompressible case
-- Implements a streamwise-accelerating parabolic profile for the compressible case
-- Renders colour maps of velocity magnitude with consistent colour scales
-- Overlays quiver arrows to visualise the local flow direction in both panels
+- Builds a 40 × 10 grid covering a longitudinal (side) section of the duct, $0 \le x \le 10$, $0 \le y \le 2$
+- Prescribes a fully developed parabolic profile ($U_{\max} = 2$) for the incompressible case
+- Prescribes a parabolic profile whose centreline speed rises linearly from 1 at the inlet to 4 at the outlet for the compressible case
+- Colours both panels by velocity magnitude on a shared colour scale (0 to the largest speed in either field)
+- Overlays a white velocity arrow at every grid node and outlines the duct walls
 
 ## Mathematical Background
 
-### Incompressible Velocity Profile
+### Incompressible Profile
 
-For incompressible flow the velocity profile is fully developed and identical at every streamwise location $x$:
+With $y_{\text{mid}} = H/2$ the duct centreline, the incompressible field is
 
-$$u_{\text{incomp}}(y) = U_{\max}\left[1 - \left(\frac{y - y_{\text{mid}}}{y_{\text{mid}}}\right)^2\right]$$
+$$u_{\text{incomp}}(y) = U_{\max}\left[1 - \left(\frac{y - y_{\text{mid}}}{y_{\text{mid}}}\right)^2\right], \qquad v = 0$$
 
-The continuity equation $\nabla \cdot \mathbf{u} = 0$ enforces a constant cross-sectional profile with no streamwise variation.
+For incompressible flow $\nabla \cdot \mathbf{u} = \partial u/\partial x + \partial v/\partial y = 0$. With $v = 0$ this forces $\partial u/\partial x = 0$, so the profile cannot change along the duct.
 
-### Compressible Velocity Profile
+### Compressible Profile
 
-Compressibility causes the fluid density to decrease as velocity increases. The modelled profile accelerates with $x$:
+The compressible field keeps the same parabolic shape but scales it linearly in $x$:
 
-$$u_{\text{comp}}(x, y) = \left(U_{\text{inlet}} + U_{\text{slope}} \cdot x\right)\left[1 - \left(\frac{y - y_{\text{mid}}}{y_{\text{mid}}}\right)^2\right]$$
+$$u_{\text{comp}}(x, y) = \left(U_{\text{inlet}} + \frac{U_{\text{outlet}} - U_{\text{inlet}}}{L}\, x\right)\left[1 - \left(\frac{y - y_{\text{mid}}}{y_{\text{mid}}}\right)^2\right], \qquad v = 0$$
 
 ### Continuity for Compressible Flow
 
-The compressible continuity equation requires:
+Steady compressible continuity reads
 
-$$\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho\, \mathbf{u}) = 0$$
+$$\nabla \cdot (\rho\, \mathbf{u}) = \frac{\partial (\rho u)}{\partial x} + \frac{\partial (\rho v)}{\partial y} = 0$$
 
-As velocity increases along the pipe, density decreases to satisfy mass conservation, a key departure from the incompressible assumption.
+With $v = 0$, the product $\rho u$ is constant along each streamline, so an accelerating flow must have falling density:
+
+$$\frac{\rho(x)}{\rho(0)} = \frac{u(0, y)}{u(x, y)} = \frac{U_{\text{inlet}}}{U_{\text{inlet}} + (U_{\text{outlet}} - U_{\text{inlet}})\, x / L}$$
+
+With the default values the implied density at the outlet is a quarter of the inlet density. The script does not compute or plot density. This ratio is exaggerated for visual effect: a real subsonic duct flow, such as Fanno flow with wall friction, accelerates much less before it chokes.
 
 ## Implementation
 
-1. Define the 40×10 grid with uniform node spacing.
-2. Compute the incompressible profile $u_{\text{incomp}}(y)$ across all streamwise positions.
-3. Compute the compressible profile $u_{\text{comp}}(x, y)$ with a linear streamwise velocity increase.
-4. Create a side-by-side figure with two subplots.
-5. Render colour maps of velocity magnitude using `pcolormesh` or equivalent.
-6. Overlay quiver arrows sampled at a coarser grid to avoid clutter.
-7. Add colour bars, axis labels, and titles identifying each flow regime.
+- `make_grid(nx, ny, x_max, y_max)` builds the mesh from the constants `NX = 40`, `NY = 10`, `X_MAX = 10`, `Y_MAX = 2`.
+- `parabolic_shape(Y, y_max)` returns the normalised parabola, clipped at zero.
+- `incompressible_field(X, Y, u_max)` and `compressible_field(X, Y, u_inlet, u_outlet, x_max)` return `(u, v)` using `U_MAX_INCOMP = 2`, `U_INLET = 1`, `U_OUTLET = 4`.
+- `plot_panel(...)` draws the duct outline, a `pcolormesh` of speed with `vmin=0` and a shared `vmax`, a colour bar, and a `quiver` plot (`scale=15`).
+- `make_figure()` assembles the two panels, and `main(argv=None)` handles the command-line flags.
+
+## Usage
+
+```bash
+python main.py                          # open the figure window
+python main.py --no-show --output out   # save compressible_vs_incompressible.png into out/
+```
+
+| Flag | Meaning |
+|------|---------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save the figure as a PNG |
 
 ## Output
 
-The script produces a two-panel figure. The left panel shows the incompressible flow with a uniform colour band reflecting the constant parabolic profile, while the right panel shows the compressible flow with a colour gradient that intensifies from inlet to outlet. Quiver arrows confirm the direction and relative speed of the flow in each case.
+The left panel shows the incompressible flow as horizontal colour bands that do not change along the duct: fastest on the centreline and zero at the walls. The right panel, on the same colour scale, starts slower than the incompressible flow at the inlet and brightens steadily towards the outlet, where its centreline speed is twice the incompressible maximum.
 
-![compressible_vs_incompressible](https://github.com/user-attachments/assets/73f166dd-d6da-45aa-91b2-16f0cdd52d8e)
+![Compressible vs. incompressible duct flow](compressible_vs_incompressible.png)
+
+## Related Notes
+
+- [Pressure and Compressibility](../../../notes/fluid_mechanics/fluid_properties/pressure_and_compressibility.md)
+- [Continuity Equation](../../../notes/fluid_mechanics/governing_equations/continuity.md)
+- [Rayleigh and Fanno Flow](../../../notes/fluid_mechanics/compressible_flow/rayleigh_fanno.md)
+- [Speed of Sound](../../../notes/fluid_mechanics/compressible_flow/speed_of_sound.md)

@@ -159,3 +159,82 @@ Keeping each step scripted and version-controlled ensures reproducibility and ma
 - Automated CAD-to-CFD pipelines eliminate manual rework, making it practical to evaluate **hundreds or thousands** of design variants.
 - The parametric dataset produced by CFD evaluations serves as training data for **ML surrogate models**, dramatically accelerating design exploration.
 - Combining surrogate predictions with optimization algorithms enables **rapid convergence** toward designs that balance drag, downforce, and other performance targets.
+
+### Related Scripts
+
+- [Design Space Distribution via Sobol Sequences](../../../scripts/plots/design_space_distribution/): draws a four-dimensional scrambled Sobol design of 512 geometry variants and plots two 2D projections of it, showing how evenly a low-discrepancy sequence covers a design space.
+
+### Exercises
+
+**Exercise 1.** At the baseline windscreen angle a CFD run gives $J = C_d = 0.310$. Increasing the windscreen angle parameter by $\delta = 1^\circ$ gives $C_d = 0.3065$. Estimate $\partial J / \partial p_k$ with the forward-difference formula from the note and predict $C_d$ for a $3^\circ$ increase. Why should this prediction be checked with CFD?
+
+<details>
+<summary>Answer</summary>
+
+$$\frac{\partial J}{\partial p_k} \approx \frac{0.3065 - 0.310}{1} = -0.0035 \text{ per degree}.$$
+
+The linear prediction for $+3^\circ$ is $0.310 + 3(-0.0035) = 0.2995$.
+
+The forward difference is only first-order accurate, and the linear extrapolation assumes the response stays smooth. The note points out that extreme windscreen angles can trigger strong A-pillar vortices, so the drag response may bend or reverse over a few degrees. The prediction is a hint about direction, not a result.
+
+</details>
+
+**Exercise 2.** The note lists 13 deformation parameters. Each CFD run takes 6 hours, and a gradient-based optimization needs 20 design iterations. Compare the cost of computing gradients with forward differences, central differences, and an adjoint method (assume the adjoint solve costs about one primal solve).
+
+<details>
+<summary>Answer</summary>
+
+- Forward differences: 1 baseline plus 13 perturbed runs, so 14 runs per iteration and $14 \times 20 \times 6 = 1680$ h.
+- Central differences: 2 runs per parameter plus the baseline for the objective value, so 27 runs per iteration and $27 \times 20 \times 6 = 3240$ h.
+- Adjoint: 1 primal plus 1 adjoint solve per iteration, so $2 \times 20 \times 6 = 240$ h.
+
+The adjoint cost does not depend on the number of parameters, which is why it dominates when there are many parameters and only a few objectives.
+
+</details>
+
+**Exercise 3.** An engineer proposes a full-factorial DoE with 3 levels for each of the 13 parameters. How many CFD runs is that, and how long would it take at 1 hour per run in serial? Suggest a practical alternative for building a surrogate.
+
+<details>
+<summary>Answer</summary>
+
+$3^{13} = 1{,}594{,}323$ runs. At 1 h each that is about 1.59 million hours, or roughly 182 years in serial. It is infeasible even on a large cluster.
+
+A space-filling design such as Latin hypercube or Sobol sampling is the practical choice. A common rule of thumb is about 10 samples per parameter, around 130 runs here, followed by adaptive infill samples where the surrogate is uncertain or where optimal designs are predicted.
+
+</details>
+
+**Exercise 4.** The trunk length has a baseline of 800 mm and is allowed to vary by $\pm 20\%$. For surrogate training all parameters are scaled to $[0, 1]$. What physical trunk length corresponds to a normalized value of 0.25, and why is this normalization useful when the parameters mix angles and lengths?
+
+<details>
+<summary>Answer</summary>
+
+The range is $[640, 960]$ mm. A normalized value of 0.25 maps to $640 + 0.25 \times 320 = 720$ mm.
+
+Normalization puts angles (degrees) and lengths (millimetres) on comparable scales. Without it, distance-based methods such as Gaussian processes and k-nearest neighbours are dominated by whichever parameter has the largest numerical range, and neural-network training becomes poorly conditioned. The same scaling must be stored and applied to new designs at prediction time.
+
+</details>
+
+**Exercise 5.** The CFD objective has iterative-convergence noise of amplitude $\eta = 10^{-4}$, and $|J''| \approx 2 \times 10^{-4}$ per degree squared. The forward-difference error is roughly $E(\delta) = |J''|\delta/2 + 2\eta/\delta$. Find the step $\delta$ that minimizes this error and the minimum error, and compare with $\delta = 0.1^\circ$ and $\delta = 5^\circ$.
+
+<details>
+<summary>Answer</summary>
+
+Setting $dE/d\delta = |J''|/2 - 2\eta/\delta^2 = 0$ gives
+
+$$\delta^* = 2\sqrt{\frac{\eta}{|J''|}} = 2\sqrt{\frac{10^{-4}}{2 \times 10^{-4}}} \approx 1.41^\circ,$$
+
+with minimum error $E^* = 2\sqrt{\eta |J''|} \approx 2.83 \times 10^{-4}$ per degree.
+
+For comparison, $E(0.1^\circ) = 2.01 \times 10^{-3}$ (noise dominates) and $E(5^\circ) = 5.4 \times 10^{-4}$ (truncation dominates).
+
+Even at the best step the error is about 8% of the sensitivity found in Exercise 1. Converging the solver more tightly (smaller $\eta$) is the only way to do much better.
+
+</details>
+
+### References
+
+- Hucho, W.-H. (Ed.), *Aerodynamics of Road Vehicles*, 4th ed., SAE International, 1998.
+- Katz, J., *Automotive Aerodynamics*, Wiley, 2016.
+- Jameson, A., "Aerodynamic design via control theory", *Journal of Scientific Computing* 3(3), 1988.
+- Nocedal, J., & Wright, S. J., *Numerical Optimization*, 2nd ed., Springer, 2006.
+- Forrester, A. I. J., Sóbester, A., & Keane, A. J., *Engineering Design via Surrogate Modelling: A Practical Guide*, Wiley, 2008.

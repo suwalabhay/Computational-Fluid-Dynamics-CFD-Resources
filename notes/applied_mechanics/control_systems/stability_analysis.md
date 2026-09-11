@@ -75,17 +75,17 @@ $$1 + K\frac{N(s)}{D(s)} = 0 \implies KG(s)H(s) = -1$$
 The root locus is the set of points satisfying:
 
 - **Magnitude condition**: $|KG(s)H(s)| = 1$
-- **Angle condition**: $\angle G(s)H(s) = (2q+1) \times 180°, \quad q = 0, \pm 1, \pm 2, \ldots$
+- **Angle condition**: $\angle G(s)H(s) = (2q+1) \times 180^\circ, \quad q = 0, \pm 1, \pm 2, \ldots$
 
 ### Rules for Construction
 
 1. **Number of branches**: Equals the number of open-loop poles $n$
 2. **Start and end points**: Branches start at open-loop poles ($K=0$) and end at open-loop zeros or infinity ($K \to \infty$)
 3. **Real-axis segments**: A point on the real axis is on the root locus if the number of real poles and zeros to its right is odd
-4. **Asymptotes**: $n - m$ branches go to infinity along asymptotes with angles $\phi_a = \frac{(2q+1) \times 180°}{n - m}$ and centroid $\sigma_a = \frac{\sum p_i - \sum z_j}{n - m}$
+4. **Asymptotes**: $n - m$ branches go to infinity along asymptotes with angles $\phi_a = \frac{(2q+1) \times 180^\circ}{n - m}$ and centroid $\sigma_a = \frac{\sum p_i - \sum z_j}{n - m}$
 5. **Breakaway/break-in points**: Found by solving $\frac{dK}{ds} = 0$ where $K = -\frac{D(s)}{N(s)}$
 6. **Imaginary axis crossings**: Use Routh-Hurwitz or substitute $s = j\omega$
-7. **Departure/arrival angles**: $\theta_{dep} = 180° - \sum \angle(\text{to other poles}) + \sum \angle(\text{to zeros})$
+7. **Departure/arrival angles**: $\theta_{dep} = 180^\circ - \sum \angle(\text{to other poles}) + \sum \angle(\text{to zeros})$
 
 ### Interpretation
 
@@ -124,7 +124,7 @@ The factor by which the open-loop gain can be increased before instability:
 
 $$GM = \frac{1}{|G(j\omega_{pc})H(j\omega_{pc})|}$$
 
-where $\omega_{pc}$ is the **phase crossover frequency** at which $\angle G(j\omega)H(j\omega) = -180°$.
+where $\omega_{pc}$ is the **phase crossover frequency** at which $\angle G(j\omega)H(j\omega) = -180^\circ$.
 
 In decibels: $GM_{dB} = -20\log_{10}|G(j\omega_{pc})H(j\omega_{pc})|$
 
@@ -132,7 +132,7 @@ In decibels: $GM_{dB} = -20\log_{10}|G(j\omega_{pc})H(j\omega_{pc})|$
 
 The additional phase lag needed to reach instability:
 
-$$PM = 180° + \angle G(j\omega_{gc})H(j\omega_{gc})$$
+$$PM = 180^\circ + \angle G(j\omega_{gc})H(j\omega_{gc})$$
 
 where $\omega_{gc}$ is the **gain crossover frequency** at which $|G(j\omega)H(j\omega)| = 1$ (0 dB).
 
@@ -141,7 +141,7 @@ where $\omega_{gc}$ is the **gain crossover frequency** at which $|G(j\omega)H(j
 | Specification | Minimum Recommended |
 |---|---|
 | Gain margin | $> 6$ dB (factor of 2) |
-| Phase margin | $> 30°$ (typically $45°$–$60°$) |
+| Phase margin | $> 30^\circ$ (typically $45^\circ$–$60^\circ$) |
 
 A system with both adequate GM and PM is **robustly stable** against modeling errors and parameter variations.
 
@@ -215,19 +215,19 @@ Therefore $K = 5(4) = 20$. The root locus crosses the imaginary axis at $s = \pm
 
 **Solution**:
 
-**Phase crossover frequency** ($\angle G = -180°$):
+**Phase crossover frequency** ($\angle G = -180^\circ$):
 
-$$\angle G(j\omega) = -90° - \arctan(\omega) - \arctan(0.1\omega) = -180°$$
+$$\angle G(j\omega) = -90^\circ - \arctan(\omega) - \arctan(0.1\omega) = -180^\circ$$
 
-$$\arctan(\omega) + \arctan(0.1\omega) = 90°$$
+$$\arctan(\omega) + \arctan(0.1\omega) = 90^\circ$$
 
-Using the identity for $\arctan a + \arctan b = 90°$ when $ab = 1$: $0.1\omega^2 = 1 \implies \omega_{pc} = \sqrt{10} \approx 3.16$ rad/s.
+Using the identity for $\arctan a + \arctan b = 90^\circ$ when $ab = 1$: $0.1\omega^2 = 1 \implies \omega_{pc} = \sqrt{10} \approx 3.16$ rad/s.
 
-$$|G(j\omega_{pc})| = \frac{10}{3.16 \cdot \sqrt{1+10} \cdot \sqrt{1+1}} = \frac{10}{3.16 \times 3.32 \times 1.41} \approx 0.676$$
+$$|G(j\omega_{pc})| = \frac{10}{3.162 \cdot \sqrt{1+10} \cdot \sqrt{1+0.1}} = \frac{10}{3.162 \times 3.317 \times 1.049} \approx 0.909$$
 
-$$GM = \frac{1}{0.676} \approx 1.48 \implies GM_{dB} \approx 3.4\;\text{dB}$$
+$$GM = \frac{1}{0.909} = 1.1 \implies GM_{dB} \approx 0.83\;\text{dB}$$
 
-This gain margin is **below the recommended 6 dB**, indicating the system has poor relative stability and would benefit from compensation.
+This gain margin is **far below the recommended 6 dB**: the Routh array for $0.1s^3 + 1.1s^2 + s + K = 0$ confirms that the loop becomes unstable at $K = 11$, only 10% above the actual gain. The system has very poor relative stability and would benefit from compensation.
 
 ## Applications
 
@@ -244,3 +244,81 @@ This gain margin is **below the recommended 6 dB**, indicating the system has po
 - Nyquist and Bode methods work directly with **experimental frequency response data** — no analytical model needed
 - Always check both gain margin **and** phase margin; either alone can be misleading
 - For digital control systems, stability analysis must account for sampling effects — use the $z$-plane or bilinear (Tustin) transformation
+
+## Exercises
+
+**Exercise 1.** Use the Routh array to determine how many roots of $P(s) = s^4 + 2s^3 + 3s^2 + 4s + 5$ lie in the right-half plane. Is the necessary condition (all coefficients positive) sufficient?
+
+<details>
+<summary>Answer</summary>
+
+$$\begin{array}{c|ccc}
+s^4 & 1 & 3 & 5 \\
+s^3 & 2 & 4 & \\
+s^2 & 1 & 5 & \\
+s^1 & -6 & & \\
+s^0 & 5 & &
+\end{array}$$
+
+where $b_1 = (2 \cdot 3 - 1 \cdot 4)/2 = 1$, $b_2 = (2 \cdot 5)/2 = 5$ and $c_1 = (1 \cdot 4 - 2 \cdot 5)/1 = -6$. The first column $1, 2, 1, -6, 5$ changes sign twice, so there are two right-half-plane roots (numerically $s \approx 0.29 \pm 1.42j$). Positive coefficients are necessary but not sufficient.
+
+</details>
+
+**Exercise 2.** For unity feedback with $G(s) = \frac{K}{(s+1)(s+2)(s+3)}$, find the range of $K > 0$ for stability and the frequency at which the root locus crosses the imaginary axis.
+
+<details>
+<summary>Answer</summary>
+
+Characteristic equation: $s^3 + 6s^2 + 11s + (6 + K) = 0$. The $s^1$ entry of the Routh array is $\frac{66 - (6 + K)}{6} = \frac{60 - K}{6}$, and the $s^0$ entry is $6 + K$. Hence $0 < K < 60$.
+
+At $K = 60$ the auxiliary polynomial is $6s^2 + 66 = 0$, so the crossing is at $s = \pm j\sqrt{11} = \pm 3.32j$ rad/s.
+
+</details>
+
+**Exercise 3.** For $G(s)H(s) = \frac{K(s+4)}{s(s+1)(s+2)(s+6)}$, find the number of asymptotes, their angles and centroid, and the real-axis segments of the root locus.
+
+<details>
+<summary>Answer</summary>
+
+$n = 4$ poles and $m = 1$ zero, so $n - m = 3$ asymptotes at $\phi_a = 60^\circ, 180^\circ, 300^\circ$.
+
+$$\sigma_a = \frac{(0 - 1 - 2 - 6) - (-4)}{3} = -\frac{5}{3} \approx -1.67$$
+
+A real-axis point lies on the locus if an odd number of poles and zeros lie to its right: the segments are $[-1, 0]$, $[-4, -2]$ and $(-\infty, -6]$.
+
+</details>
+
+**Exercise 4.** For the system of Example 3, $G(s) = \frac{10}{s(s+1)(0.1s+1)}$, find the gain crossover frequency and the phase margin. What pure time delay $e^{-\tau s}$ in the loop would make it unstable?
+
+<details>
+<summary>Answer</summary>
+
+Solving $|G(j\omega)| = 1$ numerically gives $\omega_{gc} \approx 3.01$ rad/s. Then
+
+$$PM = 180^\circ - 90^\circ - \arctan(3.01) - \arctan(0.301) \approx 1.6^\circ$$
+
+A delay adds phase lag $\omega\tau$ without changing the magnitude, so instability occurs when $\omega_{gc}\tau = PM$ (in radians):
+
+$$\tau = \frac{1.6^\circ \times \pi/180}{3.01} \approx 0.009 \text{ s}$$
+
+A delay of only about 9 ms destabilizes the loop, which confirms the very small margins found in the example.
+
+</details>
+
+**Exercise 5.** An open-loop transfer function has one right-half-plane pole ($P = 1$). Using $Z = N + P$, state whether the closed loop is stable when the Nyquist plot (a) encircles $-1$ once counterclockwise, (b) does not encircle $-1$, (c) encircles $-1$ once clockwise.
+
+<details>
+<summary>Answer</summary>
+
+(a) $N = -1$, so $Z = 0$: stable. (b) $N = 0$, so $Z = 1$: one closed-loop right-half-plane pole, unstable. (c) $N = +1$, so $Z = 2$: unstable.
+
+An open-loop unstable plant can only be stabilized by a loop whose Nyquist plot encircles $-1$ counterclockwise once for every open-loop unstable pole. For such a plant, "no encirclement" does not mean stable.
+
+</details>
+
+## References
+
+- K. Ogata, *Modern Control Engineering*, 5th ed., Prentice Hall, 2010.
+- N. S. Nise, *Control Systems Engineering*, 7th ed., Wiley, 2015.
+- G. F. Franklin, J. D. Powell, A. Emami-Naeini, *Feedback Control of Dynamic Systems*, Pearson.
+- K. J. Åström, R. M. Murray, *Feedback Systems: An Introduction for Scientists and Engineers*, Princeton University Press, 2008.

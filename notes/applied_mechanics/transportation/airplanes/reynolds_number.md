@@ -44,7 +44,7 @@ Found at the lower left part of the chart, insects and dust particles have low R
 
 II. **Birds and Hang Gliders**  
 
-Moving toward the middle of the chart, birds and hang gliders operate at slightly higher speeds (5–20 m/s) and higher Reynolds numbers, often between $10^3$ and $10^5$. While their flight still involves laminar flow, they might experience some transition to turbulence, especially at higher speeds.
+Moving toward the middle of the chart, birds and hang gliders operate at slightly higher speeds (5–20 m/s) and higher Reynolds numbers, roughly from $10^4$ (small birds) to $10^6$ (hang gliders). While their flight still involves laminar flow, they might experience some transition to turbulence, especially at higher speeds.
 
 III. **General Aviation and Airliners**  
 
@@ -75,3 +75,73 @@ Beyond Mach 1, the air compresses significantly, leading to shock waves. Hyperso
 So, how do you use this chart? If you want to understand how a particular object, such as a plane or even a bird, interacts with the air around it, you can look at its **airspeed** and estimate its **Reynolds number** based on its size (the chord length). For example, if you know an airliner typically flies at around Mach 0.8 and has a wing chord of several meters, you can find where it falls on the chart—close to the region for general aviation and airliners.
 
 Similarly, if you’re studying insects, you’d see that they exist in a low-speed, low-Reynolds-number world where laminar flow dominates. Meanwhile, military jets or the Concorde, which fly much faster, deal with much more complex and turbulent airflow, as their Reynolds numbers are extremely high and their Mach numbers surpass 1.
+
+### Related Scripts
+
+- [Laminar vs Turbulent Pipe Flow](../../../../scripts/plots/laminar_vs_turbulent_pipe/): plots laminar and turbulent radial velocity profiles of pipe flow in side-by-side panels to show how much flatter the turbulent profile is.
+
+### Exercises
+
+**Exercise 1.** An airliner cruises at 230 m/s at 11 km altitude, where $\rho = 0.364$ kg/m³, $T = 216.65$ K and $\mu = 1.42 \times 10^{-5}$ Pa·s. Its mean wing chord is 5 m. Find the Reynolds number and the Mach number ($\gamma = 1.4$, $R = 287$ J/(kg·K)).
+
+<details>
+<summary>Answer</summary>
+
+$$Re = \frac{0.364 \times 230 \times 5}{1.42 \times 10^{-5}} = 2.9 \times 10^7$$
+
+$$a = \sqrt{\gamma RT} = \sqrt{1.4 \times 287 \times 216.65} = 295 \text{ m/s}, \quad M = \frac{230}{295} = 0.78$$
+
+The flow is fully turbulent over most of the wing and is in the lower transonic regime.
+
+</details>
+
+**Exercise 2.** A bird with a 0.10 m wing chord flies at 10 m/s at sea level ($\rho = 1.225$ kg/m³, $\mu = 1.79 \times 10^{-5}$ Pa·s). Find its Reynolds number, and compare it with the airliner of Exercise 1.
+
+<details>
+<summary>Answer</summary>
+
+$$Re = \frac{1.225 \times 10 \times 0.10}{1.79 \times 10^{-5}} = 6.8 \times 10^4$$
+
+This is about 430 times smaller than the airliner's. At this Reynolds number the boundary layer is largely laminar and prone to laminar separation, so bird and small-drone airfoils are thin and highly cambered rather than scaled-down airliner sections.
+
+</details>
+
+**Exercise 3.** Below what airspeed can sea-level air ($T = 288.15$ K) be treated as incompressible? Is a light aircraft cruising at 60 m/s in that regime?
+
+<details>
+<summary>Answer</summary>
+
+$a = \sqrt{1.4 \times 287 \times 288.15} = 340$ m/s, so $M = 0.3$ corresponds to $0.3 \times 340 = 102$ m/s.
+
+At 60 m/s, $M = 0.18$, well inside the incompressible regime. The density changes by only about 1.6% ($\approx M^2/2$).
+
+</details>
+
+**Exercise 4.** A 1:10 scale model of a wing with a 2 m chord is tested in a sea-level wind tunnel. The full-size aircraft flies at 70 m/s at sea level. What tunnel speed matches the Reynolds number, and why is this impractical? How do real facilities get around the problem?
+
+<details>
+<summary>Answer</summary>
+
+Matching $Re = \rho VL/\mu$ with $L$ ten times smaller requires $V$ ten times larger: 700 m/s, or $M \approx 2.1$. The model would then see supersonic compressible flow that the aircraft never experiences, so Reynolds and Mach numbers cannot both be matched this way.
+
+Real facilities raise $\rho/\mu$ instead: pressurized tunnels increase the density, and cryogenic tunnels such as NASA's National Transonic Facility cool the gas, which raises its density and lowers its viscosity. Alternatively, engineers test at lower $Re$ and correct the results with CFD and boundary-layer trips.
+
+</details>
+
+**Exercise 5.** On a smooth flat plate, laminar-to-turbulent transition occurs at a local Reynolds number $Re_x \approx 5 \times 10^5$. Estimate how far from the leading edge transition occurs on a light aircraft wing at 60 m/s at sea level, and explain why the answer is only indicative.
+
+<details>
+<summary>Answer</summary>
+
+$$x_{tr} = \frac{Re_x\,\mu}{\rho V} = \frac{5 \times 10^5 \times 1.79 \times 10^{-5}}{1.225 \times 60} = 0.12 \text{ m}$$
+
+That is only about 8% of a 1.5 m chord. On a real wing the transition location depends strongly on the pressure gradient (a favourable gradient delays it, which is how laminar-flow airfoils work), on surface roughness, insect debris and free-stream turbulence. The flat-plate value is only a rough guide.
+
+</details>
+
+### References
+
+- Anderson, J. D., Jr., *Fundamentals of Aerodynamics*, 6th ed., McGraw-Hill Education, 2017.
+- Anderson, J. D., Jr., *Introduction to Flight*, 8th ed., McGraw-Hill Education, 2016.
+- Schlichting, H., and Gersten, K., *Boundary-Layer Theory*, 9th ed., Springer, 2017.
+- NOAA, NASA, and USAF, *U.S. Standard Atmosphere, 1976*, U.S. Government Printing Office, 1976.

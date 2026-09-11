@@ -85,6 +85,7 @@ where:
 - $t$ = width of the cross-section at the point of interest
 
 **For a rectangular cross-section:**
+
 $$\tau_{max} = \frac{3V}{2A}$$
 
 which occurs at the neutral axis.
@@ -121,15 +122,19 @@ For beams with multiple loads, the total deflection can be found by superimposin
 ### Common Deflection Formulas
 
 **Simply supported beam, central point load $P$:**
+
 $$\delta_{max} = \frac{PL^3}{48EI}$$
 
 **Simply supported beam, uniform load $w$:**
+
 $$\delta_{max} = \frac{5wL^4}{384EI}$$
 
 **Cantilever beam, point load $P$ at free end:**
+
 $$\delta_{max} = \frac{PL^3}{3EI}$$
 
 **Cantilever beam, uniform load $w$:**
+
 $$\delta_{max} = \frac{wL^4}{8EI}$$
 
 ## Example Problems
@@ -147,12 +152,15 @@ A simply supported beam ($L = 4$ m) with a rectangular cross-section ($b = 100$ 
 **Solution:**
 
 **Maximum bending moment (at midspan):**
-$$M_{max} = \frac{PL}{4} = \frac{20 \times 4}{4} = 20 \text{ kN·m}$$
+
+$$M_{max} = \frac{PL}{4} = \frac{20 \times 4}{4} = 20 \text{ kN}\cdot\text{m}$$
 
 **Moment of inertia:**
+
 $$I = \frac{bh^3}{12} = \frac{100 \times 200^3}{12} = 6.667 \times 10^7 \text{ mm}^4$$
 
 **Maximum bending stress:**
+
 $$\sigma_{max} = \frac{Mc}{I} = \frac{20 \times 10^6 \times 100}{6.667 \times 10^7} = 30.0 \text{ MPa}$$
 
 ### Example 2: Cantilever Beam Deflection
@@ -184,17 +192,20 @@ A T-beam is composed of a flange (200 mm × 30 mm) on top of a web (30 mm × 170
 **Solution:**
 
 **Centroid location** (measured from bottom):
+
 $$A_f = 200 \times 30 = 6000 \text{ mm}^2, \quad \bar{y}_f = 170 + 15 = 185 \text{ mm}$$
+
 $$A_w = 30 \times 170 = 5100 \text{ mm}^2, \quad \bar{y}_w = 85 \text{ mm}$$
 
 $$\bar{y} = \frac{6000 \times 185 + 5100 \times 85}{6000 + 5100} = \frac{1\,110\,000 + 433\,500}{11\,100} = 139.1 \text{ mm}$$
 
 **Moment of inertia** (parallel axis theorem):
+
 $$I_{NA} = \left[\frac{200 \times 30^3}{12} + 6000(185 - 139.1)^2\right] + \left[\frac{30 \times 170^3}{12} + 5100(139.1 - 85)^2\right]$$
 
-$$I_{NA} = [450\,000 + 12\,640\,860] + [12\,267\,500 + 14\,903\,805]$$
+$$I_{NA} = [450\,000 + 12\,640\,860] + [12\,282\,500 + 14\,926\,731]$$
 
-$$I_{NA} = 13\,090\,860 + 27\,171\,305 = 40.26 \times 10^6 \text{ mm}^4$$
+$$I_{NA} = 13\,090\,860 + 27\,209\,231 = 40.30 \times 10^6 \text{ mm}^4$$
 
 ## Beam Design Considerations
 
@@ -234,3 +245,79 @@ I-beams and wide-flange sections are efficient because they concentrate material
 - Consider lateral-torsional buckling for long, narrow beams under bending
 
 Understanding beam bending is essential for the design of virtually all structural and mechanical systems.
+
+## Exercises
+
+**Exercise 1.** The $100 \times 200$ mm rectangular beam of Example 1 is laid flat, with the 200 mm side horizontal. How do its section modulus and maximum bending stress change? Why?
+
+<details>
+<summary>Answer</summary>
+
+- Upright: $S = bh^2/6 = 100 \times 200^2/6 = 6.67 \times 10^5$ mm³
+- Flat: $S = 200 \times 100^2/6 = 3.33 \times 10^5$ mm³
+
+The flat beam has half the section modulus, so at $M = 20$ kN·m the stress doubles from 30 MPa to 60 MPa. $S$ grows with the square of depth but only linearly with width, so material placed far from the neutral axis is more effective.
+
+</details>
+
+**Exercise 2.** A simply supported steel beam ($E = 200$ GPa) of span 5 m carries a uniform load of 12 kN/m. Its section has $I = 8.0 \times 10^7$ mm⁴ and $c = 150$ mm. Find the maximum bending stress and mid-span deflection, and check the deflection against $L/360$.
+
+<details>
+<summary>Answer</summary>
+
+$$M_{max} = \frac{wL^2}{8} = \frac{12 \times 5^2}{8} = 37.5 \text{ kN}\cdot\text{m}, \quad \sigma_{max} = \frac{37.5 \times 10^6 \times 150}{8.0 \times 10^7} = 70.3 \text{ MPa}$$
+
+$$\delta_{max} = \frac{5wL^4}{384EI} = \frac{5 \times 12 \times 5000^4}{384 \times 200\,000 \times 8.0 \times 10^7} = 6.10 \text{ mm}$$
+
+$L/360 = 13.9$ mm, so the beam satisfies the limit.
+
+</details>
+
+**Exercise 3.** For the beam of Example 1 (central load 20 kN, section $100 \times 200$ mm), find the maximum transverse shear stress and where it occurs. Compare it with the maximum bending stress.
+
+<details>
+<summary>Answer</summary>
+
+$V = P/2 = 10$ kN in each half.
+
+$$\tau_{max} = \frac{3V}{2A} = \frac{3 \times 10\,000}{2 \times 20\,000} = 0.75 \text{ MPa}$$
+
+It occurs at the neutral axis, where the bending stress is zero. It is only 2.5% of the 30 MPa bending stress, so shear rarely governs long solid beams. It can govern short, deep beams, thin webs and timber.
+
+</details>
+
+**Exercise 4.** Use the double integration method to derive the tip deflection $PL^3/(3EI)$ of a cantilever of length $L$ with a point load $P$ at its free end.
+
+<details>
+<summary>Answer</summary>
+
+Put the fixed end at $x = 0$. Then $M(x) = -P(L - x)$ and $EI\,y'' = -P(L - x)$.
+
+Integrate once: $EI\,y' = -P(Lx - x^2/2) + C_1$, and $y'(0) = 0$ gives $C_1 = 0$.
+
+Integrate again: $EI\,y = -P(Lx^2/2 - x^3/6) + C_2$, and $y(0) = 0$ gives $C_2 = 0$.
+
+At $x = L$:
+
+$$EI\,y(L) = -P\left(\frac{L^3}{2} - \frac{L^3}{6}\right) = -\frac{PL^3}{3}$$
+
+The negative sign means downward, and the magnitude is $PL^3/(3EI)$.
+
+</details>
+
+**Exercise 5.** The cantilever of Example 2 also carries a 2 kN point load at its free end. Use superposition to find the total tip deflection.
+
+<details>
+<summary>Answer</summary>
+
+$$\delta_P = \frac{PL^3}{3EI} = \frac{2000 \times 2000^3}{3 \times 200\,000 \times 5 \times 10^6} = 5.33 \text{ mm}$$
+
+Adding the 16.0 mm from the distributed load gives a total of $21.3$ mm. Superposition is valid because both deflections are small and the material is linear elastic.
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Mechanics of Materials*, 10th ed., Pearson, 2017.
+- Gere, J. M., and Goodno, B. J., *Mechanics of Materials*, 8th ed., Cengage Learning, 2013.
+- Beer, F. P., Johnston, E. R., DeWolf, J. T., and Mazurek, D. F., *Mechanics of Materials*, 7th ed., McGraw-Hill Education, 2015.

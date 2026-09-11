@@ -1,92 +1,142 @@
-import numpy as np
+"""Draw an annotated NACA 4-digit airfoil profile (default NACA 4412).
+
+Parses the four-digit code, computes the mean camber line and the standard
+NACA thickness distribution, offsets the surfaces perpendicular to the camber
+line, and labels the leading edge, trailing edge, chord line and camber line.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Define the chord length (unit length for simplicity)
-chord = 1.0
-x = np.linspace(0, chord, 500)  # Chordwise positions
+DEFAULT_CODE = "4412"  # 4 % camber at 40 % chord, 12 % thickness
+CHORD = 1.0  # chord length (unit length for simplicity)
+N_POINTS = 500  # chordwise stations
 
-# Define camber line (for a cambered airfoil similar to a NACA 4-digit profile)
-camber_max = 0.04  # Max camber (4% of chord)
-camber_position = 0.4  # Max camber position (40% of chord)
 
-# Define the camber line using a simple parabolic equation
-camber_line = np.where(
-    x < camber_position,
-    camber_max / (camber_position**2) * (2 * camber_position * x - x**2),
-    camber_max
-    / ((1 - camber_position) ** 2)
-    * ((1 - 2 * camber_position) + 2 * camber_position * x - x**2),
-)
+def parse_naca4(code):
+    """Return (m, p, t) as chord fractions from a 4-digit NACA code."""
+    if len(code) != 4 or not code.isdigit():
+        raise ValueError(f"expected a 4-digit NACA code, got {code!r}")
+    return int(code[0]) / 100, int(code[1]) / 10, int(code[2:]) / 100
 
-# Substantially increase the thickness
-thickness_max = 0.6  # Increase max thickness to 60% of chord for a much thicker airfoil
 
-# Recalculate thickness distribution with the increased thickness
-thickness_distribution = thickness_max * (
-    0.2969 * np.sqrt(x) - 0.1260 * x - 0.3516 * x**2 + 0.2843 * x**3 - 0.1015 * x**4
-)
+def camber_line(x, m, p, c=1.0):
+    """Piecewise parabolic mean camber line y_c(x) and its slope dy_c/dx."""
+    xc = x / c
+    if m == 0 or p == 0:
+        return np.zeros_like(x), np.zeros_like(x)
+    yc = c * np.where(
+        xc < p,
+        m / p**2 * (2 * p * xc - xc**2),
+        m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * xc - xc**2),
+    )
+    dyc_dx = np.where(xc < p, 2 * m / p**2 * (p - xc), 2 * m / (1 - p) ** 2 * (p - xc))
+    return yc, dyc_dx
 
-# Calculate upper and lower surfaces
-upper_surface = camber_line + thickness_distribution
-lower_surface = camber_line - thickness_distribution
 
-# Create the plot
-fig, ax = plt.subplots(figsize=(10, 5))
+def thickness_distribution(x, t, c=1.0):
+    """NACA 4-digit half-thickness y_t(x) for maximum thickness ratio t."""
+    xc = x / c
+    return (
+        (t / 0.2)
+        * c
+        * (
+            0.2969 * np.sqrt(xc)
+            - 0.1260 * xc
+            - 0.3516 * xc**2
+            + 0.2843 * xc**3
+            - 0.1015 * xc**4
+        )
+    )
 
-# Plot the upper and lower surfaces
-ax.plot(x, upper_surface, color="gray", label="Upper Surface")
-ax.plot(x, lower_surface, color="gray", label="Lower Surface")
 
-# Plot the chord line
-ax.plot([0, 1], [0, 0], "yellow", lw=2, label="Chord Line")
+def naca4_geometry(code, c=1.0, n=500):
+    """Chordwise stations, camber line and upper/lower surface coordinates."""
+    m, p, t = parse_naca4(code)
+    x = np.linspace(0, c, n)
+    yc, dyc_dx = camber_line(x, m, p, c)
+    yt = thickness_distribution(x, t, c)
+    theta = np.arctan(dyc_dx)
+    xu, yu = x - yt * np.sin(theta), yc + yt * np.cos(theta)
+    xl, yl = x + yt * np.sin(theta), yc - yt * np.cos(theta)
+    return x, yc, (xu, yu), (xl, yl)
 
-# Plot the camber line
-ax.plot(x, camber_line, "r--", lw=2, label="Mean Camber Line")
 
-# Add annotations for key points
-ax.text(
-    0,
-    0.04,
-    "Leading edge",
-    fontsize=12,
-    bbox=dict(facecolor="lightgray", edgecolor="black"),
-)
-ax.text(
-    0.9,
-    0.04,
-    "Trailing edge",
-    fontsize=12,
-    bbox=dict(facecolor="lightgray", edgecolor="black"),
-)
-ax.text(
-    0.5,
-    -0.03,
-    "Chord line",
-    fontsize=12,
-    bbox=dict(facecolor="yellow", edgecolor="black"),
-    ha="center",
-)
-ax.text(
-    0.5,
-    0.18,
-    "Mean camber line",
-    fontsize=12,
-    bbox=dict(facecolor="orange", edgecolor="black"),
-    ha="center",
-)
-ax.text(0.15, 0.28, "Camber of upper surface", fontsize=10, ha="center")
-ax.text(0.15, -0.25, "Camber of lower surface", fontsize=10, ha="center")
+def plot_airfoil(code, c=1.0, n=500):
+    x, yc, (xu, yu), (xl, yl) = naca4_geometry(code, c, n)
 
-# Set axis limits, title, and remove the grid
-ax.set_xlim(-0.1, 1.1)
-ax.set_ylim(-0.35, 0.35)
-ax.set_aspect("equal")
-ax.axis("off")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(xu, yu, color="gray", label="Upper Surface")
+    ax.plot(xl, yl, color="gray", label="Lower Surface")
+    ax.plot([0, c], [0, 0], "yellow", lw=2, label="Chord Line")
+    ax.plot(x, yc, "r--", lw=2, label="Mean Camber Line")
 
-# Add title
-plt.title("Airfoil Profile with Increased Thickness")
+    box = dict(facecolor="lightgray", edgecolor="black")
+    ax.text(-0.02 * c, 0.1 * c, "Leading edge", fontsize=12, bbox=box, ha="left")
+    ax.text(0.98 * c, 0.1 * c, "Trailing edge", fontsize=12, bbox=box, ha="right")
+    ax.text(
+        0.5 * c,
+        -0.03 * c,
+        "Chord line",
+        fontsize=12,
+        bbox=dict(facecolor="yellow", edgecolor="black"),
+        ha="center",
+    )
+    ax.text(
+        0.5 * c,
+        0.18 * c,
+        "Mean camber line",
+        fontsize=12,
+        bbox=dict(facecolor="orange", edgecolor="black"),
+        ha="center",
+    )
+    ax.text(0.25 * c, 0.13 * c, "Upper surface", fontsize=10, ha="center")
+    ax.text(0.25 * c, -0.1 * c, "Lower surface", fontsize=10, ha="center")
 
-# Display the plot
-plt.legend()
-plt.tight_layout()
-plt.show()
+    ax.set_xlim(-0.1 * c, 1.1 * c)
+    ax.set_ylim(-0.35 * c, 0.35 * c)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_title(f"NACA {code} Airfoil Profile")
+    ax.legend()
+    fig.tight_layout()
+    return fig
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--naca",
+        default=DEFAULT_CODE,
+        metavar="CODE",
+        help=f"four-digit NACA designation (default: {DEFAULT_CODE})",
+    )
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    fig = plot_airfoil(args.naca, CHORD, N_POINTS)
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "airfoil_profile.png", dpi=100, bbox_inches="tight")
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

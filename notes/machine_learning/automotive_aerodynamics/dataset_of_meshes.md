@@ -26,7 +26,7 @@ where $\theta_{\max}$ and $\theta_{\min}$ are the largest and smallest angles in
 
 - **Aspect Ratio**: The ratio of the longest cell edge (or dimension) to the shortest. In boundary-layer regions, high aspect ratios are intentional (thin, stretched cells aligned with the flow), but in the free stream, values above 100 can degrade solver convergence.
 
-![design space distribution](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/bfe914f2-1543-458e-9f4f-06aa8cff871c)
+![design space distribution](../../../scripts/plots/design_space_distribution/design_space_distribution.png)
 
 A simple ASCII diagram can illustrate how local refinement fits into a typical mesh generation process:
 
@@ -147,3 +147,86 @@ Start by listing the geometric and flow parameters that define your design space
 - Automate mesh generation and quality checks through scripted pipelines so that every configuration is treated identically and results are reproducible.
 - Validate a representative subset of meshes against experimental data or high-fidelity simulations to catch systematic errors early in the process.
 - Document all choices, from parameter ranges to solver settings, so that the dataset can be reproduced or extended by others.
+
+### Related Scripts
+
+- [Design Space Distribution via Sobol Sequences](../../../scripts/plots/design_space_distribution/): draws a four-dimensional scrambled Sobol design of 512 geometry variants and plots two 2D projections of it, showing how evenly a low-discrepancy sequence covers a design space.
+
+### Exercises
+
+**Exercise 1.** A triangular surface cell has interior angles $30^\circ$, $60^\circ$ and $90^\circ$. A second triangle has angles $8^\circ$, $52^\circ$ and $120^\circ$. Compute the equiangle skewness $S_{\text{eq}}$ of each cell and decide whether either should be flagged using the $S_{\text{eq}} > 0.85$ threshold.
+
+<details>
+<summary>Answer</summary>
+
+For triangles $\theta_{\text{ideal}} = 60^\circ$.
+
+First cell: $\frac{90 - 60}{180 - 60} = 0.25$ and $\frac{60 - 30}{60} = 0.5$, so $S_{\text{eq}} = 0.5$. The cell is acceptable.
+
+Second cell: $\frac{120 - 60}{180 - 60} = 0.5$ and $\frac{60 - 8}{60} = 0.867$, so $S_{\text{eq}} \approx 0.87$. This exceeds 0.85 and the cell should be flagged. Note that the small $8^\circ$ angle, not the obtuse $120^\circ$ angle, sets the value.
+
+</details>
+
+**Exercise 2.** A prism layer starts with a first cell height $h_1 = 2 \times 10^{-5}$ m and grows geometrically with ratio $r = 1.2$ over $N = 15$ layers. The surface cells are 4 mm wide. Find the total prism-layer thickness and the aspect ratios of the first and last layers. Are these aspect ratios a problem?
+
+<details>
+<summary>Answer</summary>
+
+The layer heights form a geometric series, so the total thickness is
+
+$$H = h_1 \frac{r^N - 1}{r - 1} = 2 \times 10^{-5} \cdot \frac{1.2^{15} - 1}{0.2} \approx 1.44 \times 10^{-3} \text{ m}.$$
+
+The last layer has height $h_1 r^{N-1} \approx 2.57 \times 10^{-4}$ m.
+
+Aspect ratios: first layer $4 \times 10^{-3} / 2 \times 10^{-5} = 200$, last layer $4 \times 10^{-3} / 2.57 \times 10^{-4} \approx 15.6$.
+
+An aspect ratio of 200 is intentional inside the boundary layer, where the cells are aligned with the flow. The limit of about 100 quoted in the note applies to free-stream cells. Two other things are worth checking: the total thickness must cover the expected boundary-layer thickness, and the jump from the 0.26 mm last layer to the 4 mm core cells (a factor of about 15) should be smoothed with more layers or a transition zone.
+
+</details>
+
+**Exercise 3.** Four design parameters (approach angle, decklid height, vehicle width, ride height) are to be sampled. A full-factorial design with 6 levels per parameter is compared with a 128-point Sobol sequence. Each case (meshing plus RANS) costs 400 core-hours, and the cluster has 2000 cores that can run cases in parallel. Compare the total cost and wall-clock time, and explain why the Sobol set may still give adequate coverage.
+
+<details>
+<summary>Answer</summary>
+
+Full factorial: $6^4 = 1296$ cases, $1296 \times 400 = 518{,}400$ core-hours, or $518{,}400 / 2000 = 259.2$ h (about 10.8 days) on the full cluster.
+
+Sobol: $128 \times 400 = 51{,}200$ core-hours, or 25.6 h. That is about 10 times cheaper.
+
+Coverage: the factorial design has only 6 distinct values per axis, and each value is repeated 216 times. The 128 Sobol points have 128 distinct values per axis and low discrepancy in the lower-dimensional projections as well. For training a surrogate, a space-filling design usually gives more information per simulation. The factorial cost also grows as $L^d$ when parameters are added, which quickly becomes unaffordable.
+
+</details>
+
+**Exercise 4.** A dataset contains 400 meshes. Following the note, choose a validation subset of 5–10%. One validated case gives $C_D = 0.312$ against a wind-tunnel value of $0.295$; another gives $0.301$ against the same reference. Which cases pass the 5% tolerance, and what would you investigate if the first case is typical of the subset?
+
+<details>
+<summary>Answer</summary>
+
+The validation subset is 20 to 40 cases.
+
+Errors: $|0.312 - 0.295| / 0.295 = 5.8\%$ (fails) and $|0.301 - 0.295| / 0.295 = 2.0\%$ (passes).
+
+If most validation cases over-predict drag by about 6%, the error is systematic rather than random. Candidates to check are near-wall resolution ($y^+$) and the wall treatment, the turbulence model, boundary conditions that differ from the tunnel (ground motion, wheel rotation, blockage), geometric simplifications, and whether $C_D$ is iteratively converged. A systematic bias should be fixed before the dataset is used for training, because the ML model will learn it.
+
+</details>
+
+**Exercise 5.** The drag history over the last iterations of a run is 0.30412, 0.30405, 0.30401, 0.30399, 0.30406, 0.30398. With $\epsilon = 10^{-4}$, is the criterion $| C_D^{(n)} - C_D^{(n-1)} | < \epsilon$ satisfied? Explain why this criterion alone can be misleading and propose a more robust check.
+
+<details>
+<summary>Answer</summary>
+
+The successive differences are $-7 \times 10^{-5}$, $-4 \times 10^{-5}$, $-2 \times 10^{-5}$, $+7 \times 10^{-5}$ and $-8 \times 10^{-5}$. All are below $10^{-4}$ in magnitude, so the criterion is met.
+
+It can mislead because it only looks at one iteration. A steady drift of $5 \times 10^{-5}$ per iteration passes the test every time, yet over 1000 iterations it changes $C_D$ by 0.05, about 16%. A slowly oscillating solution can also pass while its mean is still moving.
+
+A more robust check compares averages over windows (for example, the mean $C_D$ over the last 500 iterations against the previous 500), requires the equation residuals to have dropped by several orders of magnitude, and checks that the standard deviation of $C_D$ within the window is small.
+
+</details>
+
+### References
+
+- Thompson, J. F., Soni, B. K., & Weatherill, N. P. (Eds.), *Handbook of Grid Generation*, CRC Press, 1999.
+- Sobol', I. M., "On the distribution of points in a cube and the approximate evaluation of integrals", *USSR Computational Mathematics and Mathematical Physics* 7(4), 1967.
+- McKay, M. D., Beckman, R. J., & Conover, W. J., "A Comparison of Three Methods for Selecting Values of Input Variables in the Analysis of Output from a Computer Code", *Technometrics* 21(2), 1979.
+- Roache, P. J., *Verification and Validation in Computational Science and Engineering*, Hermosa Publishers, 1998.
+- Ahmed, S. R., Ramm, G., & Faltin, G., "Some Salient Features of the Time-Averaged Ground Vehicle Wake", SAE Technical Paper 840300, 1984.

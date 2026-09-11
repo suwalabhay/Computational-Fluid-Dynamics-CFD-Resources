@@ -15,19 +15,21 @@ Turbulent flow is characterized by:
 ## Table of Contents
 
 ### 1. [Reynolds Decomposition](./reynolds_decomposition.md)
-Statistical treatment of turbulent flows by separating mean and fluctuating components.
+Mean and fluctuating parts, averaging operators and their rules, the Reynolds stress tensor, turbulence intensity and TKE, and Favre averaging.
 
 ### 2. [Turbulence Statistics](./statistics.md)
-Statistical measures and properties of turbulent flows.
+PDFs and moments, two-point and two-time correlations, integral scales, Taylor's frozen-turbulence hypothesis, and energy spectra.
 
 ### 3. [Energy Cascade Theory](./energy_cascade.md)
-Kolmogorov's theory of energy transfer from large to small scales.
+Richardson's cascade, Kolmogorov's 1941 hypotheses and microscales, the $-5/3$ spectrum, and what the range of scales means for DNS cost.
 
 ### 4. [RANS Equations](./rans_equations.md)
-Reynolds-Averaged Navier-Stokes equations and closure problem.
+Derivation of the Reynolds-averaged equations, the closure problem, Reynolds-stress and TKE transport, the Boussinesq hypothesis, and the law of the wall.
 
 ### 5. [Turbulence Modeling](./modeling.md)
-Various approaches to model turbulent flows.
+The DNS/LES/DES/RANS hierarchy, the mixing-length, Spalart–Allmaras, $k$–$\varepsilon$, $k$–$\omega$ and SST models with their constants, LES and the Smagorinsky model, and how to choose a model.
+
+For how turbulence models are used inside a CFD workflow, see [Turbulence Modeling in CFD](../../numerical/cfd/turbulence_modeling.md).
 
 ## Characteristics of Turbulence
 
@@ -91,36 +93,7 @@ Turbulence onset depends on geometry and flow conditions:
 
 ## Scales of Turbulence
 
-### Energy-Containing Range
-- **Largest scales**: $\ell_0 \sim L$ (integral length scale)
-- **Energy production**: From mean flow shear
-- **Anisotropic**: Remember flow geometry and boundary conditions
-
-### Inertial Subrange  
-- **Scale range**: $\eta \ll \ell \ll \ell_0$
-- **Universal behavior**: Independent of viscosity and large scales
-- **Kolmogorov spectrum**: $E(k) \propto k^{-5/3}$
-- **Isotropic**: No preferred direction
-
-### Dissipation Range
-- **Smallest scales**: $\ell \sim \eta$ (Kolmogorov length scale)
-- **Viscous effects**: Molecular viscosity dominates
-- **Energy dissipation**: Turbulent kinetic energy → heat
-
-### Kolmogorov Scales
-
-The **Kolmogorov microscales** are formed using viscosity $\nu$ and dissipation rate $\epsilon$:
-
-- **Length scale**: $\eta = (\nu^3/\epsilon)^{1/4}$
-- **Time scale**: $\tau_\eta = (\nu/\epsilon)^{1/2}$  
-- **Velocity scale**: $v_\eta = (\nu\epsilon)^{1/4}$
-
-### Scale Separation
-
-The ratio of largest to smallest scales:
-$$\frac{\ell_0}{\eta} \sim Re^{3/4}$$
-
-For high Reynolds numbers, the scale separation is enormous, making direct numerical simulation extremely expensive.
+Turbulence spans a range from energy-containing eddies of the size of the flow, through an inertial subrange, down to the dissipative Kolmogorov microscales $\eta = (\nu^3/\varepsilon)^{1/4}$. The ratio of largest to smallest scales grows as $Re^{3/4}$. Kolmogorov's hypotheses, the $-5/3$ spectrum, and a worked example of the scales in a pipe flow are covered in [Energy Cascade Theory](./energy_cascade.md).
 
 ## Turbulent Transport
 
@@ -131,12 +104,7 @@ Turbulence greatly enhances transport of:
 - **Heat**: Turbulent thermal diffusivity $\alpha_t \gg \alpha$
 - **Mass**: Turbulent mass diffusivity $D_t \gg D$
 
-### Mixing Length Concept
-
-Prandtl's mixing length theory:
-$$\nu_t = \ell_m^2 \left|\frac{du}{dy}\right|$$
-
-where $\ell_m$ is the mixing length.
+The eddy-viscosity concept and the models that compute $\nu_t$ (mixing length, one- and two-equation models) are covered in [RANS Equations](./rans_equations.md) and [Turbulence Modeling](./modeling.md).
 
 ### Turbulent Prandtl and Schmidt Numbers
 
@@ -145,65 +113,18 @@ where $\ell_m$ is the mixing length.
 
 These are much closer to unity than their molecular counterparts.
 
-## Energy Budget
+## Energy Budget and Wall-Bounded Turbulence
 
-### Turbulent Kinetic Energy Equation
-
-$$\frac{Dk}{Dt} = P - \epsilon + T - \frac{1}{\rho}\nabla \cdot (\overline{p'v'})$$
-
-where:
-- $k = \frac{1}{2}\overline{v_i'v_i'}$ = turbulent kinetic energy
-- $P = -\overline{u_i'u_j'}\frac{\partial U_i}{\partial x_j}$ = production
-- $\epsilon = \nu\overline{\frac{\partial u_i'}{\partial x_j}\frac{\partial u_i'}{\partial x_j}}$ = dissipation
-- $T$ = turbulent transport
-- Last term = pressure transport
-
-### Production Mechanisms
-
-1. **Mean shear**: $P = -\overline{u'v'}\frac{dU}{dy}$ (most common)
-2. **Buoyancy**: $P_b = \beta g \overline{w'\theta'}$ (in stratified flows)
-3. **System rotation**: Coriolis effects
-
-### Dissipation
-
-Energy dissipation occurs at the smallest scales where:
-$$\epsilon = \nu \overline{\left(\frac{\partial u_i'}{\partial x_j}\right)^2}$$
-
-In equilibrium turbulence: Production = Dissipation
-
-## Wall-Bounded Turbulence
-
-### Near-Wall Structure
-
-1. **Viscous sublayer**: $y^+ < 5$
-   - Viscous effects dominate
-   - Linear velocity profile: $u^+ = y^+$
-
-2. **Buffer layer**: $5 < y^+ < 30$  
-   - Transition region
-   - Both viscous and turbulent effects important
-
-3. **Log layer**: $30 < y^+ < 0.3\delta$
-   - Logarithmic velocity profile: $u^+ = \frac{1}{\kappa}\ln y^+ + B$
-   - Universal constants: $\kappa \approx 0.41$, $B \approx 5.2$
-
-4. **Outer layer**: $y^+ > 0.3\delta$
-   - Velocity defect law
-   - Large-scale turbulent structures
-
-### Wall Units
-
-Non-dimensional variables based on wall shear stress:
-- $u_\tau = \sqrt{\tau_w/\rho}$ = friction velocity
-- $y^+ = yu_\tau/\nu$ = wall coordinate
-- $u^+ = u/u_\tau$ = velocity
+The turbulent kinetic energy equation (production, dissipation and transport), the near-wall structure (viscous sublayer, buffer layer, log law), and wall units such as $y^+$ are derived in [RANS Equations](./rans_equations.md). Additional production mechanisms appear in some flows, notably buoyancy in stratified flows and Coriolis effects under system rotation.
 
 ### Turbulent Boundary Layers
 
 Key parameters:
-- **Displacement thickness**: $\delta^* = \int_0^\delta (1 - u/U) dy$
+- **Displacement thickness**: $\delta^\ast = \int_0^\delta (1 - u/U) dy$
 - **Momentum thickness**: $\theta = \int_0^\delta \frac{u}{U}(1 - u/U) dy$
-- **Shape factor**: $H = \delta^*/\theta \approx 1.4$ (turbulent)
+- **Shape factor**: $H = \delta^\ast/\theta \approx 1.4$ (turbulent)
+
+See also [Boundary Layers](../viscous_flow/boundary_layers.md).
 
 ## Free Shear Flows
 
@@ -222,37 +143,13 @@ Key parameters:
 - **Vortex shedding**: Periodic vortex formation (low Re)
 - **Recovery**: Gradual momentum recovery downstream
 
-## Homogeneous Turbulence
+## Homogeneous and Isotropic Turbulence
 
-### Isotropic Turbulence
-- **No preferred direction**: All directions statistically equivalent
-- **Simplified analysis**: Reduces complexity significantly
-- **Laboratory approximation**: Grid-generated turbulence
-
-### Kolmogorov Theory
-For locally isotropic turbulence in inertial subrange:
-
-1. **First similarity hypothesis**: Statistics depend only on $\epsilon$ and $\nu$
-2. **Second similarity hypothesis**: For $\ell \gg \eta$, statistics independent of $\nu$
-
-### Energy Spectrum
-
-One-dimensional energy spectrum:
-$$E(k) = C\epsilon^{2/3}k^{-5/3}$$
-
-where $C \approx 1.5$ is the Kolmogorov constant.
+Homogeneous turbulence has statistics that are invariant under translation. Isotropic turbulence is also invariant under rotation and reflection. Grid-generated turbulence in a wind tunnel is the standard laboratory approximation. Definitions, correlation functions and spectra are in [Turbulence Statistics](./statistics.md), and Kolmogorov's theory of the small scales is in [Energy Cascade Theory](./energy_cascade.md).
 
 ## Advanced Topics
 
-### Large Eddy Simulation (LES)
-- Resolve large energy-containing scales
-- Model subgrid-scale turbulence
-- Compromise between DNS and RANS
-
-### Direct Numerical Simulation (DNS)
-- Resolve all scales from integral to Kolmogorov
-- No turbulence modeling
-- Extremely expensive: grid points $\sim Re^{9/4}$
+DNS, LES and hybrid RANS–LES methods, and their cost scalings, are compared in [Turbulence Modeling](./modeling.md).
 
 ### Coherent Structures
 - **Definition**: Organized patterns in turbulent flows
@@ -295,7 +192,9 @@ where $C \approx 1.5$ is the Kolmogorov constant.
 ## Historical Development
 
 - **1883**: Reynolds experiments on pipe flow transition
+- **1895**: Reynolds decomposition and averaged equations
 - **1904**: Prandtl's boundary layer theory
+- **1922**: Richardson's description of the energy cascade
 - **1925**: Prandtl's mixing length theory
 - **1941**: Kolmogorov's similarity theory
 - **1945**: von Kármán and Howarth equations

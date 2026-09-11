@@ -48,6 +48,7 @@ III. **Radial Basis Functions (RBF)**:
 - Use basis functions centered on training points. For a set $\{x^{(i)}, y^{(i)}\}_{i=1}^N$, the RBF surrogate is:
 
  $$\hat{y}(x) = \sum_{i=1}^N w_i R(\|x - x^{(i)}\|),$$
+
  where $R$ is a radially symmetric kernel (e.g., Gaussian, multiquadric).
 - Flexible and can handle scattered data in any dimension.
 - Hyperparameter tuning (e.g., scaling factors) is essential.
@@ -93,9 +94,11 @@ VI. **Surrogate Models from Reduced-Order Modeling (ROM)**:
 - Kriging: Estimate hyperparameters $\theta$ by maximizing the likelihood:
 
 $$\hat{\theta} = \arg\max_{\theta} L(\theta | Y).$$
+
 - Neural networks: Use stochastic gradient descent to minimize a loss function (e.g., mean squared error):
 
 $$\min_{w,b} \sum_{i=1}^N \|y^{(i)} - \hat{y}(x^{(i)}; w,b)\|^2,$$
+
 where $w,b$ are weights and biases.
 
 - Regularization and cross-validation are crucial to prevent overfitting. For Kriging, a nugget term may be added for noisy data. For NNs, use dropout or weight decay.
@@ -131,6 +134,7 @@ IV. **Model Fitting**:
 - Estimate Kriging hyperparameters $\theta$ by maximizing the log-likelihood. Solve:
 
  $$\hat{\theta} = \arg\max_{\theta} \left(-\frac{N}{2}\log(2\pi\sigma^2(\theta)) - \frac{1}{2}\log(\det(R(\theta))) - \frac{1}{2\sigma^2(\theta)}(Y - F\beta)^TR(\theta)^{-1}(Y - F\beta)\right),$$
+
  where $R(\theta)$ is the correlation matrix, $F$ is the regression matrix, and $Y$ contains $[C_L, C_D]$ values.
 
 V. **Validation**:
@@ -197,11 +201,63 @@ Surrogate models replace expensive CFD evaluations with fast-to-evaluate approxi
 | **Inputs** | Design parameter vector $x \in \mathbb{R}^d$ (e.g., geometric shape, inflow velocity), sampled CFD results $\{(x^{(i)}, y^{(i)})\}_{i=1}^N$, surrogate model type and hyperparameters |
 | **Outputs** | Surrogate prediction $\hat{y}(x)$ (e.g., drag coefficient, pressure drop), prediction uncertainty (for Kriging), validation metrics (RMSE, $R^2$) |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/kriging_interpolation/main.py` | Builds a Kriging surrogate using cubic-spline RBF correlation functions with varying hyperparameters. |
-| `scripts/algorithms/radial_basis_functions/main.py` | Performs 1-D function interpolation using multiquadric RBF, demonstrating the RBF surrogate concept. |
-| `scripts/algorithms/correlation_functions/main.py` | Plots several correlation function families (linear, exponential, Gaussian, cubic spline) used in Kriging and RBF models. |
-| `scripts/plots/design_space_distribution/main.py` | Visualizes a 2-D Sobol-sequence design space, illustrating the sampling step before surrogate construction. |
+- [Correlation Functions](../../../scripts/algorithms/correlation_functions/): plots four correlation functions used in kriging surrogate models (linear, exponential, Gaussian and cubic spline) for several values of the correlation parameter $\theta$.
+- [Design Space Distribution via Sobol Sequences](../../../scripts/plots/design_space_distribution/): draws a four-dimensional scrambled Sobol design of 512 geometry variants and plots two 2D projections of it, showing how evenly a low-discrepancy sequence covers a design space.
+- [Kriging Interpolation](../../../scripts/algorithms/kriging_interpolation/): interpolates 11 samples of $y(x) = (3x-3)^2 \sin(2x-10)$ with a kriging-type predictor built on the cubic spline correlation function, for four values of the correlation parameter $\theta$.
+- [Radial Basis Functions](../../../scripts/algorithms/radial_basis_functions/): fits a multiquadric radial basis function (RBF) interpolant through 11 data points on $[0, 1]$ using SciPy's `Rbf` class and plots it on a fine grid.
+
+## Exercises
+
+**Exercise 1.** An airfoil study has $d = 5$ shape parameters, and one RANS run costs 4 CPU-hours. How many runs, and CPU-hours, does a full factorial design with 3 levels per parameter need? With 5 levels? Compare with the $N = 50$ Latin hypercube plan of the example.
+
+<details>
+<summary>Answer</summary>
+
+3 levels: $3^5 = 243$ runs, i.e. 972 CPU-hours. 5 levels: $5^5 = 3125$ runs, i.e. 12500 CPU-hours. The LHS plan needs 50 runs, i.e. 200 CPU-hours. Its cost does not grow exponentially with $d$.
+
+</details>
+
+**Exercise 2.** A full quadratic response surface in $d$ variables has $(d + 1)(d + 2)/2$ coefficients. How many are needed for $d = 5$, $10$ and $20$? Can the 50-sample data set of the example support a quadratic fit for $d = 10$?
+
+<details>
+<summary>Answer</summary>
+
+$d = 5$: 21 coefficients. $d = 10$: 66. $d = 20$: 231. With $N = 50 < 66$ samples, the least-squares problem for $d = 10$ is underdetermined, so a full quadratic cannot be fitted; a reduced polynomial, Kriging or RBF model is needed instead.
+
+</details>
+
+**Exercise 3.** A hold-out set of five CFD results has $y = (0.80, 0.95, 1.10, 1.22, 1.30)$, and the surrogate predicts $\hat{y} = (0.82, 0.93, 1.12, 1.18, 1.31)$. Compute RMSE, MAE and $R^2 = 1 - \sum(y - \hat{y})^2 / \sum(y - \bar{y})^2$.
+
+<details>
+<summary>Answer</summary>
+
+The errors are $(0.02, -0.02, 0.02, -0.04, 0.01)$, and their squares sum to $0.0029$.
+
+- RMSE $= \sqrt{0.0029/5} = 0.0241$.
+- MAE $= 0.11/5 = 0.022$.
+- $\bar{y} = 1.074$ and $\sum(y - \bar{y})^2 = 0.16352$, so $R^2 = 1 - 0.0029/0.16352 = 0.982$.
+
+</details>
+
+**Exercise 4.** Fit (a) a linear and (b) a quadratic polynomial response surface by least squares to the data $x = (0, 1, 2, 3)$, $y = (1, 3, 7, 13)$. Report the coefficients and residuals, and explain why a low training error alone does not validate a surrogate.
+
+<details>
+<summary>Answer</summary>
+
+(a) $\bar{x} = 1.5$ and $\bar{y} = 6$; $S_{xy} = 20$ and $S_{xx} = 5$. The slope is 4 and the intercept is $6 - 4 \times 1.5 = 0$, so $\hat{y} = 4x$. The residuals are $(1, -1, -1, 1)$ and the sum of squared errors is 4.
+
+(b) The quadratic fit reproduces the data exactly: $\hat{y} = 1 + x + x^2$, with zero residuals.
+
+Training error measures only the fit at the samples. A model with as many coefficients as data points always fits exactly, even if it behaves badly between or beyond them. Hold-out or cross-validation errors (Exercise 3) are needed to judge predictive accuracy.
+
+</details>
+
+## References
+
+- A. I. J. Forrester, A. Sóbester and A. J. Keane, *Engineering Design via Surrogate Modelling: A Practical Guide*, Wiley, 2008.
+- N. V. Queipo, R. T. Haftka, W. Shyy, T. Goel, R. Vaidyanathan and P. K. Tucker, "Surrogate-based analysis and optimization", *Progress in Aerospace Sciences* 41(1), 2005.
+- T. W. Simpson, J. D. Peplinski, P. N. Koch and J. K. Allen, "Metamodels for computer-based engineering design: survey and recommendations", *Engineering with Computers* 17(2), 2001.
+- A. I. J. Forrester and A. J. Keane, "Recent advances in surrogate-based optimization", *Progress in Aerospace Sciences* 45(1–3), 2009.
+- C. E. Rasmussen and C. K. I. Williams, *Gaussian Processes for Machine Learning*, MIT Press, 2006.

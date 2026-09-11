@@ -61,7 +61,7 @@ $$P_1 + \frac{1}{2} \rho v_1^2 = P_2 + \frac{1}{2} \rho v_2^2$$
 - $v_1$ and $v_2$ are the velocities of the airflow over the top and bottom surfaces,
 - $\rho$ is the air density.
 
-Because the air moves faster over the top of the wing ($v_2 > v_1$), the pressure on the top ($P_2$) is lower than the pressure on the bottom ($P_1$), leading to an upward lift force.
+Because the air moves faster over the top of the wing ($v_1 > v_2$), the pressure on the top ($P_1$) is lower than the pressure on the bottom ($P_2$), leading to an upward lift force.
 
 The continuity equation also governs the conservation of mass in a fluid flow. For incompressible flow over an airfoil, the continuity equation ensures that the product of the cross-sectional area and velocity remains constant:
 
@@ -77,7 +77,7 @@ Aircraft performance can also be explored through energy and power equations. Th
 
 $$P_{\text{required}} = D \cdot v = \frac{1}{2} \rho v^3 C_D A$$
 
-This equation highlights that the power required to maintain flight increases dramatically with velocity, as it is proportional to the cube of the airspeed. Therefore, small increases in speed require significantly more engine power to overcome drag.
+This equation highlights that the power required to maintain flight increases dramatically with velocity, as it is proportional to the cube of the airspeed for a constant $C_D$ (a fair approximation at high speed, where parasite drag dominates; at low speed induced drag raises $C_D$ and the power required climbs again). Therefore, small increases in speed require significantly more engine power to overcome drag.
 
 In level flight, the engine must produce enough power to generate sufficient thrust to overcome both drag and maintain altitude. The efficiency of the engines can be expressed by the ratio of useful power (thrust times velocity) to the total energy expended:
 
@@ -87,7 +87,7 @@ where $\eta$ is the efficiency of the engine.
 
 #### Climbing and Descent Performance
 
-To climb, the airplane must generate more lift than weight. The rate of climb is related to the excess power available from the engines after overcoming drag. The vertical component of velocity during a climb, called the rate of climb ($R_c$), can be approximated as:
+A steady climb does not require more lift than weight (in fact $L = W\cos\gamma$, slightly less than $W$, where $\gamma$ is the climb angle); it requires excess thrust, i.e. excess power. The rate of climb is related to the excess power available from the engines after overcoming drag. The vertical component of velocity during a climb, called the rate of climb ($R_c$), can be approximated as:
 
 $$R_c = \frac{P_{\text{excess}}}{W}$$
 
@@ -168,3 +168,80 @@ Similarly, drag is quantified using the drag coefficient, which follows a simila
 $$C_D = \frac{D}{0.5 \times \rho \times V^2 \times A}$$
 
 where $D$ is the drag force. Reducing the drag coefficient is essential for efficient flight, as minimizing drag allows the airplane to fly faster and use less fuel.
+
+### Related Scripts
+
+- [Airfoil Angle of Attack](../../../../scripts/plots/airfoil_angle_attack/): draws a NACA 2412 airfoil pitched nose-up about its leading edge to several angles of attack, $10^\circ$ and $60^\circ$ by default, relative to a free stream flowing left to right.
+
+### Exercises
+
+**Exercise 1.** A light aircraft has mass 1100 kg and wing area 16.2 m². Find its sea-level stall speed ($\rho = 1.225$ kg/m³) with $C_{L_{max}} = 1.6$ (flaps up) and $C_{L_{max}} = 2.1$ (flaps down). Give the answers in m/s and knots.
+
+<details>
+<summary>Answer</summary>
+
+$W = 1100 \times 9.81 = 10\,791$ N.
+
+- Flaps up: $v_{stall} = \sqrt{\dfrac{2 \times 10\,791}{1.225 \times 1.6 \times 16.2}} = 26.1$ m/s = 50.7 kt
+- Flaps down: $v_{stall} = 22.8$ m/s = 44.2 kt
+
+Flaps cut the stall speed by 13%, which shortens takeoff and landing distances roughly in proportion to $v^2$.
+
+</details>
+
+**Exercise 2.** The same aircraft cruises in level flight at 55 m/s at sea level. What lift coefficient is required? Compare it with $C_{L_{max}}$.
+
+<details>
+<summary>Answer</summary>
+
+In level flight $L = W$:
+
+$$C_L = \frac{2W}{\rho v^2 A} = \frac{2 \times 10\,791}{1.225 \times 55^2 \times 16.2} = 0.36$$
+
+This is less than a quarter of $C_{L_{max}} = 1.6$, leaving a wide margin above the stall. It corresponds to a small angle of attack.
+
+</details>
+
+**Exercise 3.** Taking $C_D = 0.032$ as constant, find the drag and power required at 55 m/s and at 110 m/s for this aircraft. Why is the constant-$C_D$ assumption poor at low speed?
+
+<details>
+<summary>Answer</summary>
+
+- At 55 m/s: $D = \tfrac{1}{2}(1.225)(55^2)(0.032)(16.2) = 960$ N and $P = Dv = 52.8$ kW
+- At 110 m/s: $D = 3842$ N (4 times) and $P = 423$ kW (8 times)
+
+At low speed the wing needs a higher $C_L$, and induced drag grows as $C_L^2$. $C_D$ therefore rises sharply as speed falls, and the real power-required curve has a minimum at an intermediate speed instead of falling steadily toward zero.
+
+</details>
+
+**Exercise 4.** At a climb speed of 40 m/s, the engine and propeller deliver 80 kW of useful power and the power required for level flight at that speed is 35 kW. Find the rate of climb and the climb angle, and show that the lift during the climb is slightly less than the weight.
+
+<details>
+<summary>Answer</summary>
+
+$P_{excess} = 45$ kW, so
+
+$$R_c = \frac{P_{excess}}{W} = \frac{45\,000}{10\,791} = 4.17 \text{ m/s} \approx 820 \text{ ft/min}$$
+
+$\sin\gamma = R_c/V = 4.17/40$, so $\gamma = 6.0^\circ$.
+
+Perpendicular to the flight path, $L = W\cos\gamma = 0.995\,W$. The climb comes from excess thrust, not excess lift.
+
+</details>
+
+**Exercise 5.** With the engine off, the aircraft's best lift-to-drag ratio is 10. How far can it glide from 1500 m in still air? What speed should the pilot fly, and how does a headwind change the answer?
+
+<details>
+<summary>Answer</summary>
+
+Glide distance: $(L/D) \times h = 10 \times 1500 = 15$ km.
+
+The pilot should fly at the speed that gives maximum $L/D$ (the best-glide speed in the handbook). A headwind reduces the distance over the ground, and the best range is then obtained by flying somewhat faster than the still-air best-glide speed.
+
+</details>
+
+### References
+
+- Anderson, J. D., Jr., *Introduction to Flight*, 8th ed., McGraw-Hill Education, 2016.
+- Anderson, J. D., Jr., *Fundamentals of Aerodynamics*, 6th ed., McGraw-Hill Education, 2017.
+- Federal Aviation Administration, *Pilot's Handbook of Aeronautical Knowledge*, FAA-H-8083-25B, 2016.

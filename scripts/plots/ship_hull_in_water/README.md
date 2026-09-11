@@ -1,46 +1,70 @@
-# Ship Hull in Water — Free-Surface Flow Visualisation
+# Ship Hull in Water
 
-This script draws a stylised 2D cross-section of a ship hull together with a free-surface wave pattern, annotating the Froude number formula and key hydrodynamic features. It serves as a visual reference for understanding wave-making resistance and the relationship between hull speed and free-surface waves in naval hydrodynamics.
+This script draws a side-view sketch of a ship hull sitting in a sinusoidal free-surface wave and annotates it with the Froude number $Fr = U/\sqrt{gL}$. The wavelength of the drawn wave is linked to the ship speed through the deep-water dispersion relation, so the figure also reports the speed and Froude number that the sketch corresponds to.
 
 ## Overview
 
-- Renders a schematic hull cross-section below a sinusoidal free surface
-- Annotates the Froude number formula directly on the figure
-- Highlights the Kelvin wake half-angle of approximately $19.47^\circ$
-- Indicates the hull-speed Froude number of $Fr \approx 0.35$ where wave resistance is minimised
+- Draws a stylised hull profile (side view, bow at $x = 0$, stern at $x = L = 10$ m, draught 0.7 m) as a filled polygon.
+- Draws a free-surface wave $\eta(x) = A \sin(2\pi x/\lambda)$ with $A = 0.1$ m and $\lambda = 4$ m, extended 2 m beyond each end of the hull, and a dashed still-water line.
+- Draws an arrow labelled "Velocity U" for the oncoming flow in the ship's frame of reference.
+- Writes the Froude number formula above the hull.
+- Computes the ship speed whose transverse waves have wavelength $\lambda$, and the resulting Froude number, and writes them below the hull ($U \approx 2.50$ m/s, $Fr \approx 0.25$).
 
 ## Mathematical Background
 
 ### Free-Surface Wave Profile
 
-$$\eta(x) = A\sin\!\left(\frac{2\pi x}{\lambda}\right)$$
+$$
+\eta(x) = A\sin\left(\frac{2\pi x}{\lambda}\right)
+$$
 
 ### Froude Number
 
-$$Fr = \frac{U}{\sqrt{gL}}$$
+$$
+Fr = \frac{U}{\sqrt{gL}}
+$$
 
-where $U$ is the ship speed, $g$ is gravitational acceleration, and $L$ is the waterline length.
+where $U$ is the ship speed, $g$ the gravitational acceleration and $L$ the waterline length. $Fr$ compares inertia with gravity and governs the wave pattern and wave-making resistance of a hull; model tests of ships are run at the same Froude number as the full-scale vessel.
 
-### Hull Speed
+### Wavelength of Ship Waves
 
-$$Fr \approx 0.35 \quad \Longrightarrow \quad \text{minimum wave resistance}$$
+A deep-water gravity wave of wavelength $\lambda$ travels at phase speed $c = \sqrt{g\lambda/2\pi}$. The transverse waves of a ship are steady relative to the hull, so they travel at the ship speed, $c = U$. Therefore
 
-### Kelvin Wake Angle
+$$
+U = \sqrt{\frac{g\lambda}{2\pi}}, \qquad \frac{\lambda}{L} = 2\pi\, Fr^2
+$$
 
-$$\theta_K = \arcsin\!\left(\frac{1}{3}\right) \approx 19.47^\circ$$
-
-The Kelvin wake angle is universal: independent of ship speed for deep water.
+With $\lambda = 4$ m and $L = 10$ m this gives $U = 2.50$ m/s and $Fr = 0.25$. When $\lambda = L$ ($Fr = 1/\sqrt{2\pi} \approx 0.40$, the classical "hull speed") the bow and stern waves reinforce each other and wave-making resistance rises steeply.
 
 ## Implementation
 
-1. Define hull geometry as a closed polygon representing the cross-sectional profile.
-2. Generate a sinusoidal free-surface elevation $\eta(x)$ across the domain.
-3. Draw and fill the hull below the waterline using a shaded patch.
-4. Overlay the wave profile at the free surface.
-5. Annotate the figure with the Froude number formula and the Kelvin wake angle.
+- Constants: `G` (m/s$^2$), `HULL_LENGTH` (m), `WAVE_LENGTH` (m) and `WAVE_AMPLITUDE` (m).
+- `ship_speed_from_wavelength(wavelength, g)` returns $\sqrt{g\lambda/2\pi}$.
+- `froude_number(speed, length, g)` returns $U/\sqrt{gL}$.
+- `draw_ship_hull_and_waves(hull_length, wavelength, amplitude)` plots the wave, fills the hull polygon (scaled to `hull_length`), draws the velocity arrow, still-water line and annotations, and returns the figure. The axes use equal scaling.
+- `main(argv=None)` parses the flags, saves the figure if requested, and shows it.
+
+## Usage
+
+```bash
+python main.py                      # open the figure in a window
+python main.py --no-show --output . # save ship_hull_in_water.png without opening a window
+```
+
+| Flag | Description |
+|------|-------------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save the figure there as a PNG |
 
 ## Output
 
-The script displays a 2D schematic figure showing the hull cross-section submerged beneath a sinusoidal wave pattern. Annotations label the Froude number expression and the $19.47^\circ$ Kelvin wake half-angle, providing an intuitive reference for free-surface CFD post-processing.
+A side view of the hull below the still-water line, the sinusoidal free surface, the flow arrow, the Froude number formula, and the computed speed and Froude number for the drawn wavelength. The sketch is qualitative: the wave is drawn everywhere, including ahead of the bow, whereas a real ship's waves trail behind it.
 
-![ship_hull_in_water](https://github.com/user-attachments/assets/f1265bd2-3b3c-4860-87a2-7a90a9fdc064)
+![Ship hull in water](ship_hull_in_water.png)
+
+## Related Notes
+
+- [Dimensionless Numbers](../../../notes/fluid_mechanics/dimensions.md)
+- [Fluid Loading](../../../notes/applied_mechanics/fluid_loading/intro.md)
+- [Wave Loading](../../../notes/applied_mechanics/fluid_loading/wave_loading.md)
+- [Drag](../../../notes/fluid_mechanics/viscous_flow/drag.md)

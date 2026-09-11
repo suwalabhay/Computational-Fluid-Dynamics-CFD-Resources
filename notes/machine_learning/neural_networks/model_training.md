@@ -15,10 +15,14 @@ This methodology aims to clarify if geometric deep learning can adapt not only t
 In a typical setup, two different design datasets are used. One corresponds to Design 1 (e.g., a baseline shape family with certain variants), and another corresponds to Design 2 (a different family of shapes with its own unique modifications). Both datasets might involve systematic geometry alterations—such as bumper changes or roof attachments—to enrich the training space with diverse configurations.  
 
 
+**Design 1 dataset (X):**
+
 I. 50 to 70 simulations (X) for training  
 
 II. An additional 10 to 20 simulations (X) for testing  
 
+
+**Design 2 dataset (Y):**
 
 I. 20 to 40 simulations (Y) for training  
 
@@ -128,3 +132,82 @@ Spatial error maps—computed as $\Delta\phi(\mathbf{x}) = \phi^{\text{pred}}(\m
 - Reserving entire unseen geometries—not random splits—for testing provides the most realistic estimate of deployment performance.
 - Both global aerodynamic coefficients and local field variables should be evaluated, since aggregate metrics can mask localized prediction errors.
 - Early-stage design exploration benefits most from GDL surrogates, where modest accuracy trade-offs are acceptable in exchange for orders-of-magnitude speedup over full CFD.
+
+### Related Scripts
+
+- [Drag Coefficient Prediction](../../../scripts/plots/drag_coefficient_prediction/): compares two synthetic drag-coefficient predictors with reference values in a predicted-vs-reference plot, adding a regression line and $R^2$ for each.
+
+### Exercises
+
+**Exercise 1.** For Model 1 the comparison table gives a test MAE of 0.0110 and a test relative MAE of 4.8%. What baseline $C_d$ does this imply? What relative error does the same absolute MAE represent for a design with $C_d = 0.30$?
+
+<details>
+<summary>Answer</summary>
+
+Baseline $C_d \approx 0.0110/0.048 \approx 0.229$.
+
+For $C_d = 0.30$: $0.0110/0.30 \approx 3.7\%$.
+
+Relative MAE depends on the chosen baseline, so the reference value must be reported with it.
+
+</details>
+
+**Exercise 2.** Model 1 has test $R^2 = 0.61$ and a test error standard deviation of 0.0115. Assuming the errors have zero mean, estimate the standard deviation of the reference $C_d$ values in the test set. Explain how a model with under 5% relative MAE can still have a modest $R^2$.
+
+<details>
+<summary>Answer</summary>
+
+With zero-mean errors, MSE $\approx 0.0115^2 = 1.32 \times 10^{-4}$. Since $R^2 = 1 - \text{MSE}/\text{Var}(y)$:
+
+$$\text{Var}(y) = \frac{1.32 \times 10^{-4}}{1 - 0.61} \approx 3.39 \times 10^{-4}, \qquad \text{std}(y) \approx 0.0184.$$
+
+The test designs differ in $C_d$ by only about 0.018, so an error spread of 0.0115 (62% of that) leaves much of the variance unexplained, even though it is small relative to $C_d$ itself. $R^2$ measures the ability to rank and separate designs; relative MAE measures absolute accuracy. Design studies usually care about the former.
+
+</details>
+
+**Exercise 3.** At four surface nodes the predicted pressure coefficients are $(0.95, 0.40, -0.30, -0.60)$ and the references are $(1.00, 0.35, -0.20, -0.65)$. Compute the NRMSE defined in the note.
+
+<details>
+<summary>Answer</summary>
+
+The errors are $(-0.05, 0.05, -0.10, 0.05)$, so RMSE $= \sqrt{(0.0025 + 0.0025 + 0.01 + 0.0025)/4} \approx 0.0661$.
+
+The reference range is $1.00 - (-0.65) = 1.65$, so NRMSE $\approx 0.0661/1.65 \approx 0.040$ (4.0%).
+
+</details>
+
+**Exercise 4.** Model 3 is trained on 60 Design 1 cases and 30 Design 2 cases. What per-sample loss weights make both designs contribute equally to the training loss while keeping the average weight equal to 1? Why might this matter?
+
+<details>
+<summary>Answer</summary>
+
+With $N = 90$ samples and 2 groups, use $w_g = N/(2N_g)$: $w_X = 90/120 = 0.75$ and $w_Y = 90/60 = 1.5$.
+
+Each group then contributes $60 \times 0.75 = 30 \times 1.5 = 45$ effective samples, and the total weight stays at 90.
+
+Without weighting, the combined model is optimized mostly for Design 1, and its better average test score could hide poorer performance on Design 2. Report the metrics per design as well as combined.
+
+</details>
+
+**Exercise 5.** A grid search covers depth $\in \{4, 8, 12, 16\}$, hidden size $\in \{64, 128, 256\}$, learning rate $\in \{10^{-3}, 3 \times 10^{-4}, 10^{-4}\}$ and message-passing steps $\in \{5, 10, 15\}$, at 6 GPU-hours per trial. Compute the total cost and compare with 20 random-search trials. What is the probability that at least one of the 20 random trials lands in the best 5% of the search space?
+
+<details>
+<summary>Answer</summary>
+
+Grid search: $4 \times 3 \times 3 \times 3 = 108$ trials, or $108 \times 6 = 648$ GPU-hours.
+
+Random search: $20 \times 6 = 120$ GPU-hours.
+
+The probability that at least one random trial lands in the top 5% is $1 - 0.95^{20} \approx 0.64$.
+
+Random search is much cheaper and, when only a few hyperparameters really matter, tries more distinct values of each one than a grid does. Bayesian optimization (for example, Optuna) improves on this by concentrating later trials in promising regions.
+
+</details>
+
+### References
+
+- Bronstein, M. M., Bruna, J., Cohen, T., & Veličković, P., "Geometric Deep Learning: Grids, Groups, Graphs, Geodesics, and Gauges", arXiv:2104.13478, 2021.
+- Bergstra, J., & Bengio, Y., "Random Search for Hyper-Parameter Optimization", *Journal of Machine Learning Research* 13, 2012.
+- Akiba, T., Sano, S., Yanase, T., Ohta, T., & Koyama, M., "Optuna: A Next-generation Hyperparameter Optimization Framework", ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD), 2019.
+- Hastie, T., Tibshirani, R., & Friedman, J., *The Elements of Statistical Learning*, 2nd ed., Springer, 2009.
+- Pfaff, T., Fortunato, M., Sanchez-Gonzalez, A., & Battaglia, P. W., "Learning Mesh-Based Simulation with Graph Networks", International Conference on Learning Representations (ICLR), 2021.

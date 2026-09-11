@@ -167,6 +167,7 @@ $$x = r\cos\theta, \quad y = r\sin\theta, \quad z = z$$
 Unit vectors $\hat{\mathbf{e}}_r$, $\hat{\mathbf{e}}_\theta$, $\hat{\mathbf{e}}_z$ where $\hat{\mathbf{e}}_r$ and $\hat{\mathbf{e}}_\theta$ vary with position:
 
 $$\hat{\mathbf{e}}_r = \cos\theta\,\mathbf{i} + \sin\theta\,\mathbf{j}$$
+
 $$\hat{\mathbf{e}}_\theta = -\sin\theta\,\mathbf{i} + \cos\theta\,\mathbf{j}$$
 
 Applications: rotating shafts, pipe flow analysis, turbomachinery.
@@ -228,7 +229,7 @@ $$|\mathbf{d}| = \sqrt{5^2 + 2^2 + 3^2} = \sqrt{38} = 6.16 \text{ m}$$
 
 Angle between the vectors:
 
-$$\theta = \cos^{-1}\left(\frac{W}{|\mathbf{F}||\mathbf{d}|}\right) = \cos^{-1}\left(\frac{10}{53.85 \times 6.16}\right) = \cos^{-1}(0.0302) = 88.3°$$
+$$\theta = \cos^{-1}\left(\frac{W}{|\mathbf{F}||\mathbf{d}|}\right) = \cos^{-1}\left(\frac{10}{53.85 \times 6.16}\right) = \cos^{-1}(0.0302) = 88.3^\circ$$
 
 The force is nearly perpendicular to the displacement, resulting in minimal work.
 
@@ -292,3 +293,78 @@ These six scalar equations are the foundation for solving 3D statics problems.
 5. **Apply dimensional analysis**: Ensure that the units of each vector operation are consistent with the expected result
 
 Vector analysis is the essential mathematical toolkit for all of mechanics. Proficiency with vector operations enables clear, systematic solutions to force analysis, moment computation, and equilibrium problems in both two and three dimensions. These skills form the prerequisite for advanced topics including dynamics, deformable body mechanics, and computational methods.
+
+## Exercises
+
+**Exercise 1.** Find the magnitude and direction angles of $\mathbf{A} = 3\mathbf{i} - 4\mathbf{j} + 12\mathbf{k}$, and verify the direction-cosine identity.
+
+<details>
+<summary>Answer</summary>
+
+$|\mathbf{A}| = \sqrt{9 + 16 + 144} = 13$.
+
+$$\alpha = \cos^{-1}(3/13) = 76.7^\circ, \quad \beta = \cos^{-1}(-4/13) = 107.9^\circ, \quad \gamma = \cos^{-1}(12/13) = 22.6^\circ$$
+
+Check: $(9 + 16 + 144)/169 = 1$.
+
+</details>
+
+**Exercise 2.** Resolve $\mathbf{F} = (30\mathbf{i} - 40\mathbf{j} + 20\mathbf{k})$ N into components parallel and perpendicular to the direction $(2, -2, 1)$.
+
+<details>
+<summary>Answer</summary>
+
+$\hat{\mathbf{u}} = (2, -2, 1)/3$, so
+
+$$F_\parallel = \mathbf{F} \cdot \hat{\mathbf{u}} = \frac{60 + 80 + 20}{3} = 53.3 \text{ N}$$
+
+$$F_\perp = \sqrt{|\mathbf{F}|^2 - F_\parallel^2} = \sqrt{2900 - 2844.4} = 7.45 \text{ N}$$
+
+</details>
+
+**Exercise 3.** Find the area of the triangle with vertices $A(1, 0, 0)$, $B(0, 2, 0)$ and $C(0, 0, 3)$ (coordinates in m), and a unit normal to its plane.
+
+<details>
+<summary>Answer</summary>
+
+$\mathbf{r}_{AB} = (-1, 2, 0)$ and $\mathbf{r}_{AC} = (-1, 0, 3)$.
+
+$$\mathbf{r}_{AB} \times \mathbf{r}_{AC} = (6, 3, 2), \quad |\mathbf{r}_{AB} \times \mathbf{r}_{AC}| = 7$$
+
+The triangle area is half the parallelogram area: $3.5$ m². A unit normal is $\hat{\mathbf{n}} = (6, 3, 2)/7$.
+
+</details>
+
+**Exercise 4.** Use the scalar triple product to decide whether $(1, 2, 3)$, $(4, 5, 6)$ and $(7, 8, 9)$ are coplanar, and find the volume of the parallelepiped formed by $(1, 0, 0)$, $(1, 2, 0)$ and $(0, 1, 3)$.
+
+<details>
+<summary>Answer</summary>
+
+$$\begin{vmatrix} 1 & 2 & 3 \\ 4 & 5 & 6 \\ 7 & 8 & 9 \end{vmatrix} = 1(45 - 48) - 2(36 - 42) + 3(32 - 35) = -3 + 12 - 9 = 0$$
+
+so these vectors are coplanar.
+
+$$\begin{vmatrix} 1 & 0 & 0 \\ 1 & 2 & 0 \\ 0 & 1 & 3 \end{vmatrix} = 1(6 - 0) = 6$$
+
+so the volume is 6 (cubic units).
+
+</details>
+
+**Exercise 5.** Differentiate the cylindrical unit vectors $\hat{\mathbf{e}}_r$ and $\hat{\mathbf{e}}_\theta$ with respect to time, and use the result to derive the velocity $\mathbf{v} = \dot{r}\hat{\mathbf{e}}_r + r\dot{\theta}\hat{\mathbf{e}}_\theta + \dot{z}\mathbf{k}$ of a point at $\mathbf{r} = r\hat{\mathbf{e}}_r + z\mathbf{k}$. Evaluate the speed for $r = 2$ m, $\dot{r} = 1$ m/s, $\dot{\theta} = 3$ rad/s and $\dot{z} = 0$.
+
+<details>
+<summary>Answer</summary>
+
+$$\frac{d\hat{\mathbf{e}}_r}{dt} = \dot{\theta}(-\sin\theta\,\mathbf{i} + \cos\theta\,\mathbf{j}) = \dot{\theta}\,\hat{\mathbf{e}}_\theta, \quad \frac{d\hat{\mathbf{e}}_\theta}{dt} = -\dot{\theta}(\cos\theta\,\mathbf{i} + \sin\theta\,\mathbf{j}) = -\dot{\theta}\,\hat{\mathbf{e}}_r$$
+
+Therefore $\mathbf{v} = \frac{d}{dt}(r\hat{\mathbf{e}}_r + z\mathbf{k}) = \dot{r}\hat{\mathbf{e}}_r + r\dot{\theta}\hat{\mathbf{e}}_\theta + \dot{z}\mathbf{k}$, since $\mathbf{k}$ is constant.
+
+Numerically $\mathbf{v} = 1\,\hat{\mathbf{e}}_r + 6\,\hat{\mathbf{e}}_\theta$ m/s, so the speed is $\sqrt{37} = 6.08$ m/s.
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- M. R. Spiegel, S. Lipschutz, D. Spellman, *Vector Analysis*, 2nd ed., Schaum's Outline Series, McGraw-Hill, 2009.
+- E. Kreyszig, *Advanced Engineering Mathematics*, 10th ed., Wiley, 2011.

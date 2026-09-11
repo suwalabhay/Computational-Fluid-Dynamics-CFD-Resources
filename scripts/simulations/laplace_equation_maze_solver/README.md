@@ -1,59 +1,64 @@
 # Laplace Equation Maze Solver
 
-This simulation generates a random perfect maze, solves Laplace's equation over the maze interior to produce a smooth potential field, and traces the solution path by following the potential gradient from entrance to exit. Watch it in action: [![YouTube](https://img.youtube.com/vi/kyYcME2sBws/maxresdefault.jpg)](https://youtu.be/kyYcME2sBws)
+This script solves a randomly generated maze by computing a potential that satisfies Laplace's equation in the maze passages and then following the potential uphill from the entrance to the exit. The solve and the path are animated with Pygame. Watch it in action: [![YouTube](https://img.youtube.com/vi/kyYcME2sBws/maxresdefault.jpg)](https://youtu.be/kyYcME2sBws)
 
 ## Overview
 
-- **Depth-first maze generation**: recursive backtracker produces a perfect $N\times N$ maze with exactly one path between any two cells.
-- **Laplace's equation** $\nabla^2\phi=0$ solved over open cells with Dirichlet BCs: entrance $\phi=0$, exit $\phi=1$, walls $\phi=-1$.
-- **Gradient ascent**: path traced by stepping to the neighbor with the highest potential.
-- **Pygame rendering**: walls in black, open cells color-mapped by $\phi$, solution path highlighted in gold.
+- **Maze generation**: a seeded depth-first (recursive backtracker) algorithm carves a perfect maze on a 100 × 100 grid, with exactly one route between any two open cells. The entrance is the top-left cell $(0, 0)$ and the exit is $(98, 98)$.
+- **Laplace's equation**: solved on the open cells with $\phi = 0$ at the entrance, $\phi = 1$ at the exit and insulating walls (no flux through them).
+- **Conjugate gradients**: 25 iterations are drawn per frame until the relative residual falls below $10^{-10}$. The default maze needs 4646 iterations.
+- **Path extraction**: once the potential has converged, the path steps from the entrance to the open 4-neighbour with the largest $\phi$, backtracking out of dead ends if one is ever entered.
+- **Display**: walls are black and open cells are coloured from blue ($\phi = 0$) to green ($\phi = 1$). The gold path is revealed one cell per frame, with the entrance in red and the exit in green.
 
 ## Mathematical Background
 
-### Laplace's Equation for Potential
+### Discrete Laplace Equation
 
-Interior open cells satisfy:
+Each open cell $c$ that is not the entrance or exit satisfies the graph Laplace equation over its open neighbours $\mathcal{N}(c)$:
 
-$$\nabla^2\phi = 0$$
+$$\sum_{n\in\mathcal{N}(c)} \left(\phi_c - \phi_n\right) = 0$$
 
-with boundary conditions $\phi=0$ at the entrance, $\phi=1$ at the exit, and walls fixed at $\phi=-1$ (excluded from relaxation).
+This is the 5-point finite-difference form of $\nabla^2\phi = 0$. Neighbours that are walls are left out of the sum, which imposes the zero-flux condition $\partial\phi/\partial n = 0$. The Dirichlet values $\phi_{\text{entrance}} = 0$ and $\phi_{\text{exit}} = 1$ move to the right-hand side, giving a symmetric positive-definite system $A\boldsymbol{\phi} = \mathbf{b}$.
 
-### Finite-Difference Relaxation
+### Why the Gradient Finds the Route
 
-The discrete Laplacian is iterated via Gauss–Seidel relaxation:
+Think of the maze as an electrical network with a unit voltage applied between the entrance and the exit. In a perfect maze the only conducting route is the unique path between them. The potential therefore rises linearly along that path, by $1/(L-1)$ per cell for a path of $L$ cells. Every dead-end branch carries no current and keeps the constant potential of the junction where it leaves the path. Stepping to the neighbour with the largest potential therefore never enters a dead end. For the default maze the path has 1649 cells and $\phi$ rises by exactly $1/1648$ at each step.
 
-$$\phi_{i,j}^{\text{new}} = \phi_{i,j} + \Delta t\!\left(\frac{1}{4}\sum_{(k,\ell)\in\mathcal{N}(i,j)}\phi_{k,\ell} - \phi_{i,j}\right)$$
+### Conjugate Gradient Method
 
-where $\mathcal{N}(i,j)$ denotes the four orthogonal neighbors. Iteration stops when $\max|\Delta\phi| < \varepsilon$ or after a fixed iteration cap.
+Starting from $\mathbf{r}_0 = \mathbf{b} - A\boldsymbol{\phi}_0$ and $\mathbf{d}_0 = \mathbf{r}_0$, each iteration computes
 
-### Path Extraction via Gradient Ascent
+$$\alpha_k = \frac{\mathbf{r}_k^\top\mathbf{r}_k}{\mathbf{d}_k^\top A\mathbf{d}_k}, \quad \boldsymbol{\phi}_{k+1} = \boldsymbol{\phi}_k + \alpha_k\mathbf{d}_k, \quad \mathbf{r}_{k+1} = \mathbf{r}_k - \alpha_k A\mathbf{d}_k, \quad \mathbf{d}_{k+1} = \mathbf{r}_{k+1} + \frac{\mathbf{r}_{k+1}^\top\mathbf{r}_{k+1}}{\mathbf{r}_k^\top\mathbf{r}_k}\mathbf{d}_k$$
 
-Starting at the entrance, move greedily to the open neighbor with the largest potential:
-
-$$\text{next cell} = \arg\max_{(k,\ell)\in\mathcal{N}(i,j)} \phi_{k,\ell}$$
-
-Continue until the exit is reached, backtracking if no unvisited neighbor has higher $\phi$.
-
-### Color Mapping
-
-Open cells are colored proportionally to their potential, mapping $[-1,+1]$ to the blue–green range:
-
-$$\text{color} \propto \left(\frac{\phi+1}{2}\right)$$
+and stops when $\lVert\mathbf{r}_k\rVert \le 10^{-10}\,\lVert\mathbf{b}\rVert$.
 
 ## Implementation
 
-1. Build a perfect maze on an $N\times N$ grid using a depth-first recursive backtracker; mark walls and passages.
-2. Assign boundary potentials: $\phi=0$ (entrance), $\phi=1$ (exit), $\phi=-1$ (walls).
-3. Iteratively apply the finite-difference relaxation stencil to all open interior cells until convergence ($\max|\Delta\phi| < 10^{-6}$) or 5000 iterations.
-4. Perform gradient ascent from the entrance: at each step move to the open neighbor with the largest $\phi$.
-5. Each frame: extend the visible gold path by one step and redraw the full maze with current $\phi$ colors.
-6. Continue until the path reaches the exit or the window is closed.
+- `generate_maze(size, rng)` carves passages on even-indexed cells with a `random.Random(SEED)` generator.
+- `apply_laplacian(phi, open_mask)` applies the graph Laplacian with vectorised NumPy slices. Wall and out-of-grid neighbours are skipped.
+- `LaplaceSolver` stores the potential, residual and search direction. `iterate(n)` performs up to `n` conjugate-gradient iterations, and `converged` checks the residual against `TOLERANCE`.
+- `follow_gradient(phi, open_mask, start, end)` performs greedy ascent over 4-neighbours with backtracking.
+- `draw_maze` builds an RGB array of walls, potential, path and markers, and scales it to the window with `CELL_SIZE`.
+- `main` runs `CG_ITERATIONS_PER_FRAME` iterations per frame until convergence (capped at `MAX_ITERATIONS`), then traces the path and reveals it one cell per frame.
+
+## Usage
+
+```bash
+python main.py                                     # run until the window is closed
+python main.py --no-show --output . --steps 1900   # headless, save a screenshot with the full path
+```
+
+`--steps N` sets the number of frames. The default maze uses about 186 frames for the solve, then one frame per path cell, so the full path is visible after about 1840 frames.
 
 ## Output
 
-The Pygame window displays the maze and potential field rendered in real time:
+![Maze coloured by potential with the solution path](laplace_equation_maze_solver.png)
 
-- **Potential gradient**: a smooth color ramp from blue (entrance, $\phi=0$) to green (exit, $\phi=1$) reveals how the solution flows through maze passages.
-- **Gold path**: the traced solution route is incrementally revealed frame by frame.
-- **Start/End markers**: entrance in red, exit in green.
+- **Potential**: passages are coloured from blue near the entrance (top left) to green near the exit (bottom right). Each dead-end region has a uniform colour set by the junction where it branches off the solution path.
+- **Gold path**: the route from the entrance (red) to the exit (green), obtained by following the potential uphill.
+
+## Related Notes
+
+- [Potential flow and Laplace's equation](../../../notes/fluid_mechanics/inviscid_flow/potential_flow.md)
+- [Direct and iterative solvers](../../../notes/numerical/cfd/direct_and_iterative_solvers.md)
+- [Finite difference discretization](../../../notes/numerical/fdm/discretization.md)

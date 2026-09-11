@@ -7,7 +7,6 @@ The Airfoil Tools website is a valuable resource for anyone interested in aircra
 When you first visit the Airfoil Tools website, you’ll find a vast database of airfoils, many of which are sourced from the University of Illinois database. These airfoils cover a wide range of designs used in various types of aircraft, from gliders to high-speed jets. The website also allows users to search for specific airfoils by name or browse through categories based on performance characteristics like lift, drag, or stall behavior.
 
 One of the most helpful features of the Airfoil Tools site is its user-friendly interface. You can easily click on an airfoil to see detailed information, including key parameters like the coefficient of lift (CL), coefficient of drag (CD), and the lift-to-drag ratio (CL/CD). Each airfoil also comes with performance curves that allow you to visualize how it behaves across different angles of attack and Reynolds numbers, helping you make informed decisions about which airfoil best suits your design.
-Here’s a refined version of the text for better clarity, organization, and presentation, along with renamed screenshots:
 
 ### Airfoil Comparison
 
@@ -55,7 +54,7 @@ V. **CM vs Alpha (Moment Coefficient vs Angle of Attack)**
 
 Comparing Performance at Different Reynolds Numbers:
 
-- At **Re = 50,000**, both airfoils exhibit lower efficiency due to higher drag relative to lift, typical for low Reynolds numbers where airflow is more turbulent and less smooth.
+- At **Re = 50,000**, both airfoils exhibit lower efficiency due to higher drag relative to lift, typical for low Reynolds numbers, where the boundary layer stays laminar longer and is prone to laminar separation bubbles.
 - At **Re = 1,000,000**, the efficiency of both airfoils improves, but the **Clark Y** shows a notably higher peak CL/CD ratio of **114.8**, significantly outperforming the **NACA 0012**, which peaks at **63**. This makes the **Clark Y** a superior choice for smooth, efficient flight at moderate speeds, as in slow-flying planes or gliders.
 
 ### Analyzing Airfoil Performance
@@ -91,10 +90,84 @@ Here's a simple table comparing some common airfoils based on their general char
 | **Airfoil**     | **Type**         | **Lift (CL)**           | **Drag (CD)**          | **Stall Characteristics** | **Typical Use Cases**             | **Notes**                                                                 |
 |-----------------|------------------|-------------------------|------------------------|----------------------------|------------------------------------|---------------------------------------------------------------------------|
 | NACA 2412       | Cambered          | Moderate (balanced)     | Moderate               | Gradual stall              | General aviation (e.g., Cessna 172)| Good all-rounder, balance between lift and drag for medium speeds.         |
-| NACA 0012       | Symmetric         | Low at zero AoA         | Low at high speeds      | Sharp stall                | Aerobatics, supersonic aircraft    | No lift at zero AoA; stable in both directions for inverted flight.       |
+| NACA 0012       | Symmetric         | Low at zero AoA         | Low at high speeds      | Sharp stall                | Aerobatics, helicopter rotors, tail surfaces | No lift at zero AoA; stable in both directions for inverted flight.       |
 | NACA 4412       | Highly Cambered   | High                    | Higher drag at low speeds | More gradual stall         | Slow-flying aircraft, gliders      | Great for high lift at slow speeds but suffers from increased drag.       |
 | Clark Y         | Flat-bottomed     | High                    | Moderate to high        | Moderate stall             | Homebuilt aircraft, early aircraft | Popular due to simplicity and good lift generation at lower speeds.       |
 | NACA 23012      | Cambered          | Moderate to high        | Moderate               | Gradual stall              | Light aircraft, gliders            | Balances good low-speed lift and efficiency for cruising.                 |
 | Eppler 423 (E423)| Cambered (Glider) | High at low speeds      | Low to moderate         | Gradual stall              | Gliders, sailplanes                | Optimized for high lift-to-drag ratios, great for sustained gliding.      |
 | NACA 63(3)-618  | Laminar flow      | Moderate                | Very low (laminar drag) | Moderate stall             | High-speed gliders, sailplanes     | Excellent for low drag at higher speeds, used in modern sailplanes.       |
 
+### Related Scripts
+
+- [NACA 4-Digit Airfoil Profile](../../../../scripts/plots/airfoil_profile/): draws an annotated NACA 4-digit airfoil profile (NACA 4412 by default) from its four-digit designation, labelling the leading edge, trailing edge, chord line and mean camber line.
+
+### Exercises
+
+**Exercise 1.** Airfoil Tools lists polars at fixed Reynolds numbers (for example 50,000, 100,000, 200,000, 500,000 and 1,000,000). Which polar should you look at for (a) a full-size glider wing with a 0.9 m chord flying at 25 m/s, and (b) a model glider with a 0.2 m chord flying at 10 m/s? Use sea-level air: $\rho = 1.225$ kg/m³, $\mu = 1.81 \times 10^{-5}$ Pa·s.
+
+<details>
+<summary>Answer</summary>
+
+(a) $Re = 1.225 \times 25 \times 0.9/1.81 \times 10^{-5} = 1.52 \times 10^6$. Use the 1,000,000 polar, remembering that performance at the real Reynolds number will be slightly better.
+
+(b) $Re = 1.225 \times 10 \times 0.2/1.81 \times 10^{-5} = 1.35 \times 10^5$. Use the 100,000 polar, and preferably 200,000 as well to bracket it. At these values airfoil behaviour changes quickly with $Re$, so interpolation is less reliable.
+
+</details>
+
+**Exercise 2.** A section polar shows $c_l = 0.8$ with $c_d = 0.008$, i.e. $c_l/c_d = 100$. The section is used on a wing with $AR = 20$ and $e = 0.9$. Estimate the wing's lift-to-drag ratio, ignoring fuselage and tail drag. What does this say about reading section $c_l/c_d$ values such as 114.8 directly as aircraft performance?
+
+<details>
+<summary>Answer</summary>
+
+$$C_{D_i} = \frac{C_L^2}{\pi e\,AR} = \frac{0.64}{\pi \times 0.9 \times 20} = 0.0113$$
+
+$C_D \approx 0.008 + 0.0113 = 0.0193$, so $L/D \approx 0.8/0.0193 = 41$.
+
+Section polars are two-dimensional and leave out induced drag, which here is larger than the profile drag. Section $c_l/c_d$ ranks airfoils but greatly overstates the lift-to-drag ratio of the whole aircraft.
+
+</details>
+
+**Exercise 3.** Decode the designations NACA 0012, 2412 and 4412. Then explain why the NACA 0012 is a poor choice for a supersonic aircraft even though it is symmetric.
+
+<details>
+<summary>Answer</summary>
+
+- NACA 0012: no camber, 12% thick
+- NACA 2412: 2% camber at 40% chord, 12% thick
+- NACA 4412: 4% camber at 40% chord, 12% thick
+
+At supersonic speed, wave drag grows roughly with the square of the thickness ratio, and a blunt, round leading edge produces a detached bow shock. Supersonic wings therefore use much thinner sections (a few percent thick) with sharp or small-radius leading edges. A 12% section with a round nose suits low-speed aerobatic aircraft, helicopter rotors and tail surfaces instead.
+
+</details>
+
+**Exercise 4.** In the comparison, both airfoils perform worse at $Re = 50\,000$ than at $Re = 1\,000\,000$. Explain the physical reason, and name two design responses for aircraft that must fly at low Reynolds numbers.
+
+<details>
+<summary>Answer</summary>
+
+At low Reynolds numbers the boundary layer stays laminar over much of the surface. A laminar boundary layer separates easily in the adverse pressure gradient behind the suction peak and often forms a laminar separation bubble, which thickens the wake, raises drag and makes lift non-linear. Skin-friction coefficients are also higher at low $Re$.
+
+Design responses:
+
+- Choose airfoils designed for low $Re$: thin, with carefully shaped pressure recovery (for example the Eppler and Selig families).
+- Trip the boundary layer to turbulence ahead of the separation point with turbulator tape or zig-zag strips.
+
+</details>
+
+**Exercise 5.** A sailplane has a best glide ratio $L/D = 40$. How far can it glide in still air from 1000 m? Does a heavier sailplane with the same $L/D$ glide farther?
+
+<details>
+<summary>Answer</summary>
+
+In a steady glide the glide ratio equals $L/D$, so the distance is $40 \times 1000 = 40$ km.
+
+Weight does not change the maximum $L/D$, only the speed at which it occurs, so a heavier sailplane glides the same distance but faster. That is why racing sailplanes carry water ballast.
+
+</details>
+
+### References
+
+- Abbott, I. H., and von Doenhoff, A. E., *Theory of Wing Sections: Including a Summary of Airfoil Data*, Dover, 1959.
+- Drela, M., "XFOIL: An analysis and design system for low Reynolds number airfoils", in Mueller, T. J. (ed.), *Low Reynolds Number Aerodynamics*, Lecture Notes in Engineering, vol. 54, Springer, 1989.
+- Selig, M. S., Guglielmo, J. J., Broeren, A. P., and Giguère, P., *Summary of Low-Speed Airfoil Data*, Vol. 1, SoarTech Publications, 1995.
+- Anderson, J. D., Jr., *Fundamentals of Aerodynamics*, 6th ed., McGraw-Hill Education, 2017.

@@ -1,44 +1,186 @@
-import pygame
+"""Real-time Eulerian simulation of inviscid flow past a cylinder with Pygame.
+
+A 2D staggered (MAC) grid holds the velocity and a passive dye ("smoke")
+field. Each frame applies gravity (off by default), makes the velocity
+divergence-free with Gauss-Seidel over-relaxation, extrapolates boundary
+velocities, and advects velocity and dye with the semi-Lagrangian method. A
+uniform inflow enters from the left; a dye streak released at mid-height shows
+the wake. The scheme follows Matthias Mueller's "Ten Minute Physics" Eulerian
+fluid demo. There is no explicit viscosity; only numerical diffusion from the
+interpolation damps the flow.
+
+Keys: P pauses or resumes, M advances one frame while paused.
+"""
+
+import argparse
+import os
+from pathlib import Path
+
 import numpy as np
+import pygame
+from numba import njit
 
-# Constants
-WINDOW_WIDTH, WINDOW_HEIGHT = 800, 600
-SIM_HEIGHT = 1.1
-GRAVITY = 0.0  # Gravity turned off
-DELTA_TIME = 1.0 / 60.0
-NUM_ITERATIONS = 20
-OVER_RELAXATION = 1.9
-OBSTACLE_RADIUS = 0.15
-DENSITY = 1000.0
+WINDOW_WIDTH, WINDOW_HEIGHT = 800, 600  # pixels
+SIM_HEIGHT = 1.1  # visible height of the window, m
+GRAVITY = 0.0  # m/s^2 (turned off)
+DELTA_TIME = 1.0 / 60.0  # s per frame
+NUM_ITERATIONS = 20  # Gauss-Seidel iterations per frame
+OVER_RELAXATION = 1.9  # SOR factor for the projection
+OBSTACLE_X, OBSTACLE_Y = 0.4, 0.5  # cylinder centre, m
+OBSTACLE_RADIUS = 0.15  # m
+DENSITY = 1000.0  # kg/m^3 (only scales the pressure field)
+INLET_VELOCITY = 2.0  # m/s
+RESOLUTION = 100  # cells across the domain height
+DEFAULT_HEADLESS_STEPS = 300  # frames used with --no-show when --steps is omitted
 
-# Helper functions
-def canvas_x(x, scale):
-    return x * scale
+BACKGROUND = (240, 248, 255)  # Alice blue
+OBSTACLE_COLOR = (47, 79, 79)  # dark slate grey
+PALETTE = np.array(
+    [
+        (173, 216, 230),  # light blue      dye fraction 0.00-0.25
+        (100, 149, 237),  # cornflower blue 0.25-0.50
+        (70, 130, 180),  # steel blue       0.50-0.75
+        (144, 238, 144),  # light green     0.75-1.00 (clear fluid)
+    ],
+    dtype=np.uint8,
+)
 
-def canvas_y(y, canvas_height, scale):
-    return canvas_height - y * scale
 
-def get_sci_color(value, min_val, max_val):
-    value = min(max(value, min_val), max_val - 0.0001)
-    delta = max_val - min_val
-    normalized_value = (value - min_val) / delta if delta != 0 else 0.5
-    segment = 0.25
-    colors = [
-        (173, 216, 230),  # Light blue
-        (100, 149, 237),  # Cornflower blue
-        (70, 130, 180),   # Steel blue
-        (144, 238, 144)   # Light green
-    ]
+@njit(cache=False)
+def integrate(v, s, nx, ny, dt, gravity):
+    """Add gravity to v on faces between two fluid cells."""
+    n = ny
+    for i in range(1, nx):
+        for j in range(1, ny - 1):
+            if s[i * n + j] != 0.0 and s[i * n + j - 1] != 0.0:
+                v[i * n + j] += gravity * dt
 
-    color_index = int(normalized_value / segment)
-    r, g, b = colors[color_index]
 
-    return r, g, b, 255
+@njit(cache=False)
+def solve_incompressibility(u, v, p, s, nx, ny, num_iters, cp, omega):
+    """Remove the velocity divergence of every fluid cell by Gauss-Seidel SOR.
+
+    s is 1 for fluid and 0 for solid cells; solid faces are not changed. The
+    accumulated correction times cp = rho*h/dt is the pressure.
+    """
+    n = ny
+    for _ in range(num_iters):
+        for i in range(1, nx - 1):
+            for j in range(1, ny - 1):
+                if s[i * n + j] == 0.0:
+                    continue
+                sx0 = s[(i - 1) * n + j]
+                sx1 = s[(i + 1) * n + j]
+                sy0 = s[i * n + j - 1]
+                sy1 = s[i * n + j + 1]
+                s_sum = sx0 + sx1 + sy0 + sy1
+                if s_sum == 0.0:
+                    continue
+                div = (
+                    u[(i + 1) * n + j] - u[i * n + j] + v[i * n + j + 1] - v[i * n + j]
+                )
+                corr = -div / s_sum * omega
+                p[i * n + j] += cp * corr
+                u[i * n + j] -= sx0 * corr
+                u[(i + 1) * n + j] += sx1 * corr
+                v[i * n + j] -= sy0 * corr
+                v[i * n + j + 1] += sy1 * corr
+
+
+@njit(cache=False)
+def extrapolate(u, v, nx, ny):
+    """Copy tangential velocities into the boundary rows and columns."""
+    n = ny
+    for i in range(nx):
+        u[i * n + 0] = u[i * n + 1]
+        u[i * n + ny - 1] = u[i * n + ny - 2]
+    for j in range(ny):
+        v[0 * n + j] = v[1 * n + j]
+        v[(nx - 1) * n + j] = v[(nx - 2) * n + j]
+
+
+@njit(cache=False)
+def sample_field(x, y, field, off_x, off_y, nx, ny, h):
+    """Bilinearly interpolate a staggered field at (x, y).
+
+    off_x, off_y give the offset of the field's sample points from the cell
+    corner: u is at (0, h/2), v at (h/2, 0), cell-centred data at (h/2, h/2).
+    """
+    n = ny
+    inv_h = 1.0 / h
+    x = min(max(x, h), nx * h)
+    y = min(max(y, h), ny * h)
+
+    x0 = min(int((x - off_x) * inv_h), nx - 1)
+    tx = ((x - off_x) - x0 * h) * inv_h
+    x1 = min(x0 + 1, nx - 1)
+
+    y0 = min(int((y - off_y) * inv_h), ny - 1)
+    ty = ((y - off_y) - y0 * h) * inv_h
+    y1 = min(y0 + 1, ny - 1)
+
+    sx = 1.0 - tx
+    sy = 1.0 - ty
+    return (
+        sx * sy * field[x0 * n + y0]
+        + tx * sy * field[x1 * n + y0]
+        + tx * ty * field[x1 * n + y1]
+        + sx * ty * field[x0 * n + y1]
+    )
+
+
+@njit(cache=False)
+def advect_velocity(u, v, new_u, new_v, s, nx, ny, h, dt):
+    """Semi-Lagrangian advection of both velocity components."""
+    n = ny
+    half_h = 0.5 * h
+    new_u[:] = u
+    new_v[:] = v
+    for i in range(1, nx):
+        for j in range(1, ny):
+            if s[i * n + j] != 0.0 and s[(i - 1) * n + j] != 0.0 and j < ny - 1:
+                x = i * h
+                y = j * h + half_h
+                uu = u[i * n + j]
+                vv = sample_field(x, y, v, half_h, 0.0, nx, ny, h)
+                new_u[i * n + j] = sample_field(
+                    x - dt * uu, y - dt * vv, u, 0.0, half_h, nx, ny, h
+                )
+            if s[i * n + j] != 0.0 and s[i * n + j - 1] != 0.0 and i < nx - 1:
+                x = i * h + half_h
+                y = j * h
+                uu = sample_field(x, y, u, 0.0, half_h, nx, ny, h)
+                vv = v[i * n + j]
+                new_v[i * n + j] = sample_field(
+                    x - dt * uu, y - dt * vv, v, half_h, 0.0, nx, ny, h
+                )
+    u[:] = new_u
+    v[:] = new_v
+
+
+@njit(cache=False)
+def advect_dye(m, new_m, u, v, s, nx, ny, h, dt):
+    """Semi-Lagrangian advection of the cell-centred dye field."""
+    n = ny
+    half_h = 0.5 * h
+    new_m[:] = m
+    for i in range(1, nx - 1):
+        for j in range(1, ny - 1):
+            if s[i * n + j] != 0.0:
+                uu = 0.5 * (u[i * n + j] + u[(i + 1) * n + j])
+                vv = 0.5 * (v[i * n + j] + v[i * n + j + 1])
+                x = i * h + half_h - dt * uu
+                y = j * h + half_h - dt * vv
+                new_m[i * n + j] = sample_field(x, y, m, half_h, half_h, nx, ny, h)
+    m[:] = new_m
+
 
 class FluidSimulator:
+    """Staggered-grid fluid state; arrays are flat with index i * grid_height + j."""
+
     def __init__(self, density, grid_width, grid_height, cell_size):
         self.density = density
-        self.grid_width = grid_width + 2
+        self.grid_width = grid_width + 2  # one ghost/boundary cell on each side
         self.grid_height = grid_height + 2
         self.num_cells = self.grid_width * self.grid_height
         self.cell_size = cell_size
@@ -47,141 +189,44 @@ class FluidSimulator:
         self.new_u = np.zeros(self.num_cells, dtype=np.float32)
         self.new_v = np.zeros(self.num_cells, dtype=np.float32)
         self.pressure = np.zeros(self.num_cells, dtype=np.float32)
-        self.solid = np.ones(self.num_cells, dtype=np.float32)
-        self.density_field = np.ones(self.num_cells, dtype=np.float32)
+        self.solid = np.ones(self.num_cells, dtype=np.float32)  # 1 fluid, 0 solid
+        self.density_field = np.ones(self.num_cells, dtype=np.float32)  # dye
         self.new_density_field = np.zeros(self.num_cells, dtype=np.float32)
 
-    def integrate(self, delta_time, gravity):
-        n = self.grid_height
-        for i in range(1, self.grid_width):
-            for j in range(1, self.grid_height - 1):
-                if self.solid[i * n + j] != 0.0 and self.solid[i * n + j - 1] != 0.0:
-                    self.v[i * n + j] += gravity * delta_time
-
-    def solve_incompressibility(self, num_iterations, delta_time, density_constant, over_relaxation):
-        n = self.grid_height
-        for _ in range(num_iterations):
-            for i in range(1, self.grid_width - 1):
-                for j in range(1, self.grid_height - 1):
-                    if self.solid[i * n + j] == 0.0:
-                        continue
-
-                    s = (self.solid[(i - 1) * n + j] + self.solid[(i + 1) * n + j] +
-                         self.solid[i * n + j - 1] + self.solid[i * n + j + 1])
-                    if s == 0.0:
-                        continue
-
-                    divergence = (self.u[(i + 1) * n + j] - self.u[i * n + j] +
-                                  self.v[i * n + j + 1] - self.v[i * n + j])
-
-                    pressure = -divergence / s
-                    pressure *= over_relaxation
-                    self.pressure[i * n + j] += density_constant * pressure
-
-                    self.u[i * n + j] -= self.solid[(i - 1) * n + j] * pressure
-                    self.u[(i + 1) * n + j] += self.solid[(i + 1) * n + j] * pressure
-                    self.v[i * n + j] -= self.solid[i * n + j - 1] * pressure
-                    self.v[i * n + j + 1] += self.solid[i * n + j + 1] * pressure
-
-    def extrapolate(self):
-        n = self.grid_height
-        self.u[:n] = self.u[n:2 * n]
-        self.u[-n:] = self.u[-2 * n:-n]
-        self.v[:n] = self.v[n:2 * n]
-        self.v[-n:] = self.v[-2 * n:-n]
-
-    def sample_field(self, x, y, field_type):
-        n = self.grid_height
-        h = self.cell_size
-        inv_h = 1.0 / h
-        half_h = 0.5 * h
-
-        x = min(max(x, h), self.grid_width * h)
-        y = min(max(y, h), self.grid_height * h)
-
-        dx, dy = 0.0, 0.0
-
-        if field_type == 'U_FIELD':
-            field = self.u
-            dy = half_h
-        elif field_type == 'V_FIELD':
-            field = self.v
-            dx = half_h
-        elif field_type == 'DENSITY_FIELD':
-            field = self.density_field
-            dx = dy = half_h
-
-        x0 = min(int((x - dx) * inv_h), self.grid_width - 1)
-        tx = ((x - dx) - x0 * h) * inv_h
-        x1 = min(x0 + 1, self.grid_width - 1)
-
-        y0 = min(int((y - dy) * inv_h), self.grid_height - 1)
-        ty = ((y - dy) - y0 * h) * inv_h
-        y1 = min(y0 + 1, self.grid_height - 1)
-
-        sx, sy = 1.0 - tx, 1.0 - ty
-
-        value = (sx * sy * field[x0 * n + y0] +
-                 tx * sy * field[x1 * n + y0] +
-                 tx * ty * field[x1 * n + y1] +
-                 sx * ty * field[x0 * n + y1])
-
-        return value
-
-    def advect(self, delta_time):
-        n = self.grid_height
-        self.new_u[:] = self.u
-        self.new_v[:] = self.v
-
-        for i in range(1, self.grid_width):
-            for j in range(1, self.grid_height):
-                if self.solid[i * n + j] != 0.0 and self.solid[(i - 1) * n + j] != 0.0 and j < self.grid_height - 1:
-                    x = i * self.cell_size
-                    y = j * self.cell_size + 0.5 * self.cell_size
-                    u = self.u[i * n + j]
-                    v = self.sample_field(x, y, 'V_FIELD')
-                    x -= delta_time * u
-                    y -= delta_time * v
-                    self.new_u[i * n + j] = self.sample_field(x, y, 'U_FIELD')
-
-                if self.solid[i * n + j] != 0.0 and self.solid[i * n + j - 1] != 0.0 and i < self.grid_width - 1:
-                    x = i * self.cell_size + 0.5 * self.cell_size
-                    y = j * self.cell_size
-                    u = self.sample_field(x, y, 'U_FIELD')
-                    v = self.v[i * n + j]
-                    x -= delta_time * u
-                    y -= delta_time * v
-                    self.new_v[i * n + j] = self.sample_field(x, y, 'V_FIELD')
-
-        self.u[:] = self.new_u
-        self.v[:] = self.new_v
-
-    def advect_density(self, delta_time):
-        n = self.grid_height
-        self.new_density_field[:] = self.density_field
-
-        for i in range(1, self.grid_width - 1):
-            for j in range(1, self.grid_height - 1):
-                if self.solid[i * n + j] != 0.0:
-                    u = 0.5 * (self.u[i * n + j] + self.u[(i + 1) * n + j])
-                    v = 0.5 * (self.v[i * n + j] + self.v[i * n + j + 1])
-                    x = i * self.cell_size + 0.5 * self.cell_size - delta_time * u
-                    y = j * self.cell_size + 0.5 * self.cell_size - delta_time * v
-                    self.new_density_field[i * n + j] = self.sample_field(x, y, 'DENSITY_FIELD')
-
-        self.density_field[:] = self.new_density_field
-
-    def simulate(self, delta_time, gravity, num_iterations, density_constant, over_relaxation):
-        self.integrate(delta_time, gravity)
+    def simulate(self, delta_time, gravity, num_iterations, over_relaxation):
+        nx, ny, h = self.grid_width, self.grid_height, self.cell_size
+        integrate(self.v, self.solid, nx, ny, delta_time, gravity)
         self.pressure.fill(0.0)
-        self.solve_incompressibility(num_iterations, delta_time, density_constant, over_relaxation)
-        self.extrapolate()
-        self
-
-.advect(delta_time)
-        self.advect_density(delta_time)
+        cp = self.density * h / delta_time
+        solve_incompressibility(
+            self.u,
+            self.v,
+            self.pressure,
+            self.solid,
+            nx,
+            ny,
+            num_iterations,
+            cp,
+            over_relaxation,
+        )
+        extrapolate(self.u, self.v, nx, ny)
+        advect_velocity(
+            self.u, self.v, self.new_u, self.new_v, self.solid, nx, ny, h, delta_time
+        )
+        advect_dye(
+            self.density_field,
+            self.new_density_field,
+            self.u,
+            self.v,
+            self.solid,
+            nx,
+            ny,
+            h,
+            delta_time,
+        )
 
     def set_obstacle(self, x, y, radius, velocity_x=0.0, velocity_y=0.0):
+        """Mark cells inside the circle as solid and set their face velocities."""
         n = self.grid_height
         for i in range(1, self.grid_width - 2):
             for j in range(1, self.grid_height - 2):
@@ -196,51 +241,93 @@ class FluidSimulator:
                     self.v[i * n + j] = velocity_y
                     self.v[i * n + j + 1] = velocity_y
 
-def setup_scene(scene_number=0):
-    resolution = 100 if scene_number != 0 else 50
-    domain_height = 1.0
-    domain_width = domain_height / SIM_HEIGHT * (WINDOW_WIDTH / WINDOW_HEIGHT)
+
+def setup_scene(scene_number=1):
+    """Return a FluidSimulator for scene 0 (tank) or 1 (wind tunnel)."""
+    resolution = RESOLUTION if scene_number != 0 else RESOLUTION // 2
+    domain_height = 1.0  # m
+    domain_width = domain_height * WINDOW_WIDTH / WINDOW_HEIGHT  # m
     cell_size = domain_height / resolution
     grid_width = int(domain_width / cell_size)
     grid_height = int(domain_height / cell_size)
 
     fluid = FluidSimulator(DENSITY, grid_width, grid_height, cell_size)
-
     n = fluid.grid_height
-    if scene_number == 0:  # Tank
+    if scene_number == 0:  # closed tank, open at the top
         for i in range(fluid.grid_width):
             for j in range(fluid.grid_height):
-                fluid.solid[i * n + j] = 1.0 if i != 0 and i != fluid.grid_width - 1 and j != 0 else 0.0
-    else:  # Vortex shedding
-        inlet_velocity = 2.0
+                inside = i != 0 and i != fluid.grid_width - 1 and j != 0
+                fluid.solid[i * n + j] = 1.0 if inside else 0.0
+    else:  # wind tunnel: solid left wall with inflow, walls at top and bottom
         for i in range(fluid.grid_width):
             for j in range(fluid.grid_height):
-                fluid.solid[i * n + j] = 1.0 if i != 0 and j != 0 and j != fluid.grid_height - 1 else 0.0
+                inside = i != 0 and j != 0 and j != fluid.grid_height - 1
+                fluid.solid[i * n + j] = 1.0 if inside else 0.0
                 if i == 1:
-                    fluid.u[i * n + j] = inlet_velocity
-
+                    fluid.u[i * n + j] = INLET_VELOCITY
+        # dye streak entering at mid-height through the inlet column (i = 0)
         pipe_height = 0.1 * fluid.grid_height
         min_j = int(0.5 * fluid.grid_height - 0.5 * pipe_height)
         max_j = int(0.5 * fluid.grid_height + 0.5 * pipe_height)
-        for j in range(min_j, max_j):
-            fluid.density_field[j] = 0.0
-
+        fluid.density_field[min_j:max_j] = 0.0
     return fluid
 
-def main():
+
+def draw(screen, fluid, canvas_scale):
+    """Draw the dye field (4-colour banded map) and the obstacle."""
+    nx, ny = fluid.grid_width, fluid.grid_height
+    m = fluid.density_field.reshape(nx, ny)
+    solid = fluid.solid.reshape(nx, ny)
+    band = (np.clip(m, 0.0, 1.0 - 1e-4) / 0.25).astype(np.int64)
+    rgb = PALETTE[band]
+    rgb[m == 0.0] = BACKGROUND
+    rgb[solid == 0.0] = OBSTACLE_COLOR
+    # surfarray is indexed (x, y) with y pointing down; grid j points up
+    image = pygame.surfarray.make_surface(np.ascontiguousarray(rgb[:, ::-1, :]))
+    size = (
+        int(round(nx * fluid.cell_size * canvas_scale)),
+        int(round(ny * fluid.cell_size * canvas_scale)),
+    )
+    screen.fill(BACKGROUND)
+    screen.blit(pygame.transform.scale(image, size), (0, WINDOW_HEIGHT - size[1]))
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show",
+        action="store_true",
+        help="run without a window (SDL dummy video driver)",
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save a screenshot of the last frame in DIR"
+    )
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=None,
+        help="simulate this many frames, then stop (default: run until closed; "
+        f"{DEFAULT_HEADLESS_STEPS} with --no-show)",
+    )
+    args = parser.parse_args(argv)
+    max_steps = args.steps
+    if args.no_show:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        if max_steps is None:
+            max_steps = DEFAULT_HEADLESS_STEPS
+
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    pygame.display.set_caption("Eulerian Cylinder Flow")
     clock = pygame.time.Clock()
-    canvas_scale = WINDOW_HEIGHT / SIM_HEIGHT
-    density_constant = DENSITY * canvas_scale / DELTA_TIME
+    canvas_scale = WINDOW_HEIGHT / SIM_HEIGHT  # pixels per metre
 
     fluid = setup_scene(1)
-    fluid.set_obstacle(0.4, 0.5, OBSTACLE_RADIUS)
+    fluid.set_obstacle(OBSTACLE_X, OBSTACLE_Y, OBSTACLE_RADIUS)
 
     running = True
     paused = False
     frame_number = 0
-
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -249,32 +336,28 @@ def main():
                 if event.key == pygame.K_p:
                     paused = not paused
                 elif event.key == pygame.K_m:
-                    paused = False
-                    fluid.simulate(DELTA_TIME, GRAVITY, NUM_ITERATIONS, density_constant, OVER_RELAXATION)
+                    fluid.simulate(DELTA_TIME, GRAVITY, NUM_ITERATIONS, OVER_RELAXATION)
+                    frame_number += 1
                     paused = True
 
         if not paused:
-            fluid.simulate(DELTA_TIME, GRAVITY, NUM_ITERATIONS, density_constant, OVER_RELAXATION)
+            fluid.simulate(DELTA_TIME, GRAVITY, NUM_ITERATIONS, OVER_RELAXATION)
             frame_number += 1
 
-        screen.fill((240, 248, 255))  # Alice blue background
-        for i in range(fluid.grid_width):
-            for j in range(fluid.grid_height):
-                color = (240, 248, 255)  # Alice blue
-                if fluid.solid[i * fluid.grid_height + j] == 0.0:
-                    color = (47, 79, 79)  # Dark slate gray for obstacles
-                elif fluid.density_field[i * fluid.grid_height + j] != 0.0:
-                    color = get_sci_color(fluid.density_field[i * fluid.grid_height + j], 0.0, 1.0)
-
-                x = int(canvas_x(i * fluid.cell_size, canvas_scale))
-                y = int(canvas_y((j + 1) * fluid.cell_size, WINDOW_HEIGHT, canvas_scale))
-                pygame.draw.rect(screen, color, (x, y, int(canvas_scale * fluid.cell_size), int(canvas_scale * fluid.cell_size)))
-
+        draw(screen, fluid, canvas_scale)
         pygame.display.flip()
-        clock.tick(60)
+        if max_steps is not None and frame_number >= max_steps:
+            running = False
+        if not args.no_show:
+            clock.tick(60)
 
+    print(f"simulated {frame_number} frames (t = {frame_number * DELTA_TIME:.2f} s)")
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        pygame.image.save(screen, str(out_dir / "eulerian_cylinder_flow.png"))
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
-

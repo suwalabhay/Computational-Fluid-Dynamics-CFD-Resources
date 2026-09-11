@@ -157,3 +157,76 @@ Building a text-to-CAD pipeline requires careful preparation at each stage:
 - Feature extraction must capture both geometric properties (volume, curvature) and topological relationships (face connectivity).
 - Loss functions should balance geometric fidelity with adherence to textual intent and engineering constraints.
 - Automated validation against manufacturability rules is essential before generated models enter production workflows.
+
+## Exercises
+
+**Exercise 1.** A generated 2D shape is sampled as $S_2 = \{(0, 0.1), (1, 0), (2, 0)\}$ and the reference as $S_1 = \{(0, 0), (1, 0)\}$. Compute the Chamfer distance $d_{\text{CD}}(S_1, S_2)$ as defined in the note, and each one-sided term. Which term detects the spurious point?
+
+<details>
+<summary>Answer</summary>
+
+$S_1 \to S_2$: $(0,0)$ is nearest to $(0, 0.1)$ with squared distance 0.01, and $(1,0)$ matches exactly. The mean is 0.005.
+
+$S_2 \to S_1$: $(0, 0.1)$ gives 0.01, $(1, 0)$ gives 0, and $(2, 0)$ is nearest to $(1, 0)$ with squared distance 1. The mean is $1.01/3 \approx 0.337$.
+
+$d_{\text{CD}} \approx 0.342$.
+
+The $S_2 \to S_1$ term penalizes the extra geometry. The one-sided $S_1 \to S_2$ term alone (0.005) would rate the shape as nearly perfect.
+
+</details>
+
+**Exercise 2.** Shapes are voxelized as float32 occupancy grids for a 3D CNN. Compute the memory per shape and for a library of 10,000 shapes at $256^3$ and at $64^3$. For a 5 m long car, what is the voxel size in each case?
+
+<details>
+<summary>Answer</summary>
+
+$256^3 \times 4$ bytes $\approx 67.1$ MB (64 MiB) per shape, or about 671 GB for 10,000 shapes. The voxel size is $5/256 \approx 1.95$ cm.
+
+$64^3 \times 4$ bytes $\approx 1.05$ MB per shape, or about 10.5 GB in total. The voxel size is $5/64 \approx 7.8$ cm.
+
+The coarse grid is affordable but cannot resolve mirrors, spoiler edges or gaps. The memory cost is a strong reason to use point clouds, meshes or graph representations instead.
+
+</details>
+
+**Exercise 3.** A CAD model has a bounding-box diagonal of 5 m, a volume of 2.4 m³ and a surface area of 30 m². It is scaled to a unit diagonal before feature extraction. Compute the scaled volume and area, and show that $V/A^{3/2}$ is unchanged.
+
+<details>
+<summary>Answer</summary>
+
+The scale factor is $s = 0.2$. Volume scales as $s^3$ and area as $s^2$: $V = 2.4 \times 0.008 = 0.0192$ and $A = 30 \times 0.04 = 1.2$.
+
+$V/A^{3/2}$ is $2.4/30^{1.5} \approx 0.0146$ before scaling and $0.0192/1.2^{1.5} \approx 0.0146$ after.
+
+Dimensionless descriptors like this carry shape information that does not depend on size. Size itself can be supplied as a separate feature if it matters (for example, through the Reynolds number).
+
+</details>
+
+**Exercise 4.** A VAE encoder outputs a Gaussian with mean $\mu = 0.5$ and standard deviation $\sigma = 0.8$ for one latent dimension. Compute the KL divergence to the standard normal prior, $\tfrac{1}{2}(\mu^2 + \sigma^2 - 1 - \ln\sigma^2)$. What is the total for a 32-dimensional latent space with identical values in each dimension, and what happens to interpolation if this term is weighted too weakly?
+
+<details>
+<summary>Answer</summary>
+
+$\tfrac{1}{2}(0.25 + 0.64 - 1 - \ln 0.64) = \tfrac{1}{2}(-0.11 + 0.446) \approx 0.168$ nats per dimension, or $32 \times 0.168 \approx 5.38$ nats in total.
+
+If the KL term is weighted too weakly, the encoder places shapes in isolated, spread-out regions of latent space. Points between two encoded shapes then decode to geometry the decoder has never learned, and the smooth interpolation the note attributes to VAEs is lost.
+
+</details>
+
+**Exercise 5.** A library has 5,000 CAD models made up of 200 design families with 25 minor variants each. Why is a random 80/10/10 split of models inappropriate, and how would you split?
+
+<details>
+<summary>Answer</summary>
+
+Variants within a family are near-duplicates. A random split puts siblings of each test model into the training set, so test accuracy measures recognition of known families rather than generalization to new designs.
+
+Split by family: 160 families (4,000 models) for training, and 20 families (500 models) each for validation and testing. Also remove exact or near-exact duplicates (for example, the same part exported as both STEP and IGES), for instance by thresholding the Chamfer distance between normalized shapes.
+
+</details>
+
+## References
+
+- Kingma, D. P., & Welling, M., "Auto-Encoding Variational Bayes", International Conference on Learning Representations (ICLR), 2014.
+- Goodfellow, I., et al., "Generative Adversarial Nets", *Advances in Neural Information Processing Systems* 27, 2014.
+- Fan, H., Su, H., & Guibas, L., "A Point Set Generation Network for 3D Object Reconstruction from a Single Image", IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2017.
+- Qi, C. R., Su, H., Mo, K., & Guibas, L. J., "PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation", IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2017.
+- Koch, S., et al., "ABC: A Big CAD Model Dataset for Geometric Deep Learning", IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2019.

@@ -114,9 +114,9 @@ Using the scalar formulation with the force perpendicular to the moment arm:
 
 $$M = Fd = 200 \times 0.3 = 60 \text{ N·m}$$
 
-If the force is applied at an angle $\theta = 60°$ to the handle:
+If the force is applied at an angle $\theta = 60^\circ$ to the handle:
 
-$$M = FL\sin\theta = 200 \times 0.3 \times \sin(60°) = 51.96 \text{ N·m}$$
+$$M = FL\sin\theta = 200 \times 0.3 \times \sin(60^\circ) = 51.96 \text{ N·m}$$
 
 The effective moment arm is reduced to $d = L\sin\theta = 0.26$ m.
 
@@ -210,3 +210,70 @@ $$|\mathbf{M}_O| = \sqrt{60^2 + 5^2 + 100^2} = \sqrt{3600 + 25 + 10000} = \sqrt{
 5. **Draw clear diagrams** showing force positions, moment arms, and sign conventions
 
 The concepts of moments and couples are foundational for structural analysis, machine design, and any field where rotational effects must be considered. Mastery of these topics is essential before moving on to more advanced topics such as internal forces in beams and torsion of shafts.
+
+## Exercises
+
+**Exercise 1.** A 500 N force directed $30^\circ$ above the $+x$ axis acts at the point $(2, 1)$ m. Find its moment about the origin using $M_O = xF_y - yF_x$.
+
+<details>
+<summary>Answer</summary>
+
+$F_x = 500\cos 30^\circ = 433.0$ N and $F_y = 500\sin 30^\circ = 250$ N.
+
+$$M_O = 2(250) - 1(433.0) = 67.0 \text{ N·m (counterclockwise)}$$
+
+</details>
+
+**Exercise 2.** Two opposite parallel forces of 80 N act 0.25 m apart. What is the couple moment? What pair of forces 0.4 m apart forms an equivalent couple?
+
+<details>
+<summary>Answer</summary>
+
+$M = Fd = 80 \times 0.25 = 20$ N·m. An equivalent couple needs the same $Fd$: $F = 20/0.4 = 50$ N, with the same sense of rotation and in a parallel plane.
+
+</details>
+
+**Exercise 3.** For the force of Example 3, $\mathbf{F} = (100\mathbf{i} - 200\mathbf{j} + 50\mathbf{k})$ N at $P(0.3, 0.4, 0.2)$ m, find the moment about the axis through $O$ in the direction $(2, 1, 2)$.
+
+<details>
+<summary>Answer</summary>
+
+$\hat{\mathbf{u}}_a = (2, 1, 2)/3$. Using $\mathbf{M}_O = (60, 5, -100)$ N·m from Example 3:
+
+$$M_a = \hat{\mathbf{u}}_a \cdot \mathbf{M}_O = \frac{2(60) + 1(5) + 2(-100)}{3} = -25 \text{ N·m}$$
+
+The negative sign means the moment about the axis is 25 N·m in the sense opposite to $\hat{\mathbf{u}}_a$ (by the right-hand rule).
+
+</details>
+
+**Exercise 4.** A beam $AB$ carries 10 kN downward at 1 m from $A$, 6 kN upward at 3 m, 8 kN downward at 5 m, and a 12 kN·m counterclockwise couple. Reduce the system to a force-couple system at $A$, then to a single resultant force, and give its location.
+
+<details>
+<summary>Answer</summary>
+
+$R = -10 + 6 - 8 = -12$ kN (12 kN downward).
+
+Counterclockwise positive: $M_A = -10(1) + 6(3) - 8(5) + 12 = -20$ kN·m (20 kN·m clockwise).
+
+A single 12 kN downward force at distance $x$ from $A$ produces a clockwise moment $12x$, so $12x = 20$ gives $x = 1.67$ m.
+
+</details>
+
+**Exercise 5.** Show that the moment of a couple is the same about every point. Then evaluate it for $\mathbf{F} = 30\mathbf{k}$ N acting at $A(1, 0, 0)$ m and $-\mathbf{F}$ acting at $B(0, 2, 0)$ m.
+
+<details>
+<summary>Answer</summary>
+
+About an arbitrary point $O$: $\mathbf{M} = \mathbf{r}_A \times \mathbf{F} + \mathbf{r}_B \times (-\mathbf{F}) = (\mathbf{r}_A - \mathbf{r}_B) \times \mathbf{F}$. This depends only on the relative position $\mathbf{r}_{A/B}$, not on $O$, so the couple moment is a free vector.
+
+Here $\mathbf{r}_{A/B} = (1, -2, 0)$ m:
+
+$$\mathbf{M} = (1, -2, 0) \times (0, 0, 30) = (-60, -30, 0) \text{ N·m}, \quad |\mathbf{M}| = 67.1 \text{ N·m}$$
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- J. L. Meriam, L. G. Kraige, *Engineering Mechanics: Statics*, Wiley.
+- F. P. Beer, E. R. Johnston, D. F. Mazurek, *Vector Mechanics for Engineers: Statics*, McGraw-Hill.

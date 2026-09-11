@@ -1,44 +1,70 @@
-# Mean Velocity Magnitude — Experiment vs CFD Comparison
+# Mean Velocity Magnitude: Experiment vs CFD Comparison
 
-This script plots the normalised mean velocity magnitude $|U|/U_0$ along the under-body centreline of a bluff body, comparing mock experimental data with CFD Scale-Resolving Simulation (SRS) results. It demonstrates the typical validation workflow used in industrial CFD where computational predictions are benchmarked against wind-tunnel or water-tunnel measurements.
+This script plots a mock experimental profile and a mock CFD scale-resolving simulation (SRS) profile of the normalised mean velocity magnitude $|U|/U_0$ along an under-body centreline. It mimics the line plots used in industrial CFD validation, where simulation results are overlaid on wind-tunnel measurements. Both curves are synthetic, so the figure shows the layout of such a comparison, not real data.
 
 ## Overview
 
-- Generates mock experimental data using an exponentially damped sinusoidal profile
-- Adds a small random deviation to produce synthetic CFD SRS results
-- Plots both datasets against relative streamwise distance $x/L$
-- Includes error bars, legend, and axis labels consistent with CFD validation reports
+- Generates a mock "experimental" profile from an exponentially damped sine wave on 50 points over 0 to 6 m.
+- Adds seeded Gaussian noise to that profile to produce a mock "CFD SRS" profile.
+- Prints the RMS difference between the two profiles.
+- Plots the experimental data as black markers joined by a line and the CFD result as a cyan line, with axis labels, a legend and a dashed grid.
 
 ## Mathematical Background
 
-### Velocity Magnitude
+### Normalised velocity magnitude
 
-$$|\mathbf{U}| = \sqrt{u^2 + v^2 + w^2}$$
+The quantity on the vertical axis is the mean velocity magnitude divided by a reference free-stream speed $U_0$:
 
-### Normalised Velocity
+$$
+\frac{|\overline{\mathbf{U}}|}{U_0} = \frac{\sqrt{\overline{u}^2 + \overline{v}^2 + \overline{w}^2}}{U_0}
+$$
 
-$$\frac{|\mathbf{U}|}{U_0}$$
+The script does not compute this from velocity components. It prescribes the profile directly.
 
-where $U_0$ is the reference free-stream speed used to non-dimensionalise both experimental and CFD data.
+### Mock experimental profile
 
-### Mock Experimental Profile
+$$
+u_{\mathrm{exp}}(x) = e^{-0.2x}\sin(x) + 0.75, \qquad 0 \le x \le 6
+$$
 
-$$u_{exp}(x) = e^{-0.2x}\sin(x) + 0.75$$
+### Mock CFD profile
 
-### CFD Deviation
+$$
+u_{\mathrm{CFD}}(x_i) = u_{\mathrm{exp}}(x_i) + \epsilon_i, \qquad \epsilon_i \sim \mathcal{N}(0,\, 0.05^2)
+$$
 
-The CFD SRS result is generated as $u_{CFD}(x) = u_{exp}(x) + \epsilon$ where $\epsilon$ is a small random perturbation, simulating the slight discrepancy expected between simulation and measurement.
+### Agreement metric
+
+$$
+\mathrm{RMS} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(u_{\mathrm{CFD}}(x_i) - u_{\mathrm{exp}}(x_i)\right)^2}
+$$
 
 ## Implementation
 
-1. Define a streamwise coordinate array representing relative distance along the under-body centreline.
-2. Evaluate the mock experimental profile $u_{exp}(x)$.
-3. Add a random perturbation to produce the synthetic CFD profile.
-4. Plot both profiles on the same axes with distinct markers and line styles.
-5. Add labels, legend, and grid consistent with a CFD validation figure.
+- `generate_data(n_points, x_max, noise_std, seed)` builds the coordinate array and both profiles. The constants `N_POINTS = 50`, `X_MAX = 6.0` m, `DECAY_RATE = 0.2`, `OFFSET = 0.75`, `NOISE_STD = 0.05` and `SEED = 0` set the shape and noise.
+- `plot_profiles(x, exp, cfd)` draws both curves on one set of axes and returns the figure.
+- `main(argv)` parses the command-line flags, prints the RMS difference, and saves and/or shows the figure.
+
+## Usage
+
+```bash
+python main.py                      # open the plot window
+python main.py --no-show --output . # save mean_velocity_magnitude.png without opening a window
+```
+
+| Flag | Effect |
+|------|--------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save `mean_velocity_magnitude.png` in it |
 
 ## Output
 
-The script displays a single plot of $|U|/U_0$ versus relative streamwise position. Two curves are overlaid — one for experimental data and one for the CFD SRS result — illustrating the level of agreement typically achieved by scale-resolving simulations in wake and under-body flow regions.
+The figure shows $|U|/U_0$ against relative distance along the line. The black experimental curve rises to about 1.5, falls to about 0.35 and recovers. The noisy cyan CFD curve follows it closely, with an RMS difference of about 0.05.
 
 ![mean_velocity_magnitude_plot](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/786494a3-21c4-4141-bafd-0f40da8db897)
+
+## Related Notes
+
+- [Turbulence Modeling](../../../notes/numerical/cfd/turbulence_modeling.md): time averages, mean velocity, and the RANS/LES approaches behind SRS.
+- [Turbulence Statistics](../../../notes/fluid_mechanics/turbulence/statistics.md): mean and fluctuating quantities.
+- [The Strategy of CFD](../../../notes/numerical/cfd/cfd_process.md): post-processing and comparing numerical with reference solutions.

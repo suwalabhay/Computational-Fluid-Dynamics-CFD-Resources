@@ -68,7 +68,7 @@ where $C_L$ is the lift coefficient, $C_D$ is the drag coefficient, and $\alpha$
 
 The critical wind speed for galloping onset is:
 
-$$U_{cr} = \frac{2 m \omega_n \zeta}{\rho D \left| \frac{dC_L}{d\alpha} + C_D \right|}$$
+$$U_{cr} = \frac{4 m \omega_n \zeta}{\rho D \left| \frac{dC_L}{d\alpha} + C_D \right|}$$
 
 - Circular cylinders are **immune** to galloping ($dC_L/d\alpha + C_D > 0$)
 - Square, D-shaped, and ice-coated sections are highly susceptible
@@ -150,7 +150,7 @@ Streamlined fairings rotate freely to align with the flow, reducing the effectiv
 
 A secondary mass-spring-dashpot system is tuned to the target frequency:
 
-$$f_{TMD} = \frac{f_n}{1 + \mu_m}, \quad \zeta_{TMD,opt} = \sqrt{\frac{3\mu_m}{8(1+\mu_m)}}$$
+$$f_{TMD} = \frac{f_n}{1 + \mu_m}, \quad \zeta_{TMD,opt} = \sqrt{\frac{3\mu_m}{8(1+\mu_m)^3}}$$
 
 where $\mu_m = m_{TMD}/m_s$ is the mass ratio (typically 1–5%).
 
@@ -213,9 +213,9 @@ $$\left|\frac{dC_L}{d\alpha} + C_D\right| = |-3.0 + 1.2| = 1.8$$
 
 Since the quantity is negative, the Den Hartog criterion is satisfied — galloping is possible.
 
-$$U_{cr} = \frac{2 m \omega_n \zeta}{\rho D \times 1.8} = \frac{2 \times 2.5 \times 2\pi \times 0.005}{1.225 \times 0.05 \times 1.8}$$
+$$U_{cr} = \frac{4 m \omega_n \zeta}{\rho D \times 1.8} = \frac{4 \times 2.5 \times 2\pi \times 0.005}{1.225 \times 0.05 \times 1.8}$$
 
-$$U_{cr} = \frac{0.157}{0.110} = 1.43 \text{ m/s}$$
+$$U_{cr} = \frac{0.314}{0.110} = 2.85 \text{ m/s}$$
 
 Galloping can begin at very low wind speeds — **ice removal or aerodynamic treatment** is essential.
 
@@ -262,3 +262,80 @@ Galloping can begin at very low wind speeds — **ice removal or aerodynamic tre
 - A fatigue damage fraction $D < 1.0$ is required; typical safety factor gives $D < 0.33$
 
 Flow-induced vibrations represent a rich intersection of fluid mechanics, structural dynamics, and aeroelasticity. Proper identification and mitigation of FIV mechanisms is essential for the safe and reliable performance of slender structures in wind, water, and process flows.
+
+## Exercises
+
+**Exercise 1.** A taut cable of diameter $D = 0.03$ m has natural frequency $f_n = 12$ Hz. Taking $St = 0.2$, find the wind speed at which the Strouhal shedding frequency matches $f_n$, and the wind-speed range corresponding to the lock-in band $4 \lesssim U_r \lesssim 8$.
+
+<details>
+<summary>Answer</summary>
+
+$f_s = f_n$ when $U = f_n D/St = 12 \times 0.03/0.2 = 1.8$ m/s, which corresponds to $U_r = 1/St = 5$.
+
+From $U = U_r f_n D$ with $f_n D = 0.36$ m/s, the lock-in band is $1.44 \lesssim U \lesssim 2.88$ m/s. These low wind speeds occur very often, which is why aeolian vibration of cables is a common fatigue problem.
+
+</details>
+
+**Exercise 2.** A steel riser has $D = 0.3$ m, mass per unit length $m = 150$ kg/m (including contents) and damping ratio $\zeta = 0.01$. Compute the Scruton number in seawater ($\rho = 1025$ kg/m³) and in air ($\rho = 1.225$ kg/m³). What do the values imply for VIV?
+
+<details>
+<summary>Answer</summary>
+
+$\delta \approx 2\pi\zeta = 0.0628$, so $2m\delta = 18.85$ kg/m.
+
+$$Sc_{water} = \frac{18.85}{1025 \times 0.09} = 0.20, \quad Sc_{air} = \frac{18.85}{1.225 \times 0.09} = 171$$
+
+Because water is about 840 times denser than air, the same structure has a very low mass-damping parameter in water. Large VIV amplitudes ($A/D$ of order 1) are therefore possible underwater, while in air the amplitudes would be negligible. Adding structural damping is ineffective in water; strakes or fairings are used instead.
+
+</details>
+
+**Exercise 3.** (a) In quasi-steady theory, a body moving transversely with small velocity $\dot{y}$ in a steady flow $U$ has transverse force coefficient $C_y \approx -\left(\frac{dC_L}{d\alpha} + C_D\right)\frac{\dot{y}}{U}$. Derive the Den Hartog criterion and the critical galloping speed. (b) Wind-tunnel data for a square bar give $\frac{dC_L}{d\alpha} + C_D = -2.7$. With $D = 0.5$ m, $m = 100$ kg/m, $f_n = 2$ Hz and $\zeta = 0.005$ in air, find $U_{cr}$.
+
+<details>
+<summary>Answer</summary>
+
+(a) The transverse force per unit length is $F_y = \frac{1}{2}\rho U^2 D\,C_y = -\frac{1}{2}\rho U D\left(\frac{dC_L}{d\alpha} + C_D\right)\dot{y}$. Moving it to the left-hand side of $m\ddot{y} + 2m\omega_n\zeta\dot{y} + ky = F_y$ gives a total damping coefficient
+
+$$c_{tot} = 2m\omega_n\zeta + \frac{1}{2}\rho U D\left(\frac{dC_L}{d\alpha} + C_D\right)$$
+
+The aerodynamic term can only make $c_{tot}$ negative if $\frac{dC_L}{d\alpha} + C_D < 0$ (the Den Hartog criterion). Instability then starts when $c_{tot} = 0$:
+
+$$U_{cr} = \frac{4m\omega_n\zeta}{\rho D\left|\frac{dC_L}{d\alpha} + C_D\right|}$$
+
+(b) $\omega_n = 12.57$ rad/s:
+
+$$U_{cr} = \frac{4 \times 100 \times 12.57 \times 0.005}{1.225 \times 0.5 \times 2.7} = \frac{25.1}{1.654} = 15.2 \text{ m/s}$$
+
+</details>
+
+**Exercise 4.** A steel chimney has modal mass 20 000 kg and $f_n = 0.5$ Hz. Design a tuned mass damper with mass ratio $\mu_m = 0.02$ using the tuning formulas in this note: give the TMD mass, frequency, spring stiffness, optimum damping ratio and damping coefficient.
+
+<details>
+<summary>Answer</summary>
+
+$m_{TMD} = 0.02 \times 20\,000 = 400$ kg and $f_{TMD} = 0.5/1.02 = 0.490$ Hz, so $\omega_{TMD} = 3.08$ rad/s.
+
+$$k_{TMD} = m_{TMD}\omega_{TMD}^2 = 400 \times 3.08^2 = 3.79 \text{ kN/m}$$
+
+$$\zeta_{opt} = \sqrt{\frac{3 \times 0.02}{8(1.02)^3}} = 0.084, \quad c_{TMD} = 2m_{TMD}\omega_{TMD}\zeta_{opt} = 207 \text{ N·s/m}$$
+
+</details>
+
+**Exercise 5.** VIV of a riser produces a stress range of 60 MPa at 0.5 Hz for 50 hours per year. The S-N curve is $N = 10^{12}/\Delta\sigma^3$ ($\Delta\sigma$ in MPa). Estimate the annual Palmgren-Miner damage and the fatigue life for allowable damage fractions of 0.33 and 1.0.
+
+<details>
+<summary>Answer</summary>
+
+Cycles per year: $n = 0.5 \times 3600 \times 50 = 90\,000$. Cycles to failure: $N = 10^{12}/60^3 = 4.63 \times 10^6$.
+
+Annual damage: $D = n/N = 0.0194$. The life is $0.33/0.0194 = 17$ years with the safety factor, or $1/0.0194 = 51$ years to $D = 1$. The cubic S-N slope means a 20% reduction in stress range (for example from strakes) would extend the life by a factor of about $1/0.8^3 \approx 2$.
+
+</details>
+
+## References
+
+- R. D. Blevins, *Flow-Induced Vibration*, 2nd ed., Van Nostrand Reinhold, 1990.
+- E. Simiu, R. H. Scanlan, *Wind Effects on Structures: Fundamentals and Applications to Design*, 3rd ed., Wiley, 1996.
+- M. P. Païdoussis, S. J. Price, E. de Langre, *Fluid-Structure Interactions: Cross-Flow-Induced Instabilities*, Cambridge University Press, 2011.
+- C. H. K. Williamson, R. Govardhan, "Vortex-induced vibrations", *Annual Review of Fluid Mechanics* 36, 413–455, 2004.
+- J. P. Den Hartog, *Mechanical Vibrations*, 4th ed., McGraw-Hill, 1956.

@@ -212,3 +212,76 @@ A variety of hyperparameters are carefully tuned—ranging from the choice of op
 - Masking solid regions and prism layers during both preprocessing and loss computation ensures the network focuses on the fluid domain where mesh quality matters most.
 - Predicted mesh densities should be validated end-to-end by running CFD solves on the generated meshes and comparing quantities of interest against adjoint-refined references.
 - While ML models interpolate well within training data, caution is needed for geometries or flow conditions that differ significantly from the training distribution.
+
+## Exercises
+
+**Exercise 1.** On a $3 \times 3$ image the predicted densities are $\hat{d} = \begin{bmatrix} 0.2 & 0.4 & 0.5 \\ 0.3 & 0.9 & 0.6 \\ 0.1 & 0.2 & 0.3 \end{bmatrix}$ and the references are $d = \begin{bmatrix} 0.25 & 0.4 & 0.45 \\ 0.3 & 0.1 & 0.7 \\ 0.1 & 0.3 & 0.3 \end{bmatrix}$. The centre pixel lies inside the solid body ($m = 0$); all others have $m = 1$. Compute the masked MSE and the unmasked MSE.
+
+<details>
+<summary>Answer</summary>
+
+The squared errors on the fluid pixels are $0.0025, 0, 0.0025, 0, 0.01, 0, 0.01, 0$, which sum to 0.025. The masked MSE is $0.025/8 = 3.125 \times 10^{-3}$.
+
+The centre pixel adds $(0.9 - 0.1)^2 = 0.64$, so the unmasked MSE is $0.665/9 \approx 7.39 \times 10^{-2}$.
+
+The single meaningless solid pixel inflates the loss about 24-fold. Without the mask, training would waste effort fitting values that are never used.
+
+</details>
+
+**Exercise 2.** The wind-tunnel domain is 4 m × 4 m and is rasterized at $1024 \times 1024$, then blurred and downsampled to $128 \times 128$. Compute the pixel size before and after downsampling. Can the network represent a 5 mm refinement zone around a sharp trailing edge?
+
+<details>
+<summary>Answer</summary>
+
+Before: $4/1024 \approx 3.9$ mm. After: $4/128 = 3.125$ cm, a downsampling factor of 8.
+
+A 5 mm zone is about one-sixth of an output pixel, so it cannot be resolved as a distinct feature. The network predicts a smooth, averaged size field, and the mesh generator must enforce minimum sizes near sharp features separately (for example, through boundary sizing or prism layers, which the note masks out).
+
+</details>
+
+**Exercise 3.** Cell sizes in the dataset range from $10^{-4}$ m to $10^{-1}$ m. Map the sizes $10^{-3}$ m and $10^{-2}$ m to $[0, 1]$ using (a) linear min–max scaling and (b) min–max scaling of $\log_{10}$ of the size. Which choice suits an MSE loss?
+
+<details>
+<summary>Answer</summary>
+
+(a) Linear: $10^{-3} \to (10^{-3} - 10^{-4})/(10^{-1} - 10^{-4}) \approx 0.009$ and $10^{-2} \to 0.099$.
+
+(b) Logarithmic: $10^{-3} \to (-3 + 4)/3 \approx 0.333$ and $10^{-2} \to 0.667$.
+
+With linear scaling, every size below 1 cm is squeezed into the bottom tenth of the range. The MSE hardly notices a factor-of-10 error in the finest cells, which are the ones that matter most. In 2D the cell count scales as $1/h^2$, so relative errors matter, and the log scale handles them correctly.
+
+</details>
+
+**Exercise 4.** In a U-Net, a $3 \times 3$ convolution maps 64 channels to 128. How many parameters does it have? Starting from a $128 \times 128$ input with $2 \times 2$ pooling at each level, what is the spatial size after 4 poolings, and how many poolings are possible before reaching $1 \times 1$?
+
+<details>
+<summary>Answer</summary>
+
+$3 \times 3 \times 64 \times 128 + 128 = 73{,}856$ parameters.
+
+After 4 poolings: $128/2^4 = 8$, so $8 \times 8$.
+
+Since $128 = 2^7$, seven poolings reach $1 \times 1$. At the $8 \times 8$ bottleneck each feature summarizes a large part of the domain (the global context), while the skip connections supply local detail. This is the balance the note describes.
+
+</details>
+
+**Exercise 5.** A DWR estimate gives five cells local residuals $\rho_K = (0.8, 0.1, 0.5, 0.05, 0.3)$ and adjoint weights $\omega_K = (0.1, 2.0, 0.4, 1.0, 0.05)$. Compute the indicators $\eta_K = \rho_K \omega_K$ and their sum. Using Dörfler marking with $\theta = 0.6$, find the smallest set of cells (largest indicators first) whose indicators sum to at least $\theta \sum_K \eta_K$. Comment on cell 1.
+
+<details>
+<summary>Answer</summary>
+
+$\eta = (0.08, 0.2, 0.2, 0.05, 0.015)$, which sums to 0.545. The target is $0.6 \times 0.545 = 0.327$.
+
+Sorted indicators: cells 2 and 3 (0.2 each) already give $0.4 \ge 0.327$, so cells 2 and 3 are refined.
+
+Cell 1 has the largest residual but a small adjoint weight. Its error hardly affects the quantity of interest (for example, drag), so goal-oriented refinement leaves it alone. This geometry-to-importance mapping is what the ML model is trained to reproduce without solving the adjoint problem.
+
+</details>
+
+## References
+
+- Becker, R., & Rannacher, R., "An optimal control approach to a posteriori error estimation in finite element methods", *Acta Numerica* 10, 2001.
+- Dörfler, W., "A Convergent Adaptive Algorithm for Poisson's Equation", *SIAM Journal on Numerical Analysis* 33(3), 1996.
+- Ronneberger, O., Fischer, P., & Brox, T., "U-Net: Convolutional Networks for Biomedical Image Segmentation", Medical Image Computing and Computer-Assisted Intervention (MICCAI), 2015.
+- Kingma, D. P., & Ba, J., "Adam: A Method for Stochastic Optimization", International Conference on Learning Representations (ICLR), 2015.
+- Pfaff, T., Fortunato, M., Sanchez-Gonzalez, A., & Battaglia, P. W., "Learning Mesh-Based Simulation with Graph Networks", International Conference on Learning Representations (ICLR), 2021.

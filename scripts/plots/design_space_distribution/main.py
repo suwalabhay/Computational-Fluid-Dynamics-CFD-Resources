@@ -1,33 +1,71 @@
-import numpy as np
+"""Visualise a scrambled Sobol design of experiments for geometry variants.
+
+A four-dimensional scrambled Sobol sequence is drawn in the unit hypercube, one
+dimension per normalised geometry parameter. Two 2D projections of the same
+design are plotted side by side to show how evenly the low-discrepancy points
+cover each parameter plane. In a real workflow each sample would be mapped to a
+deformed mesh and simulated.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 from scipy.stats.qmc import Sobol
 
-# Set up Sobol sequence generator
-dimension = 2
-num_samples = 500
-sobol = Sobol(d=dimension, scramble=True)
+SEED = 0  # seed for the Sobol scrambling
+LOG2_SAMPLES = 9  # 2**9 = 512 samples; Sobol balance needs a power of two
+PARAMETERS = ("Approach_Angle", "Variable_1", "Decklid_Height", "Variable_2")
 
-# Generate Sobol sequence samples
-samples = sobol.random(n=num_samples)
 
-# Mock meshes generation
-# In actual implementation, samples would be used to generate 3D mesh geometries
-mock_meshes = samples  # Just for demonstration
+def generate_design(log2_samples=LOG2_SAMPLES, dimension=len(PARAMETERS), seed=SEED):
+    """Return an array of shape (2**log2_samples, dimension) in [0, 1)^dimension."""
+    sobol = Sobol(d=dimension, scramble=True, rng=seed)
+    return sobol.random_base2(m=log2_samples)
 
-# Plotting the results
-fig, axes = plt.subplots(1, 2, figsize=(12, 6))
 
-# Plot for Approach_Angle
-axes[0].scatter(mock_meshes[:, 0], mock_meshes[:, 1], color="blue")
-axes[0].set_title("2D design space distribution")
-axes[0].set_xlabel("Approach_Angle")
-axes[0].set_ylabel("Variable_1")
+def make_figure(samples, parameters=PARAMETERS):
+    """Scatter (param 0, param 1) and (param 2, param 3) in two panels."""
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    for ax, (i, j) in zip(axes, [(0, 1), (2, 3)]):
+        ax.scatter(samples[:, i], samples[:, j], color="blue", s=12)
+        ax.set_title("2D design space distribution")
+        ax.set_xlabel(f"{parameters[i]} (normalised)")
+        ax.set_ylabel(f"{parameters[j]} (normalised)")
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.set_aspect("equal")
+    fig.suptitle(
+        f"{len(samples)} geometry variants from a {samples.shape[1]}D scrambled "
+        "Sobol sequence (all shown)"
+    )
+    return fig
 
-# Plot for Decklid_Height
-axes[1].scatter(mock_meshes[:, 0], mock_meshes[:, 1], color="blue")
-axes[1].set_title("2D design space distribution")
-axes[1].set_xlabel("Decklid_Height")
-axes[1].set_ylabel("Variable_2")
 
-plt.suptitle("500 geometry variants generated (1st 20 shown here)")
-plt.show()
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    samples = generate_design()
+    fig = make_figure(samples)
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "design_space_distribution.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

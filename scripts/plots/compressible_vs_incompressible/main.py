@@ -1,93 +1,121 @@
-import numpy as np
+"""Compare prescribed incompressible and compressible velocity fields in a 2D duct.
+
+The incompressible case is a fully developed parabolic profile that is the same
+at every streamwise station. The compressible case is a schematic, prescribed
+field whose parabolic profile grows linearly in amplitude along the duct, as it
+would in a flow whose density falls downstream (steady continuity requires
+rho * U = const in a constant-area duct). Both fields are drawn as colour maps
+of speed on a shared colour scale with velocity arrows on top.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.patches import Rectangle
 
-# Set up the domain
-nx, ny = 40, 10  # Increase the grid resolution for a smoother plot
-xmax, ymax = 10.0, 2.0
-x = np.linspace(0, xmax, nx)
-y = np.linspace(0, ymax, ny)
-X, Y = np.meshgrid(x, y)
+# Domain (non-dimensional length units)
+NX, NY = 40, 10  # grid points in x and y
+X_MAX, Y_MAX = 10.0, 2.0  # duct length and height
 
-# -----------------------------------------------------------------------------
-# Incompressible Flow:
-#   - Parabolic profile in y, constant along x
-#   - Typical laminar flow in a rectangular duct
-# -----------------------------------------------------------------------------
-# Center-line at y_mid = ymax/2. We'll define a simple parabola:
-#     U_incomp(y) = U_max * [1 - ((y - y_mid)/(y_mid))^2]
-# so the max velocity is at the center y = y_mid and zero at the walls.
-y_mid = ymax / 2.0
-U_max_incomp = 2.0  # you can tweak this for a more distinct difference
-u_incomp = U_max_incomp * (1.0 - ((Y - y_mid) / y_mid) ** 2)
-u_incomp = np.clip(
-    u_incomp, 0, None
-)  # Parabolic shape can go negative if outside the range
-v_incomp = np.zeros_like(u_incomp)
+# Velocity scales (non-dimensional velocity units)
+U_MAX_INCOMP = 2.0  # centreline speed of the incompressible profile
+U_INLET = 1.0  # centreline speed of the compressible profile at x = 0
+U_OUTLET = 4.0  # centreline speed of the compressible profile at x = X_MAX
 
-# -----------------------------------------------------------------------------
-# Compressible Flow (highly simplified):
-#   - Velocity profile also parabolic in y,
-#   - Increases from left (x=0) to right (x=xmax).
-# -----------------------------------------------------------------------------
-# We'll say the velocity at x=0 is half of the incompressible's maximum,
-# and grows to something larger by x = xmax.
-U_inlet = 1.0  # smaller than incompressible peak
-U_outlet = 4.0  # distinctly larger to emphasize acceleration
-U_slope = (U_outlet - U_inlet) / xmax
 
-# Parabolic shape in y again:
-u_parab = 1.0 - ((Y - y_mid) / y_mid) ** 2
-u_parab = np.clip(u_parab, 0, None)
+def make_grid(nx=NX, ny=NY, x_max=X_MAX, y_max=Y_MAX):
+    """Return the meshgrid arrays X, Y covering [0, x_max] x [0, y_max]."""
+    x = np.linspace(0.0, x_max, nx)
+    y = np.linspace(0.0, y_max, ny)
+    return np.meshgrid(x, y)
 
-# Now make it depend on x:
-#   U(x,y) = [U_inlet + U_slope * x] * [parabolic in y]
-# This way, speed increases significantly in the downstream direction.
-u_comp = (U_inlet + U_slope * X) * u_parab
-v_comp = np.zeros_like(u_comp)
 
-# Compute speed for color mapping
-speed_incomp = np.sqrt(u_incomp**2 + v_incomp**2)
-speed_comp = np.sqrt(u_comp**2 + v_comp**2)
+def parabolic_shape(Y, y_max=Y_MAX):
+    """Parabola equal to 1 on the centreline and 0 on the walls y = 0, y_max."""
+    y_mid = y_max / 2.0
+    return np.clip(1.0 - ((Y - y_mid) / y_mid) ** 2, 0.0, None)
 
-# Create side-by-side subplots
-fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
-# -----------------------------------------------------------------------------
-# Left subplot: Incompressible flow
-# -----------------------------------------------------------------------------
-# Draw a rectangle to outline the pipe
-axes[0].add_patch(Rectangle((0, 0), xmax, ymax, fill=False, linewidth=1))
+def incompressible_field(X, Y, u_max=U_MAX_INCOMP, y_max=Y_MAX):
+    """Fully developed profile u = u_max * [1 - ((y - y_mid)/y_mid)^2], v = 0."""
+    u = u_max * parabolic_shape(Y, y_max)
+    return u, np.zeros_like(u)
 
-# Use pcolormesh for a filled contour of velocity magnitude
-c1 = axes[0].pcolormesh(X, Y, speed_incomp, shading="auto")
-# Add a colorbar for velocity magnitude
-cb1 = fig.colorbar(c1, ax=axes[0], label="Velocity Magnitude")
 
-# Overlay velocity vectors
-axes[0].quiver(X, Y, u_incomp, v_incomp, color="white", scale=15)
+def compressible_field(
+    X, Y, u_inlet=U_INLET, u_outlet=U_OUTLET, x_max=X_MAX, y_max=Y_MAX
+):
+    """Accelerating profile u = (u_inlet + slope * x) * parabola(y), v = 0."""
+    slope = (u_outlet - u_inlet) / x_max
+    u = (u_inlet + slope * X) * parabolic_shape(Y, y_max)
+    return u, np.zeros_like(u)
 
-axes[0].set_xlim([0, xmax])
-axes[0].set_ylim([0, ymax])
-axes[0].set_aspect("equal", adjustable="box")
-axes[0].set_title("Incompressible Flow (Laminar Parabolic)")
 
-# -----------------------------------------------------------------------------
-# Right subplot: Compressible flow
-# -----------------------------------------------------------------------------
-axes[1].add_patch(Rectangle((0, 0), xmax, ymax, fill=False, linewidth=1))
+def plot_panel(ax, fig, X, Y, u, v, title, vmax, x_max=X_MAX, y_max=Y_MAX):
+    """Draw the speed colour map, velocity arrows, and duct outline on ax."""
+    speed = np.hypot(u, v)
+    ax.add_patch(Rectangle((0, 0), x_max, y_max, fill=False, linewidth=1))
+    mesh = ax.pcolormesh(X, Y, speed, shading="auto", vmin=0.0, vmax=vmax)
+    fig.colorbar(mesh, ax=ax, label="Velocity Magnitude")
+    ax.quiver(X, Y, u, v, color="white", scale=15)
+    ax.set_xlim([0, x_max])
+    ax.set_ylim([0, y_max])
+    ax.set_aspect("equal", adjustable="box")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_title(title)
 
-# Filled contour of velocity magnitude
-c2 = axes[1].pcolormesh(X, Y, speed_comp, shading="auto")
-fig.colorbar(c2, ax=axes[1], label="Velocity Magnitude")
 
-# Velocity vectors
-axes[1].quiver(X, Y, u_comp, v_comp, color="white", scale=15)
+def make_figure():
+    """Build the two-panel comparison figure."""
+    X, Y = make_grid()
+    u_inc, v_inc = incompressible_field(X, Y)
+    u_comp, v_comp = compressible_field(X, Y)
+    vmax = max(np.hypot(u_inc, v_inc).max(), np.hypot(u_comp, v_comp).max())
 
-axes[1].set_xlim([0, xmax])
-axes[1].set_ylim([0, ymax])
-axes[1].set_aspect("equal", adjustable="box")
-axes[1].set_title("Compressible Flow (Increasing Speed)")
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+    plot_panel(
+        axes[0],
+        fig,
+        X,
+        Y,
+        u_inc,
+        v_inc,
+        "Incompressible Flow (Laminar Parabolic)",
+        vmax,
+    )
+    plot_panel(
+        axes[1], fig, X, Y, u_comp, v_comp, "Compressible Flow (Increasing Speed)", vmax
+    )
+    fig.tight_layout()
+    return fig
 
-plt.tight_layout()
-plt.show()
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = make_figure()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "compressible_vs_incompressible.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

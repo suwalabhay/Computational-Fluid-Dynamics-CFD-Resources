@@ -1,36 +1,84 @@
-import numpy as np
+"""Plot the one-seventh power-law velocity profile of a turbulent boundary layer.
+
+Evaluates u / U_inf = (y / delta)^(1/7) for 0 <= y / delta <= 1 and marks the
+wall and the boundary layer edge.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Vertical coordinate (y-direction)
-y = np.linspace(0, 1, 100)
+N_POINTS = 1000  # wall-normal samples (dense, because du/dy is infinite at the wall)
+POWER = 1 / 7  # exponent of the power law
 
-# Velocity profile approximation within the boundary layer
-u_profile = y ** (1 / 7)
 
-# Plotting the velocity profile
-plt.figure(figsize=(8, 6))
+def power_law_profile(eta, power=POWER):
+    """Velocity ratio u / U_inf as a function of eta = y / delta."""
+    return eta**power
 
-# Velocity profile plot
-plt.plot(
-    u_profile, y, linewidth=2, color="blue", label="Velocity Profile (Boundary Layer)"
-)
 
-# Indicating boundary layer thickness (approx. u ~ 0.99 U∞)
-plt.axhline(y=1, linestyle="--", color="red", linewidth=1)
-plt.text(0.5, 1.02, "Boundary Layer Thickness (δ)", fontsize=12, color="red")
+def plot_profile(eta, u_ratio):
+    fig, ax = plt.subplots(figsize=(8, 6))
 
-# Wall
-plt.axhline(y=0, color="black", linewidth=3, label="Wall (y=0, u=0)")
+    ax.plot(
+        u_ratio,
+        eta,
+        linewidth=2,
+        color="blue",
+        label=r"1/7 power law: $u/U_\infty = (y/\delta)^{1/7}$",
+    )
 
-# Annotations and labels
-plt.title("Boundary Layer Velocity Profile", fontsize=14)
-plt.xlabel("Velocity u/U∞", fontsize=12)
-plt.ylabel("Distance from Wall (y)", fontsize=12)
-plt.legend()
-plt.grid(True)
+    # Boundary layer edge, where the power law reaches u = U_inf
+    ax.axhline(y=1, linestyle="--", color="red", linewidth=1)
+    ax.text(
+        0.05, 1.02, r"Boundary Layer Thickness ($\delta$)", fontsize=12, color="red"
+    )
 
-# Axis limits
-plt.xlim(0, 1.05)
-plt.ylim(0, 1)
+    # Wall
+    ax.axhline(y=0, color="black", linewidth=3, label="Wall (y=0, u=0)")
 
-plt.show()
+    ax.set_title("Turbulent Boundary Layer Velocity Profile", fontsize=14)
+    ax.set_xlabel(r"Velocity $u/U_\infty$", fontsize=12)
+    ax.set_ylabel(r"Distance from Wall $y/\delta$", fontsize=12)
+    ax.legend(loc="center left")
+    ax.grid(True)
+    ax.set_xlim(0, 1.05)
+    ax.set_ylim(0, 1.1)
+    return fig
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    eta = np.linspace(0, 1, N_POINTS)
+    fig = plot_profile(eta, power_law_profile(eta))
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "boundary_layer_velocity_profile.png",
+            dpi=100,
+            bbox_inches="tight",
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

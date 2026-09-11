@@ -123,3 +123,78 @@ where $\mu_x, \mu_y$ are local means, $\sigma_x, \sigma_y$ are local standard de
 - Validation must go beyond visual inspection—quantitative metrics such as PSNR, SSIM, and spectral analysis are necessary to assess fidelity.
 - Ongoing advances in model efficiency and GAN-based methods are steadily reducing the computational barrier to practical deployment.
 
+### Exercises
+
+**Exercise 1.** A reconstructed vorticity field normalized to $[0, 1]$ has MSE $= 0.0025$ against the reference. Compute the PSNR. How much does PSNR change if the MSE is halved, and what MSE gives 40 dB?
+
+<details>
+<summary>Answer</summary>
+
+$\text{PSNR} = 10\log_{10}(1/0.0025) \approx 26.0$ dB.
+
+Halving the MSE adds $10\log_{10}2 \approx 3.01$ dB, giving about 29.0 dB.
+
+For 40 dB, $\text{MSE} = 10^{-4}$.
+
+</details>
+
+**Exercise 2.** A network upsamples PIV fields from $64 \times 64$ to $256 \times 256$. What fraction of the output values are not directly measured? How much storage do 10,000 high-resolution training snapshots of two velocity components need as 32-bit floats?
+
+<details>
+<summary>Answer</summary>
+
+The upsampling factor is 4 per direction, so there are 16 output values per input value, and $15/16 = 93.75\%$ of the outputs must be inferred.
+
+Storage: $256^2 \times 2 \times 4 \times 10^4 \approx 5.24 \times 10^9$ bytes, or about 5.2 GB (4.9 GiB).
+
+</details>
+
+**Exercise 3.** Compute a single global SSIM between $x = (1, 2, 3, 4)$ and $y = (1.1, 1.9, 3.2, 3.8)$, using population statistics and $c_1 = c_2 = 0$.
+
+<details>
+<summary>Answer</summary>
+
+$\mu_x = \mu_y = 2.5$, $\sigma_x^2 = 1.25$, $\sigma_y^2 = 1.125$ and $\sigma_{xy} = 1.175$.
+
+The mean term is $(2 \cdot 2.5 \cdot 2.5)/(2.5^2 + 2.5^2) = 1$.
+
+The variance–covariance term is $(2 \cdot 1.175)/(1.25 + 1.125) = 2.35/2.375 \approx 0.989$.
+
+So SSIM $\approx 0.989$. In practice SSIM is computed over local windows and averaged, with small positive constants.
+
+</details>
+
+**Exercise 4.** A reference 1D signal is $u(x) = \sin x + 0.1\sin 8x$ on $[0, 2\pi)$. A reconstruction returns only $\sin x$. Compute the MSE, the MSE relative to the mean square of $u$, and the PSNR using the peak-to-peak range of $u$ as MAX. What fraction of the energy at wavenumber 8 is recovered? What does this say about pixel metrics?
+
+<details>
+<summary>Answer</summary>
+
+The error is $0.1\sin 8x$, so MSE $= 0.01/2 = 0.005$. The mean square of $u$ is $0.5 + 0.005 = 0.505$, so the relative MSE is about 0.99%.
+
+The peak-to-peak range of $u$ is about 2.17, so PSNR $\approx 29.7$ dB. This looks respectable.
+
+None of the energy at wavenumber 8 is recovered.
+
+A pixel metric can look good while an entire band of small-scale turbulence is missing. This is why the note recommends energy-spectrum agreement alongside PSNR and SSIM.
+
+</details>
+
+**Exercise 5.** Low-resolution training inputs are made by averaging adjacent pairs of fine-grid values. Show that the fine fields $(1, 3, 2, 6)$ and $(2, 2, 5, 3)$ give the same coarse field. What does this imply about superresolution and about validation?
+
+<details>
+<summary>Answer</summary>
+
+$(1 + 3)/2 = 2$ and $(2 + 6)/2 = 4$; $(2 + 2)/2 = 2$ and $(5 + 3)/2 = 4$. Both give $(2, 4)$.
+
+Coarsening is many-to-one, so recovering the fine field is ill-posed. The network's output reflects the statistics it learned from training data (a prior), not information present in the input. It can produce a plausible but wrong field, especially for flows unlike those it was trained on. That is why held-out high-resolution ground truth, and physics-based checks such as divergence and spectra, are essential.
+
+</details>
+
+### References
+
+- Fukami, K., Fukagata, K., & Taira, K., "Super-resolution reconstruction of turbulent flows with machine learning", *Journal of Fluid Mechanics* 870, 2019.
+- Xie, Y., Franz, E., Chu, M., & Thuerey, N., "tempoGAN: A Temporally Coherent, Volumetric GAN for Super-resolution Fluid Flow", *ACM Transactions on Graphics* 37(4), 2018.
+- Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P., "Image quality assessment: from error visibility to structural similarity", *IEEE Transactions on Image Processing* 13(4), 2004.
+- Dong, C., Loy, C. C., He, K., & Tang, X., "Image Super-Resolution Using Deep Convolutional Networks", *IEEE Transactions on Pattern Analysis and Machine Intelligence* 38(2), 2016.
+- Goodfellow, I., et al., "Generative Adversarial Nets", *Advances in Neural Information Processing Systems* 27, 2014.
+

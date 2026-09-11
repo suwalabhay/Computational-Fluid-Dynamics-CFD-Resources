@@ -178,9 +178,69 @@ In experiments and sensor-limited environments, full-field data are rarely avail
 | **Inputs** | Partial measurements $Y = [y(x^{(1)}), \dots, y(x^{(N)})]^T$, POD modes $\{\psi_j\}_{j=1}^L$ (from a complete database), sample locations $x^{(i)}$ |
 | **Outputs** | Reconstructed coefficients $\Gamma_a^{(y)} = (\Psi^T\Psi)^{-1}\Psi^T Y$, full-field approximation $\hat{y}(x) = \sum a_j \psi_j(x)$ |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/pod/main.py` | Provides the POD basis that Gappy POD uses for reconstruction. |
-| `scripts/algorithms/snapshot_pod/main.py` | Alternative basis-computation method applicable to the Gappy POD workflow. |
+- [Proper Orthogonal Decomposition (POD)](../../../scripts/algorithms/pod/): performs Proper Orthogonal Decomposition on a synthetic spatio-temporal field by taking the singular value decomposition of the mean-subtracted snapshot matrix.
+- [Snapshot Proper Orthogonal Decomposition (Snapshot POD)](../../../scripts/algorithms/snapshot_pod/): computes POD modes of a synthetic spatio-temporal field with the snapshot method, which solves an eigenvalue problem for the $M \times M$ temporal correlation matrix instead of the much larger $N \times N$ spatial one.
+
+## Exercises
+
+The exercises use a discrete domain of four points with the Euclidean inner product and the two orthonormal modes $\psi_1 = (1, 1, 1, 1)/2$ and $\psi_2 = (1, 1, -1, -1)/2$. The full field is $y = (2, 2, 1, 1)$.
+
+**Exercise 1.** Show that with complete data ($N = 4$ sample points) the gappy least-squares solution $\Gamma_a^{(y)} = (\Psi^T\Psi)^{-1}\Psi^T Y$ reduces to the orthogonal projection $a_j^{(y)} = \langle y, \psi_j \rangle$, and compute the coefficients.
+
+<details>
+<summary>Answer</summary>
+
+With all points sampled, the columns of $\Psi \in \mathbb{R}^{4 \times 2}$ are the orthonormal modes, so $\Psi^T\Psi = I_2$ and $\Gamma_a^{(y)} = \Psi^T Y$, i.e. $a_j^{(y)} = \langle y, \psi_j \rangle$. Numerically, $a_1 = (2 + 2 + 1 + 1)/2 = 3$ and $a_2 = (2 + 2 - 1 - 1)/2 = 1$, so $y = 3\psi_1 + \psi_2$ exactly.
+
+</details>
+
+**Exercise 2.** Only points 1 and 3 are measured, $Y = (2, 1)$. Build $\Psi$, solve for the coefficients and reconstruct the full field. Then repeat with points 1 and 2 measured, and explain what goes wrong.
+
+<details>
+<summary>Answer</summary>
+
+Points 1 and 3: $\Psi = \begin{pmatrix} 1/2 & 1/2 \\ 1/2 & -1/2 \end{pmatrix}$ is square and invertible. Solving $a_1 + a_2 = 4$ and $a_1 - a_2 = 2$ gives $a = (3, 1)$, and $\hat{y} = (2, 2, 1, 1)$ is recovered exactly.
+
+Points 1 and 2: both rows of $\Psi$ equal $(1/2, 1/2)$, so $\text{rank}(\Psi) = 1 < L = 2$ and $\Psi^T\Psi$ is singular. The two modes take identical values at these sensors, so the data cannot tell them apart: any $a$ with $a_1 + a_2 = 4$ fits. Sensor locations must make $\Psi$ have full column rank, and preferably be well conditioned.
+
+</details>
+
+**Exercise 3.** Points 1, 2 and 3 are measured with noise: $Y = (2.1, 1.9, 1.0)$. Compute $\Psi^T\Psi$, $\Psi^T Y$, the least-squares coefficients, the reconstruction and the residual $Y - \Psi\Gamma_a^{(y)}$.
+
+<details>
+<summary>Answer</summary>
+
+$\Psi$ has rows $(1/2, 1/2), (1/2, 1/2), (1/2, -1/2)$, so
+
+$$
+\Psi^T\Psi = \begin{pmatrix} 0.75 & 0.25 \\ 0.25 & 0.75 \end{pmatrix}, \qquad \Psi^T Y = \begin{pmatrix} 2.5 \\ 1.5 \end{pmatrix}.
+$$
+
+Solving gives $a = (3, 1)$, so $\hat{y} = (2, 2, 1, 1)$, equal to the noise-free field. The residual is $(0.1, -0.1, 0)$: the two redundant sensors at points 1 and 2 average out their opposite errors. With more sensors than modes, least squares filters measurement noise.
+
+</details>
+
+**Exercise 4.** In the mask formulation of Everson and Sirovich, a diagonal mask $M = \text{diag}(m_1, \ldots, m_n)$ has $m_i = 1$ at measured points and $0$ elsewhere. With $\Psi_{\text{full}}$ the modes evaluated at all points, show that the gappy normal equations $(\Psi_{\text{full}}^T M \Psi_{\text{full}})\,a = \Psi_{\text{full}}^T M y$ coincide with those of this note. Then show that if the true field lies exactly in the span of the $L$ modes and $\Psi$ has full column rank, gappy POD recovers the coefficients exactly, whichever points are missing.
+
+<details>
+<summary>Answer</summary>
+
+Let $S$ be the $N \times n$ matrix that selects the measured points, so that $\Psi = S\Psi_{\text{full}}$, $Y = Sy$ and $S^TS = M$. Then $\Psi^T\Psi = \Psi_{\text{full}}^T S^T S\Psi_{\text{full}} = \Psi_{\text{full}}^T M\Psi_{\text{full}}$ and $\Psi^T Y = \Psi_{\text{full}}^T M y$, so the two systems are identical.
+
+If $y = \Psi_{\text{full}}a^*$, then $Y = \Psi a^*$ and
+
+$$
+\Gamma_a^{(y)} = (\Psi^T\Psi)^{-1}\Psi^T\Psi a^* = a^*.
+$$
+
+The reconstruction error of gappy POD therefore comes only from the part of $y$ outside the span of the basis (and from noise), amplified by the conditioning of $\Psi^T\Psi$.
+
+</details>
+
+## References
+
+- R. Everson and L. Sirovich, "Karhunen–Loève procedure for gappy data", *Journal of the Optical Society of America A* 12(8), 1995.
+- T. Bui-Thanh, M. Damodaran and K. Willcox, "Aerodynamic data reconstruction and inverse design using proper orthogonal decomposition", *AIAA Journal* 42(8), 2004.
+- K. Willcox, "Unsteady flow sensing and estimation via the gappy proper orthogonal decomposition", *Computers & Fluids* 35(2), 2006.

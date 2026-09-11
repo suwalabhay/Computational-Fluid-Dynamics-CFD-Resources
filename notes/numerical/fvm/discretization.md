@@ -14,7 +14,7 @@ The finite-volume method (FVM) is a widely used technique for solving partial di
 
 The starting point in FVM is the integral formulation of a conservation law over an arbitrary control volume $V$ with boundary surface $S$:
 
-$$\frac{\partial}{\partial t}\int_V \phi, dV + \int_S \vec{F} \cdot \hat{n}, dS = \int_V S_\phi, dV$$
+$$\frac{\partial}{\partial t}\int_V \phi \, dV + \int_S \vec{F} \cdot \hat{n} \, dS = \int_V S_\phi \, dV$$
 
 where:
 
@@ -27,7 +27,7 @@ where:
 
 For steady, incompressible flow (i.e., time-independent with constant density), the continuity equation simplifies to:
 
-$$\int_S \vec{V} \cdot \hat{n}, dS = 0$$
+$$\int_S \vec{V} \cdot \hat{n} \, dS = 0$$
 
 where $\vec{V}$ is the velocity vector. This equation implies that the net volumetric flow into the control volume is zero.
 
@@ -55,19 +55,19 @@ A schematic of the rectangular cell is as follows:
  
 Face 1 (Left):
 
-$$\vec{V}_1 = u_1, \hat{i} + v_1, \hat{j}$$
+$$\vec{V}_1 = u_1 \, \hat{i} + v_1 \, \hat{j}$$
 
 Face 2 (Top):
 
-$$\vec{V}_2 = u_2, \hat{i} + v_2, \hat{j}$$
+$$\vec{V}_2 = u_2 \, \hat{i} + v_2 \, \hat{j}$$
 
 Face 3 (Right):
 
-$$\vec{V}_3 = u_3, \hat{i} + v_3, \hat{j}$$
+$$\vec{V}_3 = u_3 \, \hat{i} + v_3 \, \hat{j}$$
 
 Face 4 (Bottom):
 
-$$\vec{V}_4 = u_4, \hat{i} + v_4, \hat{j}$$
+$$\vec{V}_4 = u_4 \, \hat{i} + v_4 \, \hat{j}$$
 
 *Note:* In many practical applications, one assumes that the primary contributions come from the normal components of the velocity at each face. For instance, on the left and right faces, the $u$-component is dominant, and on the top and bottom faces, the $v$-component is dominant.
 
@@ -97,7 +97,7 @@ $$(-u_1) \Delta y + (v_2) \Delta x + (u_3) \Delta y + (-v_4) \Delta x = 0$$
 
 Rearranging the terms:
 
-$$- u_1, \Delta y - v_4, \Delta x + u_3, \Delta y + v_2, \Delta x = 0$$
+$$- u_1 \, \Delta y - v_4 \, \Delta x + u_3 \, \Delta y + v_2 \, \Delta x = 0$$
 
 This expression states that the net mass flux through the cell faces must sum to zero, thus preserving mass conservation within the control volume.
 
@@ -107,7 +107,7 @@ This expression states that the net mass flux through the cell faces must sum to
 
 For the momentum equations, the same approach is used. For example, the $x$-momentum conservation in its integral form is:
 
-$$\int_S \rho u, \vec{V} \cdot \hat{n}, dS = \int_S (\text{Pressure and viscous forces}) \cdot \hat{i}, dS$$
+$$\int_S \rho u \, \vec{V} \cdot \hat{n} \, dS = \int_S (\text{Pressure and viscous forces}) \cdot \hat{i} \, dS$$
 
 After discretizing the surface integrals over the cell faces (and including any body forces or source terms), one obtains an algebraic equation for the $x$-momentum at the cell center. A similar procedure applies to the $y$-momentum.
 
@@ -115,7 +115,7 @@ After discretizing the surface integrals over the cell faces (and including any 
 
 Similarly, the energy conservation equation is integrated over the control volume:
 
-$$\int_S \left( \rho E, \vec{V} + p, \vec{V} \right) \cdot \hat{n}, dS = \int_S \text{Heat flux}, dS$$
+$$\int_S \left( \rho E \, \vec{V} + p \, \vec{V} \right) \cdot \hat{n} \, dS = \int_S \text{Heat flux} \, dS$$
 
 and then discretized by approximating the fluxes across each cell face.
 
@@ -161,9 +161,71 @@ This note shows how to discretize the integral conservation equations (continuit
 | **Inputs** | Rectangular cell dimensions $\Delta x$, $\Delta y$, face velocity components $(u_f, v_f)$, outward normals $\hat{n}$, cell-centered primary variables |
 | **Outputs** | Discrete continuity equation $(-u_1)\Delta y + (v_2)\Delta x + (u_3)\Delta y + (-v_4)\Delta x = 0$, momentum and energy algebraic equations, global matrix system |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/backward_facing_step_simple/main.py` | Assembles and solves the FVM-discretized Navier–Stokes system for a backward-facing step geometry. |
-| `scripts/simulations/lid_driven_cavity/main.py` | Demonstrates FVM-style discretization for the lid-driven cavity, including face flux evaluation. |
+- [Backward-Facing Step Flow (SIMPLE Algorithm)](../../../scripts/simulations/backward_facing_step_simple/): solves steady 2D laminar incompressible flow over a backward-facing step with the finite volume method and the SIMPLE pressure–velocity coupling algorithm.
+- [Lid-Driven Cavity Flow Simulation](../../../scripts/simulations/lid_driven_cavity/): solves the 2D incompressible Navier-Stokes equations for flow in a square cavity driven by a moving lid at a Reynolds number of 100 and animates the velocity field.
+
+## Exercises
+
+**Exercise 1.** A rectangular cell has $\Delta x = 0.1$ m and $\Delta y = 0.05$ m. The face velocities are $u_1 = 1.0$ m/s (left), $u_3 = 1.2$ m/s (right) and $v_4 = 0.3$ m/s (bottom). Use the discrete continuity equation to find the velocity $v_2$ on the top face.
+
+<details>
+<summary>Answer</summary>
+
+$(-u_1)\Delta y + v_2\Delta x + u_3\Delta y - v_4\Delta x = 0$, so
+
+$$v_2 = v_4 - (u_3 - u_1)\frac{\Delta y}{\Delta x} = 0.3 - 0.2 \times 0.5 = 0.2 \text{ m/s}$$
+
+The net volume flow out through the right face ($0.2 \times 0.05 = 0.01$ m²/s) is balanced by a reduced outflow through the top.
+
+</details>
+
+**Exercise 2.** Divide the discrete continuity equation by the cell area $\Delta x\,\Delta y$ and show that it is a consistent approximation of $\partial u/\partial x + \partial v/\partial y = 0$ at the cell centre. What is its order of accuracy on a uniform grid?
+
+<details>
+<summary>Answer</summary>
+
+$$\frac{u_3 - u_1}{\Delta x} + \frac{v_2 - v_4}{\Delta y} = 0$$
+
+The face values sit a half cell on either side of the centre, so each quotient is a central difference with spacing $\Delta x$ (or $\Delta y$) about the centre. Its truncation error is $O(\Delta x^2) + O(\Delta y^2)$. The finite-volume balance is therefore consistent and second-order accurate, while also conserving mass exactly.
+
+</details>
+
+**Exercise 3.** On a non-uniform grid, cell centres lie at $x_P = 0$ and $x_N = 0.3$, the face is at $x_f = 0.1$, and $u_P = 2$, $u_N = 5$. Compute the linearly interpolated face value. What does first-order upwinding give if the flow goes from $P$ to $N$?
+
+<details>
+<summary>Answer</summary>
+
+Linear interpolation with weight $f = (x_f - x_P)/(x_N - x_P) = 1/3$ gives
+
+$$u_f = (1 - f)u_P + f u_N = \frac{2}{3}(2) + \frac{1}{3}(5) = 3.0$$
+
+The simple average $(u_P + u_N)/2 = 3.5$ would be wrong here, because the face is not midway.
+
+Upwinding takes the upstream value, $u_f = u_P = 2$.
+
+</details>
+
+**Exercise 4.** Steady 1D heat conduction, $\frac{d}{dx}\left(k\frac{dT}{dx}\right) = 0$, in a rod of length $L = 0.5$ m, with $k = 1000$ W/(m K), cross-section $A = 10^{-2}$ m², $T_A = 100$ °C at $x = 0$ and $T_B = 500$ °C at $x = L$. Use 5 equal cells with the boundary temperatures applied on the end faces. Assemble the finite-volume equations, solve them, and check the heat flow through the rod.
+
+<details>
+<summary>Answer</summary>
+
+$\delta x = 0.1$ m and the neighbour coefficient is $a = kA/\delta x = 100$ W/K. A boundary face lies half a cell from the cell centre, so its coefficient is $2a = 200$ W/K.
+
+- Interior cells 2 to 4: $200\,T_P = 100\,T_W + 100\,T_E$.
+- Cell 1: $300\,T_1 = 100\,T_2 + 200\,T_A$.
+- Cell 5: $300\,T_5 = 100\,T_4 + 200\,T_B$.
+
+Solving gives $T = (140, 220, 300, 380, 460)$ °C, which matches the exact linear profile $T = 100 + 800x$ at the cell centres.
+
+Heat flow through the left face: $200 \times (140 - 100) = 8000$ W. Through the right face: $200 \times (500 - 460) = 8000$ W. Both equal $kA(T_B - T_A)/L = 8000$ W. Summing all cell equations cancels the interior face fluxes pairwise, which is the discrete form of global conservation.
+
+</details>
+
+## References
+
+- H. K. Versteeg, W. Malalasekera, *An Introduction to Computational Fluid Dynamics: The Finite Volume Method*, 2nd ed., Pearson Prentice Hall, 2007.
+- S. V. Patankar, *Numerical Heat Transfer and Fluid Flow*, Hemisphere, 1980.
+- F. Moukalled, L. Mangani, M. Darwish, *The Finite Volume Method in Computational Fluid Dynamics: An Advanced Introduction with OpenFOAM and Matlab*, Springer, 2016.

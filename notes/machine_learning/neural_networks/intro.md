@@ -11,6 +11,7 @@ Classical CFD relies on discretizing the Navier–Stokes equations and solving f
 Neural networks introduce an alternative route: by approximating the mapping from geometry and boundary conditions to flow quantities, they can offer rapid surrogates for full simulations. For instance, a neural network might learn a function
 
 $$F : (\text{geometry parameters}, \text{operating conditions}) \mapsto \left\{\text{flow field}, \; C_d, \; C_l,\dots\right\},$$
+
 where $C_d$ and $C_l$ are the drag and lift coefficients, respectively. Once trained, such models can instantly deliver aerodynamic properties for new inputs, drastically reducing the cost and time compared to a full CFD solve. Although these methods do not universally replace physics-based solvers, they are immensely valuable in contexts such as:
 
 I. **Preliminary Shape Optimization**: Exploring large design spaces quickly to identify promising candidates.  
@@ -30,6 +31,7 @@ I. **Physics-Informed Neural Networks (PINNs)**
    PINNs embed the underlying governing equations, such as continuity and momentum conservation, into the neural network’s loss function. For instance, one might minimize  
 
    $$\mathcal{L} = \lambda_1 \|\nabla \cdot \mathbf{u}\|^2 + \lambda_2 \left\| \rho(\mathbf{u}\cdot\nabla)\mathbf{u} + \nabla p - \mu \Delta \mathbf{u}\right\|^2$$
+
    along with boundary and initial conditions. Enforcing these PDE constraints during training encourages physically consistent solutions, even with comparatively small datasets.
 
 II. **Pure Data-Driven Neural Solvers**  
@@ -37,6 +39,7 @@ II. **Pure Data-Driven Neural Solvers**
    Another approach learns a direct mapping from shape and flow conditions to the desired outputs using purely data-driven techniques. The network might learn
 
    $$(\text{shape encoding}, \text{Reynolds number}, \dots) \;\mapsto\; (p(\mathbf{x}), \mathbf{u}(\mathbf{x}), C_d, \dots),$$
+
    without explicitly embedding the PDEs. This requires extensive, high-fidelity data—typically a large set of CFD solutions or experimental measurements.
 
 III. **Hybrid Methods**  
@@ -115,6 +118,7 @@ I. **Encoding Step**
    A CNN-based encoder reduces the geometry (often in voxelized or point-cloud form) to a latent vector $\mathbf{z}$, which can be much smaller than the full resolution. Mathematically, 
 
    $$\mathbf{z} = E(\text{Geometry}),$$
+
    where $E$ is the encoder network, yielding a compressed representation $\mathbf{z} \in \mathbb{R}^m$.
 
 II. **Decoding or Reconstruction**  
@@ -139,9 +143,8 @@ After choosing a parameterization—either through explicit morphing or learned 
 
 In each case, one aims to map geometric or latent space parameters to aerodynamic outputs. Symbolically:
 
-$$\hat{C_d}(\mathbf{z}) = M(\mathbf{z}), \quad
+$$\hat{C_d}(\mathbf{z}) = M(\mathbf{z}), \quad \hat{C_l}(\mathbf{z}) = M'(\mathbf{z}),$$
 
-\hat{C_l}(\mathbf{z}) = M'(\mathbf{z}),$$
 where $M$ and $M'$ could be neural networks or alternative regressors. The choice often depends on dataset size, desired interpretability, and computational constraints.
 
 ### Data Generation and Training Costs  
@@ -215,6 +218,7 @@ A particularly promising branch of research is geometric deep learning (GDL). In
 The advantage of these methods is their ability to preserve topological and geometric information without forcing the data into a regular grid. One might write the GNN update as:
 
 $$h_v^{(k+1)} = \phi\Bigl(h_v^{(k)}, \bigl\{h_u^{(k)} : u \in \mathcal{N}(v)\bigr\}\Bigr),$$
+
 where $h_v^{(k)}$ is the hidden state of node $v$ at layer $k$, and $\phi$ is a learned update function.
 
 ### Advantages and Challenges of GNN  
@@ -275,3 +279,85 @@ Starting with a well-scoped problem—such as predicting $C_d$ for a parametric 
 - Training data generation remains the primary bottleneck; efficient sampling and active learning strategies are essential to control costs.
 - Neural networks are best used as complements to traditional CFD—accelerating design exploration, not replacing rigorous validation.
 - Ensuring robust out-of-distribution performance and quantifying prediction uncertainty are open challenges that must be addressed before deploying surrogates in safety-critical applications.
+
+### Exercises
+
+**Exercise 1.** A surrogate $\hat{C_d}(\mathbf{p})$ maps $n = 8$ geometry parameters to two outputs $(C_d, C_l)$ through dense layers of 128, 128 and 64 neurons. Count the trainable parameters and compare with a training set of 120 CFD designs.
+
+<details>
+<summary>Answer</summary>
+
+- $8 \to 128$: $8 \times 128 + 128 = 1{,}152$
+- $128 \to 128$: $16{,}512$
+- $128 \to 64$: $8{,}256$
+- $64 \to 2$: $130$
+
+That is 26,050 parameters in total.
+
+With 120 designs (240 target values) the network is heavily over-parameterized. Regularization (weight decay, dropout, early stopping), a smaller network, or a Gaussian process are all worth trying, as the note's section on overfitting warns.
+
+</details>
+
+**Exercise 2.** A PINN candidate for steady 2D channel flow is $\mathbf{u} = (U(1 - y^2/h^2), 0)$ with $p = p_0 + Gx$. Evaluate the continuity and momentum residuals in the note's loss $\mathcal{L}$. For what $G$ does the loss vanish? Evaluate it for $\mu = 1.8 \times 10^{-5}$ Pa s, $U = 1$ m/s and $h = 0.01$ m.
+
+<details>
+<summary>Answer</summary>
+
+Continuity: $\partial u/\partial x + \partial v/\partial y = 0$, so the first term is zero.
+
+Momentum: $(\mathbf{u}\cdot\nabla)\mathbf{u} = u\,\partial u/\partial x = 0$, $\nabla p = (G, 0)$ and $\mu\Delta\mathbf{u} = (-2\mu U/h^2, 0)$. The residual is $(G + 2\mu U/h^2, 0)$.
+
+The loss vanishes when $G = -2\mu U/h^2 = -2 \times 1.8 \times 10^{-5} \times 1/10^{-4} = -0.36$ Pa/m.
+
+This is plane Poiseuille flow. The PDE residual alone pins down the pressure gradient, and the boundary-condition terms fix $u = 0$ at $y = \pm h$.
+
+</details>
+
+**Exercise 3.** A 3D CNN autoencoder encodes a $128^3$ voxel geometry into a latent vector $\mathbf{z} \in \mathbb{R}^{256}$. What is the compression ratio? For a 5 m car, how large is a voxel, and what does that imply for small aerodynamic features?
+
+<details>
+<summary>Answer</summary>
+
+$128^3 = 2{,}097{,}152$ voxels, so the ratio is $2{,}097{,}152/256 = 8{,}192$.
+
+The voxel size is $5/128 \approx 3.9$ cm, so features of a few centimetres (mirror edges, small spoilers, gaps) are at best one voxel wide before any compression. This is the "loss of fine detail" limitation in the note.
+
+</details>
+
+**Exercise 4.** Training designs in a 2-parameter space are $(0,0)$: $C_d = 0.30$, $(1,0)$: $0.32$, $(0,1)$: $0.28$, $(1,1)$: $0.31$. Predict $C_d$ at $\mathbf{p} = (0.2, 0.1)$ with k-NN regression, $k = 3$, using (a) a plain average and (b) inverse-distance weighting.
+
+<details>
+<summary>Answer</summary>
+
+The distances are $0.224$ to $(0,0)$, $0.806$ to $(1,0)$, $0.922$ to $(0,1)$ and $1.204$ to $(1,1)$.
+
+The three nearest are $(0,0)$, $(1,0)$ and $(0,1)$.
+
+(a) Plain average: $(0.30 + 0.32 + 0.28)/3 = 0.300$.
+
+(b) Inverse-distance weighting: $\sum (C_{d,i}/d_i) / \sum (1/d_i) \approx 0.3005$.
+
+Here the two estimates are almost the same because the neighbours' values straddle the nearest one. Unlike a GP, k-NN gives no uncertainty estimate.
+
+</details>
+
+**Exercise 5.** Using the note's sampling guideline of about 10 samples per parameter for $n = 12$ parameters, and 8 h on 64 cores per CFD run, compute the core-hours for the training data. Compare with running CFD directly for an optimization that needs 2,000 evaluations. Above how many evaluations does the surrogate pay off (ignoring training cost)?
+
+<details>
+<summary>Answer</summary>
+
+Training data: $120 \times 8 \times 64 = 61{,}440$ core-hours.
+
+Direct optimization: $2000 \times 8 \times 64 = 1{,}024{,}000$ core-hours, about 16.7 times more.
+
+The surrogate pays off once the optimization needs more than 120 evaluations. In practice extra validation runs and GPU training time raise that break-even point somewhat.
+
+</details>
+
+### References
+
+- Goodfellow, I., Bengio, Y., & Courville, A., *Deep Learning*, MIT Press, 2016.
+- Raissi, M., Perdikaris, P., & Karniadakis, G. E., "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations", *Journal of Computational Physics* 378, 2019.
+- Thuerey, N., Weißenow, K., Prantl, L., & Hu, X., "Deep Learning Methods for Reynolds-Averaged Navier–Stokes Simulations of Airfoil Flows", *AIAA Journal* 58(1), 2020.
+- Qi, C. R., Su, H., Mo, K., & Guibas, L. J., "PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation", IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2017.
+- Brunton, S. L., Noack, B. R., & Koumoutsakos, P., "Machine Learning for Fluid Mechanics", *Annual Review of Fluid Mechanics* 52, 2020.

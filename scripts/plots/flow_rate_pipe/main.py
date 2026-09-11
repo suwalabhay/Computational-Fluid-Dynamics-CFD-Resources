@@ -1,50 +1,100 @@
-def plot_flow_rate(pipe_radius=0.1, velocity=2, length=5):
-    # Constants
-    area = np.pi * pipe_radius**2  # Cross-sectional area
-    flow_rate = area * velocity  # Flow rate Q = A * v
+"""Draw a side view of a circular pipe and annotate its volumetric flow rate.
 
-    # Plot setup
+The cross-sectional area A = pi r^2 and flow rate Q = A v are computed for a
+uniform (plug) velocity v. The pipe is drawn as a rectangle of height 2r with
+flow arrows whose length is proportional to v, inlet and outlet labels, and a
+text box listing r, L, v, A, and Q.
+"""
+
+import argparse
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+PIPE_RADIUS = 0.1  # m
+VELOCITY = 2.0  # mean (plug) velocity, m/s
+PIPE_LENGTH = 5.0  # m
+ARROW_TIME = 0.2  # s; arrow length = velocity * ARROW_TIME (0.4 m at 2 m/s)
+
+
+def flow_rate(pipe_radius, velocity):
+    """Return (area, Q) for a circular pipe with a uniform velocity profile."""
+    area = np.pi * pipe_radius**2  # m^2
+    return area, area * velocity  # m^3/s
+
+
+def plot_flow_rate(pipe_radius=PIPE_RADIUS, velocity=VELOCITY, length=PIPE_LENGTH):
+    """Return a figure showing the pipe, flow arrows, and computed A and Q."""
+    area, q = flow_rate(pipe_radius, velocity)
+
     fig, ax = plt.subplots(figsize=(10, 4))
 
-    # Draw the pipe
+    # Draw the pipe (side view)
     ax.add_patch(
         plt.Rectangle(
             (0, -pipe_radius), length, 2 * pipe_radius, color="gray", alpha=0.3
         )
     )
 
-    # Draw flow arrows
-    x_positions = np.linspace(0.5, length - 0.5, 8)
+    # Flow arrows, length proportional to the velocity
+    arrow_length = velocity * ARROW_TIME
+    x_positions = np.linspace(0.5, length - 0.5 - arrow_length, 8)
     y_positions = np.linspace(-pipe_radius * 0.8, pipe_radius * 0.8, 5)
-
     for x in x_positions:
         for y in y_positions:
             ax.annotate(
                 "",
-                xy=(x + 0.4, y),
+                xy=(x + arrow_length, y),
                 xytext=(x, y),
-                arrowprops=dict(arrowstyle="->", lw=2, color="blue"),
+                arrowprops=dict(arrowstyle="->", lw=1.5, color="blue"),
             )
 
-    # Annotate flow rate (moved above the pipe to avoid overlapping)
+    # Inlet and outlet labels beside the pipe ends
+    ax.text(-0.1, 0, "Inlet", ha="right", va="center", fontsize=11)
+    ax.text(length + 0.1, 0, "Outlet", ha="left", va="center", fontsize=11)
+
+    # Computed values below the pipe
     ax.text(
         length / 2,
-        pipe_radius * 2,
-        f"Flow Rate: {flow_rate:.3f} m³/s",
+        -pipe_radius * 1.5,
+        f"r = {pipe_radius:g} m, L = {length:g} m, v = {velocity:g} m/s\n"
+        f"A = πr² = {area:.4f} m²,  Q = A·v = {q:.4f} m³/s",
         ha="center",
+        va="top",
         fontsize=12,
         color="black",
     )
 
-    # Settings
-    ax.set_xlim(-0.5, length + 0.5)
-    ax.set_ylim(-pipe_radius * 3, pipe_radius * 3)
+    ax.set_xlim(-1.0, length + 1.0)
+    ax.set_ylim(-pipe_radius * 6, pipe_radius * 1.5)
     ax.set_aspect("equal")
     ax.axis("off")
+    ax.set_title("Flow Rate Through a Pipe")
+    return fig
 
-    plt.title("Flow Rate Through a Pipe")
-    plt.show()
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = plot_flow_rate()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "flow_rate_pipe.png", dpi=100, bbox_inches="tight")
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
 
 
-# Example usage
-plot_flow_rate(pipe_radius=0.1, velocity=2, length=5)
+if __name__ == "__main__":
+    main()

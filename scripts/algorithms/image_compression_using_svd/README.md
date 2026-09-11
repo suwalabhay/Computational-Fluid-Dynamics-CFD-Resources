@@ -1,66 +1,87 @@
 # Image Compression Using SVD
 
-This script demonstrates how Singular Value Decomposition (SVD) can be used to compress grayscale images by retaining only the $r$ largest singular values and their associated singular vectors. Truncating the full decomposition produces a rank-$r$ approximation that captures the dominant structure of the image while discarding fine detail, offering a controlled trade-off between file size and visual fidelity.
+This script compresses a grayscale image by keeping only its $r$ largest singular values and the matching singular vectors, then compares the rank-$r$ reconstructions with the original. The same truncated SVD underlies Proper Orthogonal Decomposition, so the singular value spectrum and energy ratio plots have the same meaning as in a POD analysis of flow snapshots.
 
 ## Overview
 
-- Loads a grayscale image and decomposes it with NumPy's `linalg.svd`.
-- Reconstructs the image at ranks $r \in \{5, 25, 100\}$ and displays them alongside the original.
-- Plots the singular value spectrum on a logarithmic scale to reveal the rapid decay typical of natural images.
-- Plots the cumulative energy ratio $\mathcal{E}(r)$ versus rank to show how many singular values are needed to capture a given fraction of total image energy.
-- Annotates each reconstructed panel with its rank and relative storage cost.
+- Loads a grayscale image: by default the $512 \times 512$ `camera` sample bundled with scikit-image, or any file passed with `--image`. Colour images are converted to grayscale.
+- Computes the thin SVD with `numpy.linalg.svd(..., full_matrices=False)`.
+- Shows the original image next to reconstructions of rank $r \in \{5, 25, 100\}$, each titled with its compression ratio.
+- Plots the singular values $\sigma_i$ on a logarithmic axis.
+- Plots the cumulative energy ratio $\mathcal{E}(r)$, marks the 90 %, 95 % and 99 % levels, and gives the rank needed to reach each one in the legend and on standard output.
 
 ## Mathematical Background
 
 ### Singular Value Decomposition
 
-Any real $m \times n$ matrix $A$ (the pixel intensity matrix of a grayscale image) can be factored as
+An $m \times n$ pixel matrix $A$ can be factored as
 
-$$A = U \Sigma V^T,$$
+$$
+A = U \Sigma V^T,
+$$
 
-where $U \in \mathbb{R}^{m \times m}$ and $V \in \mathbb{R}^{n \times n}$ are orthogonal matrices and $\Sigma = \mathrm{diag}(\sigma_1, \sigma_2, \dots, \sigma_p)$ with $p = \min(m,n)$ and $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_p \geq 0$.
+with $p = \min(m, n)$, $U \in \mathbb{R}^{m \times p}$ and $V \in \mathbb{R}^{n \times p}$ having orthonormal columns, and $\Sigma = \mathrm{diag}(\sigma_1, \dots, \sigma_p)$ with $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_p \geq 0$.
 
 ### Rank-$r$ Approximation
 
-The best rank-$r$ approximation of $A$ in the Frobenius (and 2-norm) sense is given by the Eckart–Young theorem:
+$$
+A_r = U_r \Sigma_r V_r^T = \sum_{i=1}^{r} \sigma_i \mathbf{u}_i \mathbf{v}_i^T
+$$
 
-$$A_r = U_r \Sigma_r V_r^T = \sum_{i=1}^{r} \sigma_i \mathbf{u}_i \mathbf{v}_i^T,$$
+By the Eckart–Young theorem, $A_r$ is the best rank-$r$ approximation of $A$ in both the Frobenius norm and the 2-norm. Its Frobenius error is
 
-where $U_r$ and $V_r$ contain the first $r$ columns of $U$ and $V$ respectively, and $\Sigma_r = \mathrm{diag}(\sigma_1, \dots, \sigma_r)$.
-
-### Approximation Error
-
-The Frobenius-norm error of the truncation is
-
-$$\|A - A_r\|_F = \sqrt{\sum_{i=r+1}^{p} \sigma_i^2}.$$
+$$
+\|A - A_r\|_F = \sqrt{\sum_{i=r+1}^{p} \sigma_i^2}.
+$$
 
 ### Cumulative Energy Ratio
 
-The fraction of total signal energy captured by the first $r$ singular values is
+$$
+\mathcal{E}(r) = \frac{\sum_{i=1}^{r} \sigma_i^2}{\sum_{i=1}^{p} \sigma_i^2}
+$$
 
-$$\mathcal{E}(r) = \frac{\displaystyle\sum_{i=1}^{r} \sigma_i^2}{\displaystyle\sum_{i=1}^{p} \sigma_i^2}.$$
+The image is not mean-subtracted, so $\sigma_1$ carries the mean brightness and $\mathcal{E}(1)$ is already large.
 
-A value $\mathcal{E}(r) \approx 1$ means the rank-$r$ approximation is nearly lossless.
+### Compression Ratio
 
-### Storage Comparison
+Storing $A_r$ takes $r(m + n + 1)$ numbers instead of $mn$:
 
-The full image requires $m \times n$ values. The rank-$r$ approximation requires only $r(m + n + 1)$ values (the columns of $U_r$, the rows of $V_r^T$, and the $r$ singular values), yielding a compression ratio of
-
-$$\rho = \frac{mn}{r(m+n+1)}.$$
+$$
+\rho = \frac{mn}{r(m + n + 1)}.
+$$
 
 ## Implementation
 
-1. **Load image** — read a grayscale image into an $m \times n$ NumPy array of floating-point pixel intensities.
-2. **Full SVD** — compute $U$, $\boldsymbol{\sigma}$ (as a 1-D array), $V^T$ via `numpy.linalg.svd` with `full_matrices=True`.
-3. **Rank-$r$ reconstruction** — for each target rank $r \in \{5, 25, 100\}$, slice $U_r$, $\Sigma_r$, $V_r^T$ and compute $A_r = U_r \Sigma_r V_r^T$; clip pixel values to $[0, 255]$.
-4. **Image panels** — display the original and three reconstructions side by side using Matplotlib with a grey colormap; label each panel with its rank.
-5. **Singular value plot** — plot $\sigma_i$ versus $i$ on a semi-logarithmic scale to visualise spectral decay.
-6. **Energy plot** — compute the cumulative sum of $\sigma_i^2 / \|\boldsymbol{\sigma}\|^2$ and plot against rank $r$.
+- `load_grayscale_image(path)` reads the image with `skimage.io.imread`, or uses `skimage.data.camera()` when no path is given. It converts RGB or RGBA input to grayscale and returns floats in $[0, 1]$.
+- `reconstruct_image(U, S, Vt, rank)` forms $U_r \Sigma_r V_r^T$.
+- `compression_ratio(m, n, rank)` evaluates $\rho$.
+- `energy_ratios(S)` returns $\mathcal{E}(r)$ for every $r$, and `rank_for_energy(ratios, level)` returns the smallest $r$ with $\mathcal{E}(r) \geq$ `level`.
+- `plot_reconstructions` clips each reconstruction to $[0, 1]$ and shows it with a fixed gray scale. `plot_singular_values` and `plot_energy_ratios` draw the other two figures.
+- `RANKS` and `ENERGY_LEVELS` set the ranks shown and the energy levels marked.
+
+## Usage
+
+```bash
+python main.py                                   # use the bundled camera image
+python main.py --image path/to/picture.png       # use your own image
+python main.py --no-show --output .              # save the three figures as PNGs
+```
 
 ## Output
 
-The script produces three figures:
+![Original camera image and rank 5, 25 and 100 reconstructions](reconstructed_images.png)
 
-- **Reconstruction comparison** — a row of four images: original, rank-5, rank-25, and rank-100 approximations, illustrating the progressive recovery of detail.
-- **Singular value spectrum** — a log-scale plot of $\sigma_i$ versus index $i$, demonstrating the rapid decay that makes low-rank compression effective for natural images.
-- **Cumulative energy** — a plot of $\mathcal{E}(r)$ versus $r$, showing the rank required to capture 90 %, 95 %, and 99 % of total image energy.
+At rank 5 (compression ratio 51.2) only the rough light and dark regions remain. At rank 25 (10.2) the figure and tripod are recognisable. At rank 100 (2.6) the image is close to the original, apart from faint texture in the sky.
+
+![Singular values of the camera image](singular_values.png)
+
+The singular values fall by about two orders of magnitude over the first 50 indices, then decay slowly, then drop sharply over the last few indices.
+
+![Cumulative energy ratio of the camera image](energy_ratios.png)
+
+For the camera image, 90 % of the energy is reached at $r = 2$, 95 % at $r = 3$ and 99 % at $r = 21$. Visual quality needs many more modes than these energy levels suggest, because the fine detail carries little energy.
+
+## Related Notes
+
+- [SVD and POD](../../../notes/numerical/pod/pod_vs_svd.md)
+- [POD Introduction](../../../notes/numerical/pod/pod_intro.md)

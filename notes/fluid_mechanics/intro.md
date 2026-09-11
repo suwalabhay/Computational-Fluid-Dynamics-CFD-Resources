@@ -48,8 +48,7 @@ This section focuses on the **theoretical foundations** of fluid mechanics, incl
 
 ## From Molecules to Macroscopic Fluids
 
-At the molecular level, a fluid is a whirlwind of activity. Molecules bounce around at high speeds, collide with one another and with any walls or particles present, and continuously change direction. Temperature, for example, relates to the average kinetic energy of these molecules. Pressure arises from the cumulative effect of molecular impacts on surfaces. But for engineering applications, it is rarely necessary to solve for each molecule's position and velocity. Instead, one treats the fluid as if it were a continuous substance, called a continuum. Here, properties such as **density** ($
-ho$), **pressure** ($p$), and **velocity** ($\vec{v}$) are defined at every point in space and time.
+At the molecular level, a fluid is a whirlwind of activity. Molecules bounce around at high speeds, collide with one another and with any walls or particles present, and continuously change direction. Temperature, for example, relates to the average kinetic energy of these molecules. Pressure arises from the cumulative effect of molecular impacts on surfaces. But for engineering applications, it is rarely necessary to solve for each molecule's position and velocity. Instead, one treats the fluid as if it were a continuous substance, called a continuum. Here, properties such as **density** ($\rho$), **pressure** ($p$), and **velocity** ($\vec{v}$) are defined at every point in space and time.
 
 This approach is justified by the continuum hypothesis, which states that the fluid can be considered smooth as long as the scale of interest is much larger than molecular dimensions. For a gas at standard conditions, even a tiny volume like a cubic micron still contains an enormous number of molecules. Averaging their behavior yields stable macroscopic properties. Thus, fluid mechanics focuses on these averaged quantities, enabling powerful mathematical models and equations that capture the essence of fluid behavior without getting lost in molecular details.
 
@@ -59,8 +58,7 @@ The continuum hypothesis underpins classical fluid mechanics. It assumes that th
 
 Defining field variables allows writing down equations that describe how a fluid moves and changes:
 
-• **Density field** $
-ho(x,y,z,t)$ gives the mass of fluid per unit volume at each point.  
+• **Density field** $\rho(x,y,z,t)$ gives the mass of fluid per unit volume at each point.  
 
 • **Velocity field** $\vec{v}(x,y,z,t)$ describes how fast fluid parcels move and in which direction.  
 
@@ -74,8 +72,7 @@ Pressure is a key property that gives fluid mechanics much of its predictive pow
 
 In static fluids, pressure commonly changes with depth due to gravity. Deeper layers of fluid support the weight of the fluid above them, resulting in higher pressure. Mathematically, assuming the vertical axis $z$ is positive upward and ignoring other forces:
 
-$$\frac{dp}{dz} = -
-ho g,$$
+$$\frac{dp}{dz} = -\rho g,$$
 
 where $g$ is the acceleration due to gravity. This equation shows that going deeper into a fluid increases the pressure. It underlies familiar phenomena like ears popping when diving deeper into a swimming pool or the pressure differences that influence submarine design.
 
@@ -91,15 +88,11 @@ By adopting the continuum viewpoint, fluid mechanics uses partial differential e
 
 Conservation of mass ensures that fluid is neither created nor destroyed. This principle leads to the continuity equation:
 
-$$
-abla \cdot \vec{v} = 0 \quad 	ext{(for incompressible fluids)}$$
+$$\nabla \cdot \vec{v} = 0 \quad \text{(for incompressible fluids)}$$
 
 or more generally:
 
-$$\frac{\partial 
-ho}{\partial t} + 
-abla \cdot (
-ho \vec{v}) = 0.$$
+$$\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \vec{v}) = 0.$$
 
 ### Conservation of Momentum
 
@@ -114,8 +107,7 @@ By solving these equations, one can predict how fluids flow around objects (like
 ## Fluid Classification
 
 ### By Compressibility
-- **Incompressible fluids**: Density remains essentially constant ($
-ho \approx$ constant)
+- **Incompressible fluids**: Density remains essentially constant ($\rho \approx$ constant)
 - **Compressible fluids**: Density varies significantly with pressure and temperature
 
 ### By Viscosity
@@ -131,12 +123,9 @@ ho \approx$ constant)
 Fluid mechanics relies heavily on:
 
 ### Vector Calculus
-- **Gradient** ($
-abla$): Describes how scalar fields change in space
-- **Divergence** ($
-abla \cdot$): Measures source/sink strength of vector fields
-- **Curl** ($
-abla 	imes$): Quantifies rotation in vector fields
+- **Gradient** ($\nabla$): Describes how scalar fields change in space
+- **Divergence** ($\nabla \cdot$): Measures source/sink strength of vector fields
+- **Curl** ($\nabla \times$): Quantifies rotation in vector fields
 
 ### Partial Differential Equations
 Most fluid problems involve coupled PDEs that must be solved simultaneously with appropriate boundary and initial conditions.
@@ -210,3 +199,65 @@ $$\frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \vec{v}) = 0.$$
 Conservation of momentum (Newton’s second law applied to a fluid) leads to the Navier–Stokes equations. These equations incorporate pressure gradients, viscous stresses, and any external forces like gravity. The result is a set of coupled equations relating velocity, pressure, and density.
 
 By solving these equations, one can predict how fluids flow around objects (like air over an airplane wing), through channels (like water in a pipeline), or in the environment (like ocean currents and atmospheric circulation).
+
+## Related Scripts
+
+- [Microscopic vs. Macroscopic View of a Fluid](../../scripts/plots/microscopic_view/): draws two side-by-side panels that contrast the microscopic (molecular) and macroscopic (continuum) views of a fluid.
+
+## Exercises
+
+**Exercise 1.** Classify each of these as compressible or incompressible and as laminar or turbulent in typical conditions, and give a one-line reason: (a) honey poured from a spoon, (b) air around a commercial airliner at cruise ($Ma \approx 0.8$), (c) water flowing from a garden hose.
+
+<details>
+<summary>Answer</summary>
+
+(a) Incompressible and laminar. Honey is a liquid, and its very high viscosity keeps the Reynolds number small.
+
+(b) Compressible and turbulent. At $Ma \approx 0.8$ density changes are significant (the usual limit for treating a flow as incompressible is $Ma \approx 0.3$), and the Reynolds number is of order $10^7$ or more.
+
+(c) Incompressible, and usually turbulent. Water density hardly changes, and $Re = VD/\nu$ is roughly $(2)(0.015)/10^{-6} = 3 \times 10^4$.
+
+</details>
+
+**Exercise 2.** Support the continuum hypothesis with a number. Using the ideal-gas relation $n = p/(k_B T)$ with $k_B = 1.380649 \times 10^{-23}$ J/K, estimate how many molecules are in one cubic micron of air at $p = 101325$ Pa and $T = 273.15$ K.
+
+<details>
+<summary>Answer</summary>
+
+$n = 101325 / (1.380649 \times 10^{-23} \times 273.15) = 2.69 \times 10^{25}$ m⁻³. One cubic micron is $10^{-18}$ m³, so it holds about $2.7 \times 10^7$ molecules.
+
+With tens of millions of molecules, local averages such as density and pressure are statistically well defined even at this small scale.
+
+</details>
+
+**Exercise 3.** Integrate $dp/dz = -\rho g$ for water ($\rho = 1000$ kg/m³, $g = 9.81$ m/s²) to find the gauge and absolute pressure at the bottom of a 3 m deep pool, with $p_{atm} = 101325$ Pa at the surface.
+
+<details>
+<summary>Answer</summary>
+
+Integrating from the surface ($z = 0$) down to $z = -h$ gives $p = p_{atm} + \rho g h$.
+
+- Gauge pressure: $\rho g h = 1000 \times 9.81 \times 3 = 29430$ Pa.
+- Absolute pressure: $101325 + 29430 = 130755$ Pa, about 1.29 atm.
+
+</details>
+
+**Exercise 4.** A gas has uniform density $\rho(t) = \rho_0 e^{-t/\tau}$, with no spatial variation. Use the general continuity equation to find $\nabla \cdot \vec{v}$, and explain the sign.
+
+<details>
+<summary>Answer</summary>
+
+Expand the divergence: $\partial \rho/\partial t + \vec{v} \cdot \nabla \rho + \rho \nabla \cdot \vec{v} = 0$. Since $\nabla \rho = 0$,
+
+$$\nabla \cdot \vec{v} = -\frac{1}{\rho}\frac{\partial \rho}{\partial t} = \frac{1}{\tau}$$
+
+The velocity divergence is positive, so the gas expands everywhere. The same mass spreads over a growing volume, which is why the density falls. Only when $\rho$ is constant does the equation reduce to $\nabla \cdot \vec{v} = 0$.
+
+</details>
+
+## References
+
+- G. K. Batchelor, *An Introduction to Fluid Dynamics*, Cambridge University Press, 1967.
+- P. K. Kundu, I. M. Cohen, D. R. Dowling, *Fluid Mechanics*, 6th ed., Academic Press, 2016.
+- F. M. White, *Fluid Mechanics*, 8th ed., McGraw-Hill Education, 2016.
+- D. J. Acheson, *Elementary Fluid Dynamics*, Oxford University Press, 1990.

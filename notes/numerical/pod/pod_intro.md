@@ -47,6 +47,7 @@ It encodes the covariance of the data. Alternatively, one could form $\mathbf{X}
 Solve the eigenvalue problem:
 
 $$\mathbf{C}\mathbf{v}_i = \lambda_i \mathbf{v}_i,$$
+
 where $\lambda_i$ are eigenvalues (sorted $\lambda_1 \geq \lambda_2 \geq \ldots \geq 0$) and $\mathbf{v}_i$ are eigenvectors. Each eigenvalue $\lambda_i$ represents the energy (variance) captured by the corresponding mode.
 
 **Step 5: POD Modes**
@@ -62,9 +63,11 @@ These modes form an orthonormal basis. They capture dominant flow patterns ranke
 Choose $r \ll N$ to keep only the top $r$ modes. The reduced basis:
 
 $$\boldsymbol{\Phi} = [\boldsymbol{\Phi}_1, \ldots, \boldsymbol{\Phi}_r]$$
+
 approximates snapshots as:
 
 $$\mathbf{u}_i \approx \bar{\mathbf{u}} + \sum_{j=1}^r a_{j}(t_i) \boldsymbol{\Phi}_j,$$
+
 where $a_j(t_i)$ are the projection coefficients onto the $j$-th mode.
 
 **Step 7: Reduced-Order Modeling**
@@ -201,13 +204,79 @@ POD is the foundational technique for Reduced-Order Modeling in CFD. By extracti
 | **Inputs** | Snapshot matrix $\mathbf{X} \in \mathbb{R}^{M \times N}$ (each column is a flow field at one time/parameter), number of retained modes $r$, energy threshold (e.g., 99%) |
 | **Outputs** | POD modes $\boldsymbol{\Phi}_1, \dots, \boldsymbol{\Phi}_r$, eigenvalues $\lambda_i$ (energy per mode), temporal coefficients $a_j(t)$, reconstructed fields $\mathbf{u} \approx \bar{\mathbf{u}} + \sum a_j \boldsymbol{\Phi}_j$ |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/pod/main.py` | Performs standard POD via SVD on spatio-temporal flow data and extracts dominant modes. |
-| `scripts/algorithms/snapshot_pod/main.py` | Implements the Snapshot POD variant for large spatial dimensions. |
-| `scripts/plots/pod_analysis_for_flow_fields/main.py` | Plots POD eigenvalue spectra and turbulent kinetic energy distribution across modes. |
-| `scripts/plots/pod_modes_2d/main.py` | Visualizes 2-D POD spatial modes and their temporal coefficients. |
-| `scripts/plots/pod_modes_and_temporal_coefficients/main.py` | Displays the first three POD modes alongside their time-dependent coefficients. |
-| `scripts/algorithms/image_compression_using_svd/main.py` | Demonstrates truncated SVD (the mathematical core of POD) for image compression. |
+- [Eigenvector Projection of Velocity Fluctuations](../../../scripts/plots/eigenvector_projection/): finds the principal directions of correlated 2D velocity fluctuations from the eigenvectors of their covariance matrix and projects the data onto them.
+- [Image Compression Using SVD](../../../scripts/algorithms/image_compression_using_svd/): compresses a grayscale image by keeping only its $r$ largest singular values and the matching singular vectors, then compares the rank-$r$ reconstructions with the original.
+- [POD Analysis for Flow Fields](../../../scripts/plots/pod_analysis_for_flow_fields/): performs Proper Orthogonal Decomposition (POD) on a synthetic 100 × 50 snapshot matrix with the singular value decomposition (SVD) and plots the eigenvalue spectrum with the share of turbulent kinetic energy (TKE) in each mode.
+- [POD Modes of a Two-Point Velocity Signal](../../../scripts/plots/pod_modes_2d/): applies Proper Orthogonal Decomposition to velocity signals measured at two points, a and b, and plots how much each of the two POD modes contributes to each signal.
+- [POD Spatial Modes and Temporal Coefficients](../../../scripts/plots/pod_modes_and_temporal_coefficients/): extracts the first three POD spatial modes and their temporal coefficients from a synthetic two-dimensional, time-dependent field and plots them.
+- [Proper Orthogonal Decomposition (POD)](../../../scripts/algorithms/pod/): performs Proper Orthogonal Decomposition on a synthetic spatio-temporal field by taking the singular value decomposition of the mean-subtracted snapshot matrix.
+- [Snapshot Proper Orthogonal Decomposition (Snapshot POD)](../../../scripts/algorithms/snapshot_pod/): computes POD modes of a synthetic spatio-temporal field with the snapshot method, which solves an eigenvalue problem for the $M \times M$ temporal correlation matrix instead of the much larger $N \times N$ spatial one.
+
+## Exercises
+
+**Exercise 1.** A snapshot set has POD eigenvalues $\lambda = (12, 6, 1.5, 0.3, 0.15, 0.05)$. How many modes $r$ are needed to capture at least 90% and at least 99% of the energy?
+
+<details>
+<summary>Answer</summary>
+
+The total is $\sum_i \lambda_i = 20$. Cumulative fractions: $0.60, 0.90, 0.975, 0.99, 0.9975, 1.0$. So $r = 2$ reaches 90% and $r = 4$ reaches 99%.
+
+</details>
+
+**Exercise 2.** A 3D CFD case has $M = 10^6$ spatial degrees of freedom and $N = 200$ snapshots. Compare the double-precision storage of the $M \times M$ matrix $\mathbf{X}'\mathbf{X}'^T$ with that of the $N \times N$ correlation matrix $\mathbf{C}$.
+
+<details>
+<summary>Answer</summary>
+
+$M \times M$: $10^{12} \times 8 = 8 \times 10^{12}$ bytes, i.e. 8 TB. $N \times N$: $200^2 \times 8 = 3.2 \times 10^5$ bytes, i.e. 320 kB. Only the snapshot formulation is feasible.
+
+</details>
+
+**Exercise 3.** Three snapshots of a field at $M = 3$ points are $\mathbf{u}_1 = (1, 2, 3)$, $\mathbf{u}_2 = (2, 2, 2)$ and $\mathbf{u}_3 = (3, 2, 1)$. Following Steps 2–6, compute $\bar{\mathbf{u}}$, $\mathbf{X}'$, $\mathbf{C}$, its nonzero eigenpair, the mode $\boldsymbol{\Phi}_1$ and the coefficients $a_1(t_i)$. Then reconstruct $\mathbf{u}_1$ from one mode.
+
+<details>
+<summary>Answer</summary>
+
+$\bar{\mathbf{u}} = (2, 2, 2)$. The columns of $\mathbf{X}'$ are $(-1, 0, 1)$, $(0, 0, 0)$ and $(1, 0, -1)$, and
+
+$$
+\mathbf{C} = \frac{1}{3}\mathbf{X}'^T\mathbf{X}' = \frac{1}{3}\begin{pmatrix} 2 & 0 & -2 \\ 0 & 0 & 0 \\ -2 & 0 & 2 \end{pmatrix}.
+$$
+
+The only nonzero eigenvalue is $\lambda_1 = 4/3$, with $\mathbf{v}_1 = (1, 0, -1)/\sqrt{2}$. Then
+
+$$
+\boldsymbol{\Phi}_1 = \frac{\mathbf{X}'\mathbf{v}_1}{\sqrt{N\lambda_1}} = \frac{(-2, 0, 2)/\sqrt{2}}{2} = \frac{(-1, 0, 1)}{\sqrt{2}},
+$$
+
+which has unit norm. The coefficients are $a_1(t_i) = \boldsymbol{\Phi}_1^T(\mathbf{u}_i - \bar{\mathbf{u}}) = (\sqrt{2}, 0, -\sqrt{2})$. The reconstruction $\bar{\mathbf{u}} + \sqrt{2}\,\boldsymbol{\Phi}_1 = (2,2,2) + (-1,0,1) = (1,2,3) = \mathbf{u}_1$ is exact, because one mode holds 100% of the fluctuation energy.
+
+</details>
+
+**Exercise 4.** Let $\mathbf{C}\mathbf{v}_i = \lambda_i\mathbf{v}_i$ with orthonormal $\mathbf{v}_i$ and $\lambda_i > 0$. Prove that the modes $\boldsymbol{\Phi}_i = \mathbf{X}'\mathbf{v}_i/\sqrt{N\lambda_i}$ are orthonormal, and that each $\boldsymbol{\Phi}_i$ is an eigenvector of the $M \times M$ matrix $\frac{1}{N}\mathbf{X}'\mathbf{X}'^T$ with the same eigenvalue.
+
+<details>
+<summary>Answer</summary>
+
+$$
+\boldsymbol{\Phi}_i^T\boldsymbol{\Phi}_j = \frac{\mathbf{v}_i^T\mathbf{X}'^T\mathbf{X}'\mathbf{v}_j}{N\sqrt{\lambda_i\lambda_j}} = \frac{\mathbf{v}_i^T\mathbf{C}\mathbf{v}_j}{\sqrt{\lambda_i\lambda_j}} = \frac{\lambda_j\,\mathbf{v}_i^T\mathbf{v}_j}{\sqrt{\lambda_i\lambda_j}} = \delta_{ij}.
+$$
+
+For the eigenvector property:
+
+$$
+\frac{1}{N}\mathbf{X}'\mathbf{X}'^T\boldsymbol{\Phi}_i = \frac{\mathbf{X}'(\mathbf{X}'^T\mathbf{X}'/N)\mathbf{v}_i}{\sqrt{N\lambda_i}} = \lambda_i\frac{\mathbf{X}'\mathbf{v}_i}{\sqrt{N\lambda_i}} = \lambda_i\boldsymbol{\Phi}_i.
+$$
+
+The $N \times N$ and $M \times M$ problems share their nonzero eigenvalues, which is why the snapshot method gives the same modes as the direct method.
+
+</details>
+
+## References
+
+- P. Holmes, J. L. Lumley, G. Berkooz and C. W. Rowley, *Turbulence, Coherent Structures, Dynamical Systems and Symmetry*, 2nd ed., Cambridge University Press, 2012.
+- L. Sirovich, "Turbulence and the dynamics of coherent structures. Part I: Coherent structures", *Quarterly of Applied Mathematics* 45(3), 1987.
+- A. Chatterjee, "An introduction to the proper orthogonal decomposition", *Current Science* 78(7), 2000.
+- S. L. Brunton and J. N. Kutz, *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*, Cambridge University Press, 2019.

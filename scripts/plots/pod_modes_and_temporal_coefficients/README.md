@@ -1,46 +1,80 @@
 # POD Spatial Modes and Temporal Coefficients
 
-This script generates a three-dimensional synthetic spatio-temporal flow field $u(x, y, t) = \sin(0.02x)\cos(0.05y)\sin(0.5t)$ on a 50×30×100 grid, reshapes it into a snapshot matrix, and performs SVD to extract POD modes. The first three spatial modes are visualised as contour plots and their corresponding temporal coefficients are shown as time series, providing a complete picture of the dominant flow structures and their evolution in time.
+This script extracts the first three POD spatial modes and their temporal coefficients from a synthetic two-dimensional, time-dependent field and plots them. The field is defined on a 50 × 30 spatial grid (x from 1700 to 2000 mm, y from 0 to 100 mm) at 100 time instants over 4 s. It is built from three separable structures of decreasing amplitude plus noise, so POD recovers each structure as one mode. The modes are shown as contour maps next to their time series.
 
 ## Overview
 
-- Generates a 3D synthetic field on a 50×30×100 spatio-temporal grid
-- Reshapes the field into a snapshot matrix of size (N_x N_y) × N_t
-- Applies SVD to extract spatial POD modes and temporal coefficients
-- Plots first three spatial modes as filled contour plots (one per subplot)
-- Plots corresponding temporal coefficients as time series in a separate panel
+- Builds $u(x, y, t)$ as a sum of three standing-wave structures, each with its own spatial shape and oscillation frequency, plus seeded Gaussian noise.
+- Reshapes the field into an $(N_x N_y) \times N_t = 1500 \times 100$ snapshot matrix and subtracts the temporal mean at each point.
+- Runs the SVD. The columns of $\boldsymbol{\Phi}$ are the spatial modes, and $a_i(t) = \sigma_i \psi_i(t)$ are the temporal coefficients.
+- Prints the share of TKE in modes 1–4. With the default settings this is about 69%, 25%, 6% and 0.004% (noise).
+- Plots the first three modes as filled contours (left column) and $a_1, a_2, a_3$ against time (right column), with the TKE share in each title.
 
 ## Mathematical Background
 
-### Snapshot Matrix
+### Synthetic field
 
-The 3D field $u(x, y, t)$ is reshaped into:
+With $\xi = (x - 1700)/300$ and $\eta = y/100$, both in $[0, 1]$:
 
-$$U \in \mathbb{R}^{N_x N_y \times N_t}, \qquad N_x = 50,\; N_y = 30,\; N_t = 100$$
+$$
+u = \sin(\pi\xi)\sin(\pi\eta)\sin(\pi t) + 0.6\sin(2\pi\xi)\sin(\pi\eta)\sin(2\pi t) + 0.3\sin(\pi\xi)\sin(2\pi\eta)\cos(3\pi t) + \epsilon
+$$
 
-### SVD Decomposition
+with $\epsilon \sim \mathcal{N}(0, 0.02^2)$. The three spatial shapes are orthogonal on the grid and the amplitudes differ, so the SVD returns them as separate modes ordered by energy.
 
-$$U = \Phi \Sigma \Psi^T$$
+### Snapshot matrix and SVD
 
-where columns of $\Phi$ are the spatial POD modes and columns of $\Psi$ are the temporal coefficients.
+$$
+\mathbf{U}' \in \mathbb{R}^{N_x N_y \times N_t}, \qquad N_x = 50,\ N_y = 30,\ N_t = 100
+$$
 
-### Spatial Modes and Temporal Coefficients
+$$
+\mathbf{U}' = \boldsymbol{\Phi}\,\boldsymbol{\Sigma}\,\boldsymbol{\Psi}^T
+$$
 
-$$\phi_i \in \mathbb{R}^{N_x N_y} \quad \text{reshaped to } (N_x, N_y) \text{ for visualisation}$$
+Each column $\boldsymbol{\phi}_i \in \mathbb{R}^{N_x N_y}$ of $\boldsymbol{\Phi}$ is a unit-norm spatial mode, reshaped to $(N_x, N_y)$ for plotting. The columns of $\boldsymbol{\Psi}$ are unit-norm temporal modes.
 
-$$a_i(t) = \psi_i(t), \quad i = 1, 2, 3$$
+### Temporal coefficients and energy
 
-The singular values $\sigma_i$ encode the energy of each mode.
+$$
+a_i(t_k) = \sigma_i\,\psi_i(t_k) = \boldsymbol{\phi}_i^T\,\mathbf{u}'(t_k), \qquad \%\text{TKE}_i = 100\,\frac{\sigma_i^2}{\sum_j \sigma_j^2}
+$$
+
+$a_i(t)$ is the projection of each snapshot onto mode $i$. The field is recovered as $\mathbf{u}'(t) = \sum_i a_i(t)\,\boldsymbol{\phi}_i$.
 
 ## Implementation
 
-1. Build coordinate grids `x = np.linspace(0, 49, 50)`, `y = np.linspace(0, 29, 30)`, `t = np.linspace(0, 99, 100)`.
-2. Compute field `u[i, j, k] = sin(0.02*x[i]) * cos(0.05*y[j]) * sin(0.5*t[k])`.
-3. Reshape to snapshot matrix `U = u.reshape(Nx*Ny, Nt)`.
-4. Compute SVD: `Phi, sigma, PsiT = np.linalg.svd(U, full_matrices=False)`.
-5. Reshape first three columns of `Phi` to `(Nx, Ny)` and plot as contour maps.
-6. Plot first three rows of `PsiT` as temporal coefficient time series.
+- Constants: `N_X, N_Y, N_T = 50, 30, 100`, `X_RANGE = (1700, 2000)` mm, `Y_RANGE = (0, 100)` mm, `T_END = 4.0` s, `STRUCTURES` (amplitude, x and y wavenumbers, time function), `NOISE_STD = 0.02`, `SEED = 42` and `N_MODES = 3`.
+- `generate_field(noise_std, seed)` returns `x`, `y`, `t` and the field with shape `(N_X, N_Y, N_T)`.
+- `pod(field, n_modes)` reshapes, removes the mean, runs `numpy.linalg.svd`, and returns the reshaped modes, the scaled temporal coefficients and the energy fractions.
+- `plot_modes(x, y, t, modes, time_coeffs, energy_fraction)` lays out the 3 × 2 grid with `GridSpec`, using `contourf` with the `jet` colormap and 50 levels.
+- `main(argv)` handles the flags.
+
+## Usage
+
+```bash
+python main.py                      # open the plot window
+python main.py --no-show --output . # save pod_modes_and_temporal_coefficients.png without opening a window
+```
+
+| Flag | Effect |
+|------|--------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save `pod_modes_and_temporal_coefficients.png` in it |
 
 ## Output
 
-The script produces two sets of panels: three contour plots showing the spatial structure of the first three POD modes over the (x, y) domain, and three time-series plots showing the corresponding temporal coefficients $a_i(t)$. The dominant mode captures the primary oscillation pattern encoded in the synthetic field.
+- Mode 1 (about 69% TKE) is a single bump centred in the domain, oscillating with a 2 s period.
+- Mode 2 (about 25%) has two cells of opposite sign side by side in $x$, with a 1 s period.
+- Mode 3 (about 6%) has two cells stacked in $y$, oscillating three times as fast as mode 1.
+
+The sign of each mode and its coefficient is arbitrary: flipping both leaves the product unchanged.
+
+![pod_modes_and_temporal_coefficients](pod_modes_and_temporal_coefficients.png)
+
+## Related Notes
+
+- [Derivation of POD for N Dimensions](../../../notes/numerical/pod/derivation_in_n_dim.md): snapshot matrix, contour plots of modes, and time coefficients $\mathbf{A} = \mathbf{U}\boldsymbol{\Phi}$.
+- [Proper Orthogonal Decomposition in CFD](../../../notes/numerical/pod/pod_intro.md): formulation and interpretation of POD modes.
+- [The Snapshot POD](../../../notes/numerical/pod/snapshot_pod.md): the method of snapshots for the case with many more spatial points than snapshots, as here.
+- [The SVD and POD](../../../notes/numerical/pod/pod_vs_svd.md): the relationship between the SVD factors and POD modes.

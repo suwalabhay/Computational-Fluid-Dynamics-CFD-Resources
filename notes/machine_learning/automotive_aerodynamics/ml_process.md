@@ -213,3 +213,82 @@ new vehicle shapes without running a full CFD simulation each time.
 - Dimensionality reduction techniques like PCA and autoencoders make high-dimensional CFD fields manageable for ML pipelines.
 - Hybrid approaches that embed physical constraints (e.g., physics-informed neural networks) can improve generalization when training data is limited.
 - Continuous retraining and validation against experimental benchmarks are essential to maintain model accuracy as new vehicle designs emerge.
+
+### Exercises
+
+**Exercise 1.** A wind-tunnel test measures a drag force $F_D = 380$ N at $U = 30$ m/s, with $\rho = 1.2$ kg/m³ and frontal area $A = 2.2$ m². Compute $C_D$ and the power needed to overcome drag. If $C_D$ stays constant, what are the drag force and power at 40 m/s?
+
+<details>
+<summary>Answer</summary>
+
+$$C_D = \frac{2F_D}{\rho U^2 A} = \frac{2 \times 380}{1.2 \times 30^2 \times 2.2} \approx 0.320.$$
+
+Power at 30 m/s: $P = F_D U = 380 \times 30 = 11.4$ kW.
+
+At constant $C_D$ the force scales with $U^2$ and the power with $U^3$: $F_D = 380 (40/30)^2 \approx 676$ N and $P = 11.4 (40/30)^3 \approx 27.0$ kW.
+
+</details>
+
+**Exercise 2.** For the car above ($L = 4.5$ m, $\mu = 1.8 \times 10^{-5}$ Pa s), compute the Reynolds number based on length. Then use the flat-plate formula from the note to estimate $\delta$ at $x = 0.5$ m, and comment on whether that formula applies there.
+
+<details>
+<summary>Answer</summary>
+
+$\mathrm{Re} = \rho U L / \mu = 1.2 \times 30 \times 4.5 / 1.8 \times 10^{-5} = 9.0 \times 10^6$.
+
+At $x = 0.5$ m, $\mathrm{Re}_x = 1.0 \times 10^6$, and the note's formula gives $\delta \approx 5 \times 0.5 / \sqrt{10^6} = 2.5$ mm.
+
+That formula is the laminar (Blasius) result. On a flat plate transition typically occurs around $\mathrm{Re}_x \approx 5 \times 10^5$, and on a real car it happens even earlier, so the boundary layer is probably turbulent at this point. The turbulent estimate $\delta \approx 0.37 x \, \mathrm{Re}_x^{-1/5}$ gives about 11.7 mm, almost five times thicker. A feature built from the wrong formula would be badly biased.
+
+</details>
+
+**Exercise 3.** A model predicts $\hat{y} = (0.31, 0.31, 0.29, 0.33, 0.30)$ for five test designs whose reference drag coefficients are $y = (0.30, 0.32, 0.28, 0.35, 0.31)$. Compute MAE, MSE and $R^2$.
+
+<details>
+<summary>Answer</summary>
+
+The errors are $(-0.01, 0.01, -0.01, 0.02, 0.01)$.
+
+- MAE $= (0.01 + 0.01 + 0.01 + 0.02 + 0.01)/5 = 0.012$.
+- The squared errors are $(1, 1, 1, 4, 1) \times 10^{-4}$, which sum to $8 \times 10^{-4}$, so MSE $= 1.6 \times 10^{-4}$.
+- $\bar{y} = 0.312$ and $\sum_i (y_i - \bar{y})^2 = 2.68 \times 10^{-3}$, so $R^2 = 1 - 8 \times 10^{-4} / 2.68 \times 10^{-3} \approx 0.70$.
+
+An MAE of about 4% of $C_D$ still leaves 30% of the variance unexplained, because the designs differ from one another by only a few hundredths.
+
+</details>
+
+**Exercise 4.** The practical example in the note has several hundred sedan shapes, each simulated at three yaw angles. Suppose there are 300 shapes (900 CFD results). A colleague shuffles the 900 rows and splits them 80/10/10. What is wrong, and how should the split be done?
+
+<details>
+<summary>Answer</summary>
+
+A row-level split puts the same geometry into both training and test sets, only at a different yaw angle. The test score then measures interpolation in yaw for known shapes, not prediction for new shapes, and it will be optimistic.
+
+Split by shape instead: 240 shapes (720 rows) for training, 30 shapes (90 rows) for validation, and 30 shapes (90 rows) for testing, keeping all yaw angles of a shape together. Fit normalization statistics and feature scalers on the training shapes only, and use grouped cross-validation (folds of shapes) for hyperparameter tuning.
+
+</details>
+
+**Exercise 5.** A neural network for this problem takes 4 inputs (three geometric parameters and yaw angle), has two hidden layers of 64 neurons, and outputs $C_D$. Count its trainable parameters and compare with the size of the training set from Exercise 4. What precautions does the comparison suggest?
+
+<details>
+<summary>Answer</summary>
+
+Each dense layer has (inputs × outputs) weights plus one bias per output:
+
+- $4 \to 64$: $4 \times 64 + 64 = 320$
+- $64 \to 64$: $64 \times 64 + 64 = 4160$
+- $64 \to 1$: $64 + 1 = 65$
+
+That is 4545 parameters in total, for only 720 training rows.
+
+With more parameters than samples the network can memorize the training set. Precautions include weight decay or dropout, early stopping on the validation shapes, a smaller network, and comparison against a random forest or gradient-boosted tree baseline, which often does as well on small tabular datasets.
+
+</details>
+
+### References
+
+- Brunton, S. L., Noack, B. R., & Koumoutsakos, P., "Machine Learning for Fluid Mechanics", *Annual Review of Fluid Mechanics* 52, 2020.
+- Hastie, T., Tibshirani, R., & Friedman, J., *The Elements of Statistical Learning*, 2nd ed., Springer, 2009.
+- Breiman, L., "Random Forests", *Machine Learning* 45(1), 2001.
+- Schlichting, H., & Gersten, K., *Boundary-Layer Theory*, 9th ed., Springer, 2017.
+- Raissi, M., Perdikaris, P., & Karniadakis, G. E., "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations", *Journal of Computational Physics* 378, 2019.

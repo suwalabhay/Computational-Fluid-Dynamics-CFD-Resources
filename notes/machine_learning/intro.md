@@ -233,3 +233,78 @@ ASCII Diagram: ML for CFD Project Workflow
 - Setting up an ML for CFD project requires a clear objective, quality data, an appropriate model choice, rigorous validation, and integration back into the engineering workflow.
 - ML does not replace physical understanding; the most effective approaches combine domain knowledge with data-driven methods to produce interpretable and trustworthy results.
 - Starting simple (baseline models, well-understood datasets) and iterating is more effective than jumping directly to complex architectures.
+
+## Exercises
+
+**Exercise 1.** Four CFD runs of a spoiler setting $x = 1, 2, 3, 4$ give $C_d = 0.34, 0.31, 0.30, 0.27$. Fit $\hat{y} = w x + b$ by least squares and predict $C_d$ at $x = 5$. Why is this prediction risky?
+
+<details>
+<summary>Answer</summary>
+
+$\bar{x} = 2.5$ and $\bar{y} = 0.305$.
+
+$\sum (x_i - \bar{x})(y_i - \bar{y}) = -0.11$ and $\sum (x_i - \bar{x})^2 = 5$, so $w = -0.022$ and $b = 0.305 + 0.022 \times 2.5 = 0.36$.
+
+The prediction at $x = 5$ is $0.36 - 0.11 = 0.25$.
+
+$x = 5$ lies outside the training range. Drag cannot keep falling linearly forever: at some spoiler setting the flow will separate and the trend may reverse. Extrapolation should be confirmed with CFD.
+
+</details>
+
+**Exercise 2.** A Gaussian process uses the kernel $k(x, x') = \exp(-(x - x')^2/2)$, noise variance $\sigma_n^2 = 0.01$, and a single training point $(x, y) = (0, 1)$. Using the note's formulas, compute the predictive mean and variance at $x^* = 1$ and at $x^* = 3$.
+
+<details>
+<summary>Answer</summary>
+
+$\mathbf{K} + \sigma_n^2 = 1.01$.
+
+At $x^* = 1$: $k_* = e^{-0.5} \approx 0.6065$, so $\mu^* = 0.6065/1.01 \approx 0.601$ and $\sigma^{*2} = 1 - 0.6065^2/1.01 \approx 0.636$.
+
+At $x^* = 3$: $k_* = e^{-4.5} \approx 0.0111$, so $\mu^* \approx 0.011$ and $\sigma^{*2} \approx 0.9999$.
+
+Far from the data the GP falls back to its prior (mean 0, variance 1) and says so through its variance. That uncertainty is what makes GPs useful for adaptive sampling.
+
+</details>
+
+**Exercise 3.** Classify each task as supervised regression, supervised classification, semi-supervised, unsupervised or reinforcement learning: (a) predicting $C_L$ from angle of attack using 500 CFD runs; (b) labelling snapshots as laminar or turbulent using 2,000 labelled examples; (c) grouping 10,000 unlabelled PIV snapshots into recurring flow states; (d) 50 wind-tunnel labels plus 5,000 unlabelled CFD fields; (e) learning a jet-actuation policy that maximizes a drag-reduction reward.
+
+<details>
+<summary>Answer</summary>
+
+(a) Supervised regression (continuous output). (b) Supervised classification (discrete labels). (c) Unsupervised clustering (no labels). (d) Semi-supervised (a few labels, many unlabelled samples). (e) Reinforcement learning (actions and rewards from interacting with the flow).
+
+</details>
+
+**Exercise 4.** Apply one iteration of k-means with $k = 2$ to the 1D points $\{1, 2, 8, 9, 10\}$, starting from centroids 2 and 9. Give the assignments, new centroids and within-cluster sum of squares, and state whether the algorithm has converged.
+
+<details>
+<summary>Answer</summary>
+
+Assignments: $\{1, 2\}$ to centroid 2 and $\{8, 9, 10\}$ to centroid 9.
+
+New centroids: 1.5 and 9.
+
+Within-cluster sum of squares: $0.25 + 0.25 + 1 + 0 + 1 = 2.5$.
+
+Reassigning with the new centroids changes nothing, so the algorithm has converged.
+
+</details>
+
+**Exercise 5.** In Q-learning for flow control, the current estimate is $Q(s, a) = 0.5$. Taking action $a$ gives reward $r = 1$ and leads to a state whose best action value is $\max_{a'} Q(s', a') = 0.8$. With learning rate $\alpha = 0.1$ and discount $\gamma = 0.9$, apply $Q \leftarrow Q + \alpha[r + \gamma \max_{a'} Q(s', a') - Q]$.
+
+<details>
+<summary>Answer</summary>
+
+$Q \leftarrow 0.5 + 0.1(1 + 0.9 \times 0.8 - 0.5) = 0.5 + 0.1 \times 1.22 = 0.622$.
+
+A discount close to 1 makes the agent value long-term drag reduction. That matters in flow control, where an actuation's effect on the wake appears only after a convective delay.
+
+</details>
+
+## References
+
+- Brunton, S. L., Noack, B. R., & Koumoutsakos, P., "Machine Learning for Fluid Mechanics", *Annual Review of Fluid Mechanics* 52, 2020.
+- Brunton, S. L., & Kutz, J. N., *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*, Cambridge University Press, 2019.
+- Bishop, C. M., *Pattern Recognition and Machine Learning*, Springer, 2006.
+- Rasmussen, C. E., & Williams, C. K. I., *Gaussian Processes for Machine Learning*, MIT Press, 2006.
+- Sutton, R. S., & Barto, A. G., *Reinforcement Learning: An Introduction*, 2nd ed., MIT Press, 2018.

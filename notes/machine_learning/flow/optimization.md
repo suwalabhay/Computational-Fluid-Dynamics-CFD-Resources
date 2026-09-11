@@ -178,3 +178,85 @@ A well-structured optimization problem is the foundation of any successful desig
 - Surrogate models bridge the gap between computational cost and thorough exploration by providing fast approximations of the true cost function.
 - Hybrid workflows that combine AI-driven exploration with classical refinement consistently outperform either approach used in isolation.
 - A disciplined problem setup—clear cost function, compact parametrization, and iterative surrogate refinement—is essential for reliable and efficient optimization.
+
+## Exercises
+
+**Exercise 1.** A design has 8 parameters. A brute-force search uses 10 levels per parameter. How many evaluations is that? How long would it take with a surrogate that costs 1 ms per evaluation, and how many core-hours with CFD at 2 core-hours per evaluation? Compare with a genetic algorithm using a population of 50 for 100 generations.
+
+<details>
+<summary>Answer</summary>
+
+$10^8$ evaluations.
+
+With the surrogate: $10^8 \times 10^{-3}$ s $= 10^5$ s, about 27.8 h. That is feasible.
+
+With CFD: $2 \times 10^8$ core-hours. That is infeasible.
+
+The genetic algorithm needs $50 \times 100 = 5000$ evaluations, or $10^4$ core-hours with CFD. That is expensive but possible, and trivial with the surrogate. The exponential growth of brute force with dimension is why the note restricts it to low-dimensional problems.
+
+</details>
+
+**Exercise 2.** Minimize $f(\mathbf{x}) = (x_1 - 1)^2 + 10(x_2 + 0.5)^2$ by gradient descent from $\mathbf{x} = (0, 0)$ with learning rate $\eta = 0.05$. Carry out two iterations, give the largest stable learning rate, and estimate how many iterations are needed to bring the $x_1$ error below $10^{-3}$.
+
+<details>
+<summary>Answer</summary>
+
+$\nabla f = (2(x_1 - 1), 20(x_2 + 0.5))$.
+
+- Iteration 1: $\nabla f = (-2, 10)$, so $\mathbf{x} = (0.1, -0.5)$ and $f = 0.81$.
+- Iteration 2: $\nabla f = (-1.8, 0)$, so $\mathbf{x} = (0.19, -0.5)$ and $f = 0.6561$.
+
+Each coordinate error is multiplied by $1 - 2\eta$ (for $x_1$) or $1 - 20\eta$ (for $x_2$) per step. Stability requires $|1 - 20\eta| < 1$, so $\eta < 0.1$.
+
+At $\eta = 0.05$ the $x_2$ error vanishes in one step, but the $x_1$ error shrinks only by 0.9 per step. Reducing it from 1 to $10^{-3}$ takes $\ln(10^{-3})/\ln(0.9) \approx 65.6$, so 66 iterations. The ill-conditioning (curvature ratio 10) is what slows gradient descent.
+
+</details>
+
+**Exercise 3.** A simplified drag model is $C_d = 0.02 + 0.5x_1^2 + 0.3x_2^2$, and the design must satisfy $C_l = 0.4x_1 + 0.6x_2 = 0.3$. Use a Lagrange multiplier to find the optimum, and interpret the multiplier.
+
+<details>
+<summary>Answer</summary>
+
+Stationarity $\nabla C_d = \lambda \nabla C_l$ gives $x_1 = 0.4\lambda$ and $0.6 x_2 = 0.6\lambda$, so $x_2 = \lambda$.
+
+The constraint becomes $0.16\lambda + 0.6\lambda = 0.3$, so $\lambda \approx 0.395$, $x_1 \approx 0.158$ and $x_2 \approx 0.395$.
+
+The minimum drag is $C_d = 0.02 + 0.5(0.158)^2 + 0.3(0.395)^2 \approx 0.0792$.
+
+The multiplier is the sensitivity of the optimal drag to the lift requirement: $dC_d^*/dC_{l,\text{req}} = \lambda$. Demanding 0.01 more lift costs about 0.0039 in $C_d$.
+
+</details>
+
+**Exercise 4.** For minimization, Expected Improvement has the closed form $\text{EI} = (f_{\min} - \mu)\Phi(z) + \sigma\phi(z)$ with $z = (f_{\min} - \mu)/\sigma$. With $f_{\min} = 0.302$, compare candidate A ($\mu = 0.300$, $\sigma = 0.002$) and candidate B ($\mu = 0.305$, $\sigma = 0.010$). Which does Bayesian optimization evaluate next, and why?
+
+<details>
+<summary>Answer</summary>
+
+Candidate A: $z = 1$, so $\text{EI} = 0.002(0.8413) + 0.002(0.2420) \approx 2.17 \times 10^{-3}$.
+
+Candidate B: $z = -0.3$, so $\text{EI} = -0.003(0.3821) + 0.010(0.3814) \approx 2.67 \times 10^{-3}$.
+
+B is evaluated next, even though its predicted mean is worse than the current best. Its large uncertainty means a real chance of a much better value. This is the exploration–exploitation balance described in the note.
+
+</details>
+
+**Exercise 5.** An airfoil is parametrized by 200 spline control points and optimized over 30 design iterations. Compare the number of flow solves for forward-difference gradients and for an adjoint method when the objective is $C_d$ alone, and when three functions ($C_d$, $C_l$, $C_m$) are needed.
+
+<details>
+<summary>Answer</summary>
+
+- Forward differences: $201$ solves per iteration, or 6030 in total. All three functions come from the same perturbed runs, so the count is the same with one or three functions.
+- Adjoint with $C_d$ only: 1 primal plus 1 adjoint per iteration, or 60 solves.
+- Adjoint with three functions: 1 primal plus 3 adjoints per iteration, or 120 solves.
+
+The adjoint cost scales with the number of functions, not the number of design variables, so it wins decisively when there are many parameters and few objectives or constraints.
+
+</details>
+
+## References
+
+- Nocedal, J., & Wright, S. J., *Numerical Optimization*, 2nd ed., Springer, 2006.
+- Jones, D. R., Schonlau, M., & Welch, W. J., "Efficient Global Optimization of Expensive Black-Box Functions", *Journal of Global Optimization* 13(4), 1998.
+- Rasmussen, C. E., & Williams, C. K. I., *Gaussian Processes for Machine Learning*, MIT Press, 2006.
+- Jameson, A., "Aerodynamic design via control theory", *Journal of Scientific Computing* 3(3), 1988.
+- Forrester, A. I. J., Sóbester, A., & Keane, A. J., *Engineering Design via Surrogate Modelling: A Practical Guide*, Wiley, 2008.

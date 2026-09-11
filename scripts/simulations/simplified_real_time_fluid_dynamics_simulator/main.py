@@ -1,5 +1,32 @@
-import pygame
+"""Interactive 2D smoke simulation with Jos Stam's Stable Fluids method in Pygame.
+
+Velocity and a passive density field live on a collocated grid inside a closed
+box. Each frame diffuses (Jacobi iterations of the implicit system), projects,
+semi-Lagrangian-advects and projects the velocity again, then diffuses and
+advects the density. Left-click to inject density and a random velocity kick;
+with ``--no-show`` (or ``--auto-inject``) a seeded rising, swaying plume is
+injected automatically instead.
+"""
+
+import argparse
+import os
+from pathlib import Path
+
 import numpy as np
+
+SEED = 0
+SCREEN_SIZE = (800, 600)  # pixels
+CELL_SIZE = 4  # pixels per grid cell -> 200 x 150 grid
+DIFFUSION = 0.0001  # density diffusion coefficient
+VISCOSITY = 0.0001  # kinematic viscosity
+TIME_STEP = 0.1
+SOLVER_ITERATIONS = 20  # Jacobi iterations for diffusion and pressure
+CLICK_DENSITY = 1000  # density added by a mouse click
+CLICK_VELOCITY = 200  # maximum random velocity component added by a click
+PLUME_DENSITY = 0.25  # density added per source cell per frame (scripted plume)
+PLUME_VELOCITY = 0.15  # upward velocity added per source cell per frame
+PLUME_SWAY = 0.08  # amplitude of the sideways velocity added per frame
+FPS = 60
 
 
 class FluidSimulation:
@@ -26,8 +53,9 @@ class FluidSimulation:
         self.Vy[y, x] += amountY
 
     def diffuse(self, b, x, x0, diff):
+        """Implicit diffusion (I - a lap) x = x0 solved with Jacobi iterations."""
         a = self.dt * diff * (self.size[1] - 2) * (self.size[0] - 2)
-        for _ in range(20):
+        for _ in range(SOLVER_ITERATIONS):
             x[1:-1, 1:-1] = (
                 x0[1:-1, 1:-1]
                 + a * (x[:-2, 1:-1] + x[2:, 1:-1] + x[1:-1, :-2] + x[1:-1, 2:])
@@ -35,6 +63,7 @@ class FluidSimulation:
             self.set_bnd(b, x)
 
     def advect(self, b, d, d0, Vx, Vy):
+        """Semi-Lagrangian advection with bilinear interpolation."""
         dt0 = self.dt * (self.size[1] - 2)
 
         rows, cols = np.indices((self.size[0] - 2, self.size[1] - 2)) + 1
@@ -61,6 +90,7 @@ class FluidSimulation:
         self.set_bnd(b, d)
 
     def project(self, Vx, Vy, p, div):
+        """Make (Vx, Vy) divergence-free; p and div are scratch arrays."""
         h = 1.0 / self.size[1]
         div[1:-1, 1:-1] = (
             -0.5 * h * (Vx[1:-1, 2:] - Vx[1:-1, :-2] + Vy[2:, 1:-1] - Vy[:-2, 1:-1])
@@ -69,7 +99,7 @@ class FluidSimulation:
         self.set_bnd(0, div)
         self.set_bnd(0, p)
 
-        for _ in range(20):
+        for _ in range(SOLVER_ITERATIONS):
             p[1:-1, 1:-1] = (
                 div[1:-1, 1:-1]
                 + p[:-2, 1:-1]
@@ -85,29 +115,18 @@ class FluidSimulation:
         self.set_bnd(2, Vy)
 
     def set_bnd(self, b, x):
-        for i in range(1, self.size[0] - 1):
-            if b == 1:
-                x[i, 0] = -x[i, 1]
-                x[i, self.size[1] - 1] = -x[i, self.size[1] - 2]
-            else:
-                x[i, 0] = x[i, 1]
-                x[i, self.size[1] - 1] = x[i, self.size[1] - 2]
-
-        for j in range(1, self.size[1] - 1):
-            if b == 2:
-                x[0, j] = -x[1, j]
-                x[self.size[0] - 1, j] = -x[self.size[0] - 2, j]
-            else:
-                x[0, j] = x[1, j]
-                x[self.size[0] - 1, j] = x[self.size[0] - 2, j]
+        """Walls: b = 1 reflects Vx at the side walls, b = 2 reflects Vy at top/bottom."""
+        sign_x = -1.0 if b == 1 else 1.0
+        sign_y = -1.0 if b == 2 else 1.0
+        x[1:-1, 0] = sign_x * x[1:-1, 1]
+        x[1:-1, -1] = sign_x * x[1:-1, -2]
+        x[0, 1:-1] = sign_y * x[1, 1:-1]
+        x[-1, 1:-1] = sign_y * x[-2, 1:-1]
 
         x[0, 0] = 0.5 * (x[1, 0] + x[0, 1])
-        x[0, self.size[1] - 1] = 0.5 * (x[1, self.size[1] - 1] + x[0, self.size[1] - 2])
-        x[self.size[0] - 1, 0] = 0.5 * (x[self.size[0] - 2, 0] + x[self.size[0] - 1, 1])
-        x[self.size[0] - 1, self.size[1] - 1] = 0.5 * (
-            x[self.size[0] - 2, self.size[1] - 1]
-            + x[self.size[0] - 1, self.size[1] - 2]
-        )
+        x[0, -1] = 0.5 * (x[1, -1] + x[0, -2])
+        x[-1, 0] = 0.5 * (x[-2, 0] + x[-1, 1])
+        x[-1, -1] = 0.5 * (x[-2, -1] + x[-1, -2])
 
     def dens_step(self):
         self.diffuse(0, self.s, self.density, self.diff)
@@ -129,14 +148,23 @@ class FluidSimulation:
         self.dens_step()
 
 
-def initialize_pygame(screen_size):
-    pygame.init()
-    screen = pygame.display.set_mode(screen_size)
-    pygame.display.set_caption("Fluid Simulation")
-    return screen
+def inject_plume(fluid_sim, frame, rng):
+    """Scripted source: a swaying jet rising from the bottom centre of the box."""
+    height, width = fluid_sim.size
+    cx, cy = width // 2, height - 8
+    sway = np.sin(frame / 15.0)
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            fluid_sim.add_density(cx + dx, cy + dy, PLUME_DENSITY)
+            fluid_sim.add_velocity(
+                cx + dx,
+                cy + dy,
+                PLUME_SWAY * sway + 0.02 * rng.standard_normal(),
+                -PLUME_VELOCITY + 0.02 * rng.standard_normal(),  # negative y is up
+            )
 
 
-def handle_events(fluid_sim, cell_size, grid_width, grid_height, screen_size):
+def handle_events(pygame, fluid_sim, cell_size, grid_width, grid_height, rng):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return True
@@ -147,21 +175,21 @@ def handle_events(fluid_sim, cell_size, grid_width, grid_height, screen_size):
                 f"Mouse Clicked at: ({mouse_x}, {mouse_y}), Grid Coords: ({grid_x}, {grid_y})"
             )
             if 0 <= grid_x < grid_width and 0 <= grid_y < grid_height:
-                fluid_sim.add_density(grid_x, grid_y, 1000)
+                fluid_sim.add_density(grid_x, grid_y, CLICK_DENSITY)
                 fluid_sim.add_velocity(
                     grid_x,
                     grid_y,
-                    np.random.uniform(-200, 200),
-                    np.random.uniform(-200, 200),
+                    rng.uniform(-CLICK_VELOCITY, CLICK_VELOCITY),
+                    rng.uniform(-CLICK_VELOCITY, CLICK_VELOCITY),
                 )
     return False
 
 
-def draw_simulation(screen, fluid_sim, screen_size):
+def draw_simulation(pygame, screen, fluid_sim, screen_size):
     screen.fill((0, 0, 0))
     density_scaled = np.clip(fluid_sim.density * 1000, 0, 255).astype(np.uint8)
 
-    # Transpose the density array to match Pygame's coordinate system
+    # Transpose the density array to match Pygame's (x, y) surface indexing
     density_scaled = np.transpose(density_scaled)
 
     color_surface = np.zeros((*density_scaled.shape, 3), dtype=np.uint8)
@@ -172,25 +200,66 @@ def draw_simulation(screen, fluid_sim, screen_size):
     pygame.display.flip()
 
 
-def main():
-    screen_size = (800, 600)
-    cell_size = 4
-    grid_width, grid_height = screen_size[0] // cell_size, screen_size[1] // cell_size
-    fluid_sim = FluidSimulation(
-        width=grid_width, height=grid_height, diffusion=0.0001, viscosity=0.0001, dt=0.1
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--no-show", action="store_true", help="do not open a window")
+    parser.add_argument("--output", type=Path, help="directory to save a screenshot")
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=None,
+        help="frames (one solver step each) to run (default: until the window is closed)",
     )
+    parser.add_argument(
+        "--auto-inject",
+        action="store_true",
+        help="inject a scripted plume every frame (implied by --no-show)",
+    )
+    args = parser.parse_args(argv)
 
-    screen = initialize_pygame(screen_size)
-    clock = pygame.time.Clock()
-    done = False
+    if args.no_show:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+    os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+    import pygame
 
-    while not done:
-        done = handle_events(fluid_sim, cell_size, grid_width, grid_height, screen_size)
-        fluid_sim.step()
-        draw_simulation(screen, fluid_sim, screen_size)
-        clock.tick(60)
+    rng = np.random.default_rng(SEED)
+    grid_width, grid_height = SCREEN_SIZE[0] // CELL_SIZE, SCREEN_SIZE[1] // CELL_SIZE
+    fluid_sim = FluidSimulation(
+        width=grid_width,
+        height=grid_height,
+        diffusion=DIFFUSION,
+        viscosity=VISCOSITY,
+        dt=TIME_STEP,
+    )
+    auto_inject = args.auto_inject or args.no_show
 
-    pygame.quit()
+    pygame.init()
+    try:
+        screen = pygame.display.set_mode(SCREEN_SIZE)
+        pygame.display.set_caption("Fluid Simulation")
+        clock = pygame.time.Clock()
+        frame = 0
+        while args.steps is None or frame < args.steps:
+            if handle_events(
+                pygame, fluid_sim, CELL_SIZE, grid_width, grid_height, rng
+            ):
+                break
+            if auto_inject:
+                inject_plume(fluid_sim, frame, rng)
+            fluid_sim.step()
+            draw_simulation(pygame, screen, fluid_sim, SCREEN_SIZE)
+            if not args.no_show:
+                clock.tick(FPS)
+            frame += 1
+
+        if args.output:
+            args.output.mkdir(parents=True, exist_ok=True)
+            pygame.image.save(
+                screen,
+                str(args.output / "simplified_real_time_fluid_dynamics_simulator.png"),
+            )
+    finally:
+        pygame.quit()
 
 
 if __name__ == "__main__":

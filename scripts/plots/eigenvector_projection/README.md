@@ -1,49 +1,74 @@
 # Eigenvector Projection of Velocity Fluctuations
 
-This script generates correlated 2D velocity fluctuation data $(u'_a, u'_b)$, computes the covariance matrix, extracts its eigenvectors (principal directions), and produces two figures: the raw fluctuation data with eigenvectors overlaid as arrows, and the data projected onto each principal direction. The analysis mirrors the Proper Orthogonal Decomposition (POD) procedure widely used in turbulence research.
+This script finds the principal directions of correlated 2D velocity fluctuations from the eigenvectors of their covariance matrix and projects the data onto them. It generates synthetic fluctuations $(u'_a, u'_b)$, removes the mean, and solves the $2 \times 2$ eigenvalue problem. It then produces two figures: the data cloud with the eigenvectors drawn as arrows, and the data projected onto each eigenvector. This is the two-point Proper Orthogonal Decomposition (POD) used in turbulence analysis.
 
 ## Overview
 
-- Generates correlated 2D Gaussian velocity fluctuation samples $(u'_a, u'_b)$
-- Computes the 2×2 sample covariance matrix from the data
-- Solves the eigenvalue problem to obtain principal directions and their energies
-- Produces two plots: raw data with eigenvector arrows, and projected scalar signals
+- Generates 1000 seeded samples with $u'_a \sim \mathcal{N}(0, 2^2)$ and $u'_b = 0.7\,u'_a + \mathcal{N}(0, 2^2)$ (m/s), then subtracts the sample mean
+- Computes the sample covariance matrix with the $1/(m-1)$ normalisation
+- Solves the symmetric eigenvalue problem with `numpy.linalg.eigh` and sorts the modes by decreasing eigenvalue
+- Prints the covariance matrix, eigenvalues, and eigenvectors
+- Figure 1: the data cloud with each eigenvector drawn as an arrow of length $\sqrt{\lambda_k}$
+- Figure 2: each sample projected onto $\mathbf{e}_1$ (red) and $\mathbf{e}_2$ (blue), drawn as points in the same plane
 
 ## Mathematical Background
 
 ### Covariance Matrix
 
-$$C = \frac{1}{N-1}\begin{bmatrix}\langle u_a'^2\rangle & \langle u_a'u_b'\rangle \\ \langle u_a'u_b'\rangle & \langle u_b'^2\rangle\end{bmatrix}$$
+With the $m \times 2$ matrix of zero-mean samples $\mathbf{U}$ (rows $\mathbf{u}'_i = (u'_{a,i}, u'_{b,i})$):
+
+$$\mathbf{C} = \frac{1}{m-1}\mathbf{U}^T\mathbf{U} = \frac{1}{m-1}\begin{bmatrix}\sum_i u'^2_{a,i} & \sum_i u'_{a,i}u'_{b,i} \\ \sum_i u'_{a,i}u'_{b,i} & \sum_i u'^2_{b,i}\end{bmatrix}$$
 
 ### Eigenvalue Problem
 
-$$C\,\mathbf{e}_i = \lambda_i\,\mathbf{e}_i$$
+$$\mathbf{C}\,\mathbf{e}_k = \lambda_k\,\mathbf{e}_k, \qquad \lambda_1 \ge \lambda_2$$
 
-Each eigenvalue $\lambda_i$ equals the variance (energy) of the data along the corresponding eigenvector $\mathbf{e}_i$.
+Because $\mathbf{C}$ is symmetric, the unit eigenvectors are orthogonal and form the principal axes of the data ellipse.
 
-### Projection onto Principal Direction
+### Projection onto the Principal Directions
 
-$$p_i = \mathbf{u}'_i \cdot \mathbf{e}_1$$
+The scalar projection (POD coefficient) of sample $i$ on mode $k$ and its position in the plane are
 
-where $\mathbf{u}'_i = (u'_{a,i},\, u'_{b,i})$ is the $i$-th fluctuation sample vector.
+$$a_{k,i} = \mathbf{u}'_i \cdot \mathbf{e}_k, \qquad \mathbf{p}_{k,i} = a_{k,i}\,\mathbf{e}_k$$
 
-### Physical Interpretation
-
-Eigenvalues equal the POD mode energies; eigenvectors define the principal axes of the velocity-fluctuation cloud, identifying the directions of maximum and minimum variance in the measured flow.
+The variance of the coefficients equals the eigenvalue, $\frac{1}{m-1}\sum_i a_{k,i}^2 = \mathbf{e}_k^T\mathbf{C}\,\mathbf{e}_k = \lambda_k$. The first mode therefore carries the most fluctuation energy, and $\lambda_1 + \lambda_2 = \operatorname{tr}\mathbf{C}$.
 
 ## Implementation
 
-1. Define a covariance structure and draw $N$ correlated 2D Gaussian samples representing velocity fluctuations.
-2. Subtract the sample mean to ensure zero-mean fluctuations.
-3. Compute the 2×2 sample covariance matrix $C$.
-4. Solve the eigenvalue problem to obtain eigenvalues $\lambda_1 \geq \lambda_2$ and eigenvectors $\mathbf{e}_1, \mathbf{e}_2$.
-5. Plot 1: scatter the raw $(u'_a, u'_b)$ data and overlay $\mathbf{e}_1$, $\mathbf{e}_2$ as scaled arrows from the origin.
-6. Plot 2: project each sample onto $\mathbf{e}_1$ and $\mathbf{e}_2$ and display both projections as time-series lines.
+- `generate_fluctuations(n, sigma, coupling, seed)` returns the zero-mean `(n, 2)` data array (`N_SAMPLES = 1000`, `SIGMA = 2`, `COUPLING = 0.7`, `SEED = 0`).
+- `principal_directions(data)` returns the covariance matrix, the eigenvalues in descending order, and the eigenvectors as columns.
+- `draw_eigenvectors(ax, eigenvalues, eigenvectors)` draws the arrows with `quiver`, scaled by $\sqrt{\lambda_k}$.
+- `plot_raw_data_with_eigenvectors(...)` and `plot_projections_on_eigenvectors(...)` build the two figures on equal-aspect axes, so orthogonal directions look orthogonal.
+- `main(argv=None)` prints the decomposition and shows or saves both figures.
+
+## Usage
+
+```bash
+python main.py                          # open both figure windows
+python main.py --no-show --output out   # save both PNGs into out/
+```
+
+| Flag | Meaning |
+|------|---------|
+| `--no-show` | Do not open plot windows |
+| `--output DIR` | Create `DIR` and save `eigenvector_projection_raw.png` and `eigenvector_projection_projections.png` |
 
 ## Output
 
-The script produces two figures. The first shows the 2D velocity fluctuation cloud with eigenvector arrows indicating the principal axes. The second shows scalar projection signals onto each eigenvector, demonstrating how POD separates the energetically dominant direction from the subdominant one.
+With the default seed the script prints
 
-![Figure_1](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/2880d4e4-45ae-4f5b-a713-69cdcb7d675a)
+$$\mathbf{C} = \begin{bmatrix} 3.82 & 2.91 \\ 2.91 & 6.39 \end{bmatrix}, \qquad \lambda_1 = 8.28,\ \mathbf{e}_1 = (0.546, 0.838), \qquad \lambda_2 = 1.92,\ \mathbf{e}_2 = (-0.838, 0.546)$$
 
-![Figure_2](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/c955eeb5-d045-47c4-94e6-1146171edee1)
+The first figure shows the tilted elliptical cloud, with the black arrow along its major axis and the shorter grey arrow along its minor axis.
+
+![Raw data with eigenvectors](eigenvector_projection_raw.png)
+
+The second figure shows the projections lying on two perpendicular lines through the origin. The red points along $\mathbf{e}_1$ spread much further (variance 8.28) than the blue points along $\mathbf{e}_2$ (variance 1.92).
+
+![Projections on eigenvectors](eigenvector_projection_projections.png)
+
+## Related Notes
+
+- [POD Derivation in 2D](../../../notes/numerical/pod/derivation_in_2d.md)
+- [Introduction to POD](../../../notes/numerical/pod/pod_intro.md)
+- [POD Derivation in N Dimensions](../../../notes/numerical/pod/derivation_in_n_dim.md)

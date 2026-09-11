@@ -1,55 +1,72 @@
 # Mean Pressure Coefficient Along Vehicle Centreline
 
-This script plots the mean pressure coefficient $C_P$ along the upper-body centreline of a vehicle versus streamwise position $x$, comparing experimentally measured data with CFD Scale-Resolving Simulation (SRS) results. A key annotation highlights the separation plateau region where the simulation underpredicts the extent of flow separation relative to experiment.
+This script plots a mock validation figure of mean pressure coefficient $C_P$ against streamwise position, comparing "experimental" data with a "CFD SRS" (scale-resolving simulation) curve that under-predicts a separation plateau. Both curves are synthetic. The experimental curve contains a flat separation plateau, and the CFD curve has a weaker plateau plus a little seeded noise. An arrow annotation points out the difference.
 
 ## Overview
 
-- Plots $C_P(x)$ for both experimental (`Exp`) and CFD SRS data over $x \in [-1, 4]$ m
-- Uses distinct markers and colours (black for experiment, cyan for CFD SRS)
-- Annotates the separation plateau with an arrow and descriptive text
-- Demonstrates typical agreement and discrepancy between high-fidelity CFD and wind-tunnel data
+- Evaluates 50 points over $-1 \le x \le 4$ m
+- Builds the "Exp" curve from a smooth base distribution with a separation plateau between $x_{\text{sep}} = 2.7$ m and $x_{\text{reat}} = 3.5$ m
+- Builds the "CFD SRS" curve with only 40% of the plateau and Gaussian noise with standard deviation 0.01 (seeded)
+- Plots experiment in black and CFD in cyan, both with `"o-"` markers, and shades the plateau interval in grey
+- Annotates the plateau with a blue arrow and the text "Separation plateau less pronounced in simulation"
 
 ## Mathematical Background
 
-### Pressure Coefficient Definition
+### Pressure Coefficient
 
-The pressure coefficient non-dimensionalises the local surface pressure against the dynamic pressure of the free stream:
+$$C_P = \frac{p - p_\infty}{\frac{1}{2}\,\rho\,U_\infty^2}$$
 
-$$C_P = \frac{p - p_\infty}{\dfrac{1}{2}\,\rho\,U_\infty^2}$$
+where $p$ is the local static pressure, $p_\infty$ the free-stream static pressure, $\rho$ the density, and $U_\infty$ the free-stream velocity. Since $C_P$ is linear in $p$, $\partial C_P/\partial x > 0$ is the same as an adverse pressure gradient $\partial p/\partial x > 0$.
 
-where $p$ is the local static pressure, $p_\infty$ the far-field static pressure, $\rho$ the fluid density, and $U_\infty$ the free-stream velocity.
+### Separation Plateau
 
-### Flow Separation and the Separation Plateau
+Where the flow separates, the pressure on the surface under the separated region stays almost constant until the flow reattaches:
 
-An adverse pressure gradient drives flow towards separation. In terms of $C_P$:
+$$C_P \approx C_{P,\text{sep}}, \qquad x_{\text{sep}} \le x \le x_{\text{reat}}$$
 
-$$\frac{\partial C_P}{\partial x} > 0 \implies \frac{\partial p}{\partial x} > 0$$
+A simulation that predicts too short or too weak a separation shows a rounder, less flat plateau.
 
-This deceleration thickens the boundary layer and, beyond a critical point, causes separation. Once separated, $C_P$ remains nearly constant — forming the characteristic **separation plateau**:
+### Mock Data
 
-$$C_P \approx C_{P,\text{sep}} = \text{const}, \quad x \in [x_{\text{sep}},\, x_{\text{reat}}]$$
+Base curve and smooth plateau indicator, with $\sigma(z) = 1/(1 + e^{-z})$ and edge width $s = 0.08$ m:
 
-### CFD Scale-Resolving Simulation
+$$C_{P,0}(x) = -0.2\sin x - 0.1\cos 2x, \qquad w(x) = \sigma\!\left(\frac{x - x_{\text{sep}}}{s}\right)\sigma\!\left(\frac{x_{\text{reat}} - x}{s}\right)$$
 
-SRS methods (e.g., LES, DES) resolve large turbulent eddies directly rather than modelling them entirely as in RANS:
+Each curve blends the base towards the constant value $C_{P,0}(x_{\text{sep}})$ with plateau strength $k$:
 
-$$\frac{\partial \bar{u}_i}{\partial t} + \bar{u}_j \frac{\partial \bar{u}_i}{\partial x_j} = -\frac{1}{\rho}\frac{\partial \bar{p}}{\partial x_i} + \nu \frac{\partial^2 \bar{u}_i}{\partial x_j^2} - \frac{\partial \tau_{ij}^{\text{sgs}}}{\partial x_j}$$
+$$C_P(x) = \bigl(1 - k\,w(x)\bigr)\,C_{P,0}(x) + k\,w(x)\,C_{P,0}(x_{\text{sep}}) + \epsilon(x)$$
 
-where $\tau_{ij}^{\text{sgs}}$ is the subgrid-scale stress tensor. SRS captures separation dynamics better than RANS but may still underpredict the plateau length.
+The experiment uses $k = 1$ and $\epsilon = 0$. The CFD curve uses $k = 0.4$ and $\epsilon \sim \mathcal{N}(0, 0.01^2)$.
 
 ## Implementation
 
-1. Generate a streamwise coordinate array `x = np.linspace(-1, 4, 50)` (metres)
-2. Compute mock experimental $C_P$ as `exp = -0.2 sin(x) - 0.1 cos(2x)`
-3. Compute mock CFD $C_P$ by adding small Gaussian noise to `exp`
-4. Create a single-axes figure (`figsize=(10, 6)`)
-5. Plot experimental data as `"o-"` in black, CFD SRS as `"o-"` in cyan
-6. Label axes `x [m]` and `$C_P$ [-]`; set title referencing the upper-body centreline at `y = 0 m`
-7. Annotate the separation plateau with `ax.annotate(...)` using a blue arrow
-8. Display the figure with `plt.tight_layout()` and `plt.show()`
+- `base_cp(x)` gives the smooth base distribution.
+- `plateau_weight(x)` gives the smooth indicator $w(x)$, built from `X_SEP`, `X_REAT`, and `BLEND_WIDTH`.
+- `mock_cp(x, plateau_strength, noise, rng)` builds one curve.
+- `make_figure(seed)` creates both curves with `np.random.default_rng(SEED)` and draws the plot, shaded interval, and annotation (`CFD_PLATEAU_STRENGTH = 0.4`, `CFD_NOISE = 0.01`).
+- `main(argv=None)` handles the flags.
+
+## Usage
+
+```bash
+python main.py                          # open the figure window
+python main.py --no-show --output out   # save mean_pressure_coefficient.png into out/
+```
+
+| Flag | Meaning |
+|------|---------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save the figure as a PNG |
 
 ## Output
 
-The script displays a line plot of $C_P$ versus streamwise position $x$. The black curve (experiment) shows a pronounced flat separation plateau, while the cyan curve (CFD SRS) follows a similar trend but with a less distinct plateau. A blue arrow annotation identifies this discrepancy. A legend distinguishes the two data sources.
+Both curves fall from $C_P \approx 0.2$ at $x = -1$ m to a suction region near $C_P \approx -0.15$ and recover to about 0.16 at $x = 4$ m. Inside the grey band the black experimental curve stays flat and then rises sharply. The cyan CFD curve starts to recover earlier and more gradually, which is the discrepancy the blue arrow points to.
 
-![mean_pressure_coefficient_plot](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/04e46497-3f78-40ab-a9ee-4acc15e61cf2)
+![Mean pressure coefficient](mean_pressure_coefficient.png)
+
+## Related Notes
+
+- [Boundary Layers](../../../notes/fluid_mechanics/viscous_flow/boundary_layers.md)
+- [Turbulence Modeling](../../../notes/numerical/cfd/turbulence_modeling.md)
+- [Turbulence Modeling Approaches](../../../notes/fluid_mechanics/turbulence/modeling.md)
+- [Generating CFD Datasets](../../../notes/machine_learning/neural_networks/generating_cfd_datasets.md)

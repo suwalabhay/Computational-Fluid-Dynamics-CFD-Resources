@@ -1,49 +1,75 @@
-
 # Meniscus Behavior
 
-This script visualizes the formation of menisci in glass tubes by plotting two side-by-side panels: (a) water in glass, exhibiting an upward concave meniscus due to adhesive forces exceeding cohesive forces, and (b) mercury in glass, exhibiting a downward convex meniscus where cohesion dominates. Each meniscus is approximated as a parabolic curve of the form $\pm 0.5x^2$, illustrating how contact angle determines the curvature direction and the resulting capillary rise or depression.
-
-![meniscus_behavior](https://github.com/user-attachments/assets/9d3eee1d-b9f8-4ed2-b7cb-e95a23bec953)
+This script sketches the meniscus of water and of mercury in a glass tube, showing how wetting determines whether the free surface curves up or down at the wall. Panel (a) shows water, which wets glass: its concave meniscus stands above the outside liquid level. Panel (b) shows mercury, which does not wet glass: its convex meniscus sits below the outside level. Each meniscus is drawn as the parabola $y = \pm 0.5x^2$ between tube walls at $x = \pm 1$. The contact angle implied by that shape is computed and annotated.
 
 ## Overview
 
-- Two-panel figure comparing concave (water) and convex (mercury) menisci
-- Parabolic curve approximation $\pm 0.5x^2$ for each meniscus shape
-- Annotations for contact angle, liquid type, and wetting behavior
-- Illustrates the link between surface energy and capillary action
+- Draws two side-by-side panels, each with tube walls, the liquid inside the tube, and the flat liquid surface outside the tube.
+- Uses $y = +0.5x^2$ (concave, water) and $y = -0.5x^2$ (convex, mercury) for the meniscus.
+- Computes the contact angle where each parabola meets the wall (45° for water, 135° for mercury), prints it and annotates it.
+- Marks the height difference $h$ between the meniscus apex and the outside level: $h > 0$ for water (capillary rise) and $h < 0$ for mercury (capillary depression).
+- The figure is a schematic. Its lengths are arbitrary, and the drawn angles are not measured values: real water–glass angles are close to $0^\circ$, and mercury–glass angles are about $140^\circ$.
 
 ## Mathematical Background
 
-### Contact Angle
+### Meniscus shape and contact angle
 
-The contact angle $\theta_c$ is measured between the liquid–solid interface and the liquid surface at the point of contact:
+Inside the tube the free surface is $y(x) = \pm c\,x^2$ with $c = 0.5$. The wall is vertical at $x = x_w = 1$, so the contact angle, measured through the liquid between the wall and the free surface, is
 
-$$\theta_c < 90^\circ \Rightarrow \text{hydrophilic (water on glass)} \Rightarrow \text{liquid climbs} \Rightarrow \text{concave meniscus}$$
+$$
+\theta_c = 90^\circ - \arctan\left(\frac{dy}{dx}\bigg|_{x_w}\right) = 90^\circ - \arctan\left(\pm 2 c\, x_w\right)
+$$
 
-$$\theta_c > 90^\circ \Rightarrow \text{hydrophobic (mercury on glass)} \Rightarrow \text{liquid depresses} \Rightarrow \text{convex meniscus}$$
+This gives $\theta_c = 45^\circ$ for the upward parabola and $\theta_c = 135^\circ$ for the downward one.
 
-### Young's Equation
+- $\theta_c < 90^\circ$: the liquid wets the wall, the meniscus is concave and the liquid rises.
+- $\theta_c > 90^\circ$: the liquid does not wet the wall, the meniscus is convex and the liquid is depressed.
 
-Force balance at the three-phase contact line gives the Young equation relating the three interfacial tensions:
+### Young's equation
 
-$$\sigma_{SG} = \sigma_{SL} + \sigma_{LG}\cos\theta_c$$
+The contact angle comes from the force balance at the contact line between solid (S), liquid (L) and gas (G):
 
-### Capillary Rise
+$$
+\sigma_{SG} = \sigma_{SL} + \sigma_{LG}\cos\theta_c
+$$
 
-The equilibrium height of liquid in a tube of radius $r$ is determined by balancing surface tension and gravitational forces:
+### Capillary rise
 
-$$h = \frac{2\sigma\cos\theta_c}{\rho g r}$$
+The equilibrium height of liquid in a tube of radius $r$ (Jurin's law) is
 
-where $\sigma$ is the liquid–gas surface tension, $\rho$ is fluid density, $g$ is gravitational acceleration, and $r$ is the tube radius. A negative $h$ corresponds to capillary depression.
+$$
+h = \frac{2\sigma\cos\theta_c}{\rho g r}
+$$
+
+where $\sigma$ is the liquid–gas surface tension, $\rho$ the liquid density and $g$ the gravitational acceleration. $h < 0$ when $\theta_c > 90^\circ$. The script only illustrates the sign of $h$; it does not evaluate this formula.
 
 ## Implementation
 
-1. Define a horizontal coordinate array $x \in [-1, 1]$.
-2. Compute the concave parabola $y = +0.5x^2$ for the water panel.
-3. Compute the convex parabola $y = -0.5x^2$ for the mercury panel.
-4. Plot each curve with tube walls, fill the liquid region, and annotate with contact angle and labels.
-5. Render both panels side by side using `matplotlib.pyplot.subplots`.
+- Constants: `CURVATURE = 0.5`, `X_WALL = 1.0` (tube walls), `X_OUTSIDE = 2.0` (drawing half-width) and `OUTSIDE_LEVEL = 0.3` (drawn distance between the apex and the outside level).
+- `meniscus_height(x, wetting)` returns $\pm$ `CURVATURE` $x^2$.
+- `contact_angle_deg(wetting)` evaluates the contact-angle formula above.
+- `draw_panel(ax, wetting, ...)` fills the liquid inside and outside the tube, draws the meniscus, outside surface and walls, and adds the $h$ arrow and the text labels.
+- `plot_menisci()` builds the two-panel figure. `main(argv)` handles the flags.
+
+## Usage
+
+```bash
+python main.py                      # open the plot window
+python main.py --no-show --output . # save meniscus_behavior.png without opening a window
+```
+
+| Flag | Effect |
+|------|--------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save `meniscus_behavior.png` in it |
 
 ## Output
 
-The script displays a two-panel figure saved as `meniscus_behavior.png`, showing the concave water meniscus on the left and the convex mercury meniscus on the right, each annotated with the relevant contact angle regime and physical interpretation.
+On the left, water fills the tube up to a concave meniscus that stands above the flat water surface outside. On the right, mercury ends in a convex meniscus below the outside mercury surface. Each panel is labelled with its contact angle.
+
+![meniscus_behavior](meniscus_behavior.png)
+
+## Related Notes
+
+- [Surface Tension](../../../notes/fluid_mechanics/fluid_properties/surface_tension.md): cohesion, adhesion, meniscus shapes and the capillary rise equation.
+- [Fluid Properties](../../../notes/fluid_mechanics/fluid_properties/README.md): overview of surface tension alongside the other fluid properties.

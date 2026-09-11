@@ -7,6 +7,7 @@ Rigid body equilibrium extends particle equilibrium by accounting for the size a
 A rigid body is in static equilibrium when the resultant force and the resultant moment about any point are both zero:
 
 $$\sum \mathbf{F} = 0$$
+
 $$\sum \mathbf{M}_O = 0$$
 
 These two vector equations ensure that the body has no tendency to translate or rotate.
@@ -18,7 +19,9 @@ These two vector equations ensure that the body has no tendency to translate or 
 For coplanar force systems, the general equilibrium conditions reduce to three scalar equations:
 
 $$\sum F_x = 0$$
+
 $$\sum F_y = 0$$
+
 $$\sum M_O = 0$$
 
 These three equations can solve for at most **three unknowns**. Alternative equation sets include:
@@ -44,6 +47,7 @@ where $d$ is the perpendicular distance from O to the line of action.
 In three dimensions, the equilibrium conditions yield six scalar equations:
 
 $$\sum F_x = 0, \quad \sum F_y = 0, \quad \sum F_z = 0$$
+
 $$\sum M_x = 0, \quad \sum M_y = 0, \quad \sum M_z = 0$$
 
 These six equations can solve for at most **six unknowns**.
@@ -114,6 +118,7 @@ A 6 m simply supported beam carries a 10 kN point load at 2 m from the left supp
 **Solution:**
 
 The resultant of the distributed load is:
+
 $$W = w \times 3 = 5 \times 3 = 15 \text{ kN}$$
 
 acting at the centroid of the loaded region, i.e., at $x = 4.5$ m from A.
@@ -121,25 +126,31 @@ acting at the centroid of the loaded region, i.e., at $x = 4.5$ m from A.
 **Equilibrium equations:**
 
 Horizontal equilibrium:
+
 $$\sum F_x = A_x = 0$$
 
 Moment about A (counterclockwise positive):
+
 $$\sum M_A = -P(2) - W(4.5) + B_y(6) = 0$$
+
 $$-10(2) - 15(4.5) + 6B_y = 0$$
+
 $$B_y = \frac{20 + 67.5}{6} = 14.58 \text{ kN}$$
 
 Vertical equilibrium:
+
 $$\sum F_y = A_y + B_y - P - W = 0$$
+
 $$A_y = 10 + 15 - 14.58 = 10.42 \text{ kN}$$
 
 **Results:** $A_x = 0$, $A_y = 10.42$ kN, $B_y = 14.58$ kN.
 
 ## Worked Example 2: L-Shaped Bracket
 
-An L-shaped bracket is fixed at wall point A and carries a 500 N horizontal force at the free end C. The vertical segment AB is 0.4 m and the horizontal segment BC is 0.3 m.
+An L-shaped bracket is fixed at wall point A and carries a 500 N horizontal force at the free end C. The vertical segment AB runs 0.4 m straight down from A, and the horizontal segment BC is 0.3 m.
 
 **Given:**
-- Vertical arm: $AB = 0.4$ m
+- Vertical arm: $AB = 0.4$ m (B directly below A)
 - Horizontal arm: $BC = 0.3$ m
 - Applied force at C: $F = 500$ N (horizontal, to the right)
 
@@ -150,14 +161,18 @@ An L-shaped bracket is fixed at wall point A and carries a 500 N horizontal forc
 At the fixed support A there are three unknowns: $A_x$, $A_y$, and $M_A$.
 
 Horizontal equilibrium:
+
 $$\sum F_x = A_x + 500 = 0 \implies A_x = -500 \text{ N}$$
 
 Vertical equilibrium:
+
 $$\sum F_y = A_y = 0$$
 
 Moment about A (counterclockwise positive):
+
 $$\sum M_A = M_A + 500(0.4) = 0$$
-$$M_A = -200 \text{ N·m}$$
+
+$$M_A = -200 \text{ N}\cdot\text{m}$$
 
 **Results:** $A_x = -500$ N (leftward), $A_y = 0$, $M_A = -200$ N·m (clockwise).
 
@@ -195,3 +210,85 @@ $$M_A = -200 \text{ N·m}$$
 - **Wing structures**: Evaluating root reactions from aerodynamic loads
 
 Rigid body equilibrium is the essential bridge between particle equilibrium and full structural analysis. Mastery of free body diagrams and the systematic application of force and moment balance equations forms the basis for analyzing trusses, frames, beams, and all other structural systems.
+
+## Exercises
+
+**Exercise 1.** Find the degree of static indeterminacy $n = r - e$ of these planar beams: (a) cantilever (fixed at one end), (b) propped cantilever (fixed at one end, roller at the other), (c) beam on a pin and two rollers, (d) beam fixed at both ends.
+
+<details>
+<summary>Answer</summary>
+
+With $e = 3$:
+
+- (a) $r = 3$, $n = 0$ (determinate)
+- (b) $r = 4$, $n = 1$
+- (c) $r = 4$, $n = 1$
+- (d) $r = 6$, $n = 3$
+
+Each indeterminate case needs $n$ compatibility equations as well as equilibrium.
+
+</details>
+
+**Exercise 2.** A 3 m cantilever, fixed at its left end A, carries a uniform load of 4 kN/m over its full length and a 6 kN downward point load at the free end. Find the reactions at A.
+
+<details>
+<summary>Answer</summary>
+
+$A_x = 0$. $A_y = 4(3) + 6 = 18$ kN upward.
+
+Moment about A, counterclockwise positive:
+
+$$M_A - 12(1.5) - 6(3) = 0 \implies M_A = 36 \text{ kN}\cdot\text{m}$$
+
+The reaction moment is counterclockwise.
+
+</details>
+
+**Exercise 3.** A uniform 5 m ladder of mass 20 kg leans against a smooth vertical wall, making $60^\circ$ with the floor. Find the wall reaction, the floor normal force and friction, and the minimum floor friction coefficient for the ladder to stay put.
+
+<details>
+<summary>Answer</summary>
+
+$W = 196.2$ N acts at mid-length. The smooth wall exerts only a horizontal force $N_w$.
+
+Moments about the foot:
+
+$$N_w(5\sin 60^\circ) = W(2.5\cos 60^\circ) \implies N_w = \frac{196.2 \times 1.25}{4.330} = 56.6 \text{ N}$$
+
+Force balance gives $F = N_w = 56.6$ N and $N_f = W = 196.2$ N, so $\mu_{min} = F/N_f = 0.289$.
+
+</details>
+
+**Exercise 4.** A beam has a pin at A ($x = 0$) and a roller at B ($x = 6$ m), and overhangs to $x = 8$ m. It carries 3 kN/m between A and B and a 10 kN point load at its tip. Find $A_y$ and $B_y$.
+
+<details>
+<summary>Answer</summary>
+
+The distributed load resultant is 18 kN at $x = 3$ m.
+
+$$\sum M_A = 6B_y - 18(3) - 10(8) = 0 \implies B_y = 22.3 \text{ kN}$$
+
+$$A_y = 18 + 10 - 22.3 = 5.67 \text{ kN}$$
+
+Both reactions are upward. A tip load above 27 kN would make $A_y$ negative, meaning the pin at A would have to hold the beam down.
+
+</details>
+
+**Exercise 5.** A horizontal plate with a 400 N weight acting at the point $(1, 0.5)$ m is held by three vertical cables attached at A$(0, 0)$, B$(2, 0)$ and D$(1, 1)$ m. Find the three tensions.
+
+<details>
+<summary>Answer</summary>
+
+Three unknowns, three useful equations ($\sum F_z$, $\sum M_x$, $\sum M_y$):
+
+- Moments about the $x$-axis (lever arm is the $y$ coordinate): $T_D(1) = 400(0.5)$, so $T_D = 200$ N
+- Moments about the $y$-axis (lever arm is the $x$ coordinate): $T_B(2) + T_D(1) = 400(1)$, so $T_B = 100$ N
+- Vertical forces: $T_A = 400 - 200 - 100 = 100$ N
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- Meriam, J. L., and Kraige, L. G., *Engineering Mechanics: Statics*, Wiley.
+- Beer, F. P., Johnston, E. R., Mazurek, D. F., and Eisenberg, E. R., *Vector Mechanics for Engineers: Statics*, McGraw-Hill.

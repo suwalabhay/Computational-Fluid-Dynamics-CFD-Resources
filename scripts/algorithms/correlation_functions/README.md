@@ -1,58 +1,76 @@
 # Correlation Functions
 
-This script visualises four classical spatial correlation functions used in kriging and Gaussian-process surrogate models. By plotting each function over a range of lag values $h \in [-2, 2]$ for multiple values of the length-scale parameter $\theta$, the script provides an intuitive picture of how different kernel choices and parameter settings control the spatial range and smoothness of the modelled correlations.
+This script plots four correlation functions used in kriging surrogate models (linear, exponential, Gaussian and cubic spline) for several values of the correlation parameter $\theta$. Laying the curves side by side shows how the choice of function sets the smoothness of the correlation at zero lag and whether it has compact support, and how $\theta$ sets its range.
 
 ## Overview
 
-- Evaluates four correlation functions — linear, exponential, Gaussian, and cubic spline — on a dense grid of lag values.
-- Overlays curves for several values of $\theta$ in each panel to illustrate the sensitivity to the length-scale parameter.
-- Renders a $2 \times 2$ subplot figure with one panel per correlation function.
-- Labels each curve with its $\theta$ value and annotates axes for easy comparison.
-- Highlights the compact-support property of the linear and cubic spline kernels versus the global support of the exponential and Gaussian kernels.
+- Evaluates the four correlation functions on 400 lag values $h \in [-2, 2]$.
+- Overlays one curve per $\theta \in \{0.5, 1, 2\}$ in each panel.
+- Draws a $2 \times 2$ figure, one panel per function, with a legend giving $\theta$.
 
 ## Mathematical Background
 
-### Spatial Correlation Functions
+A stationary correlation function $R(h;\,\theta)$ depends only on the lag $h = x - x'$ and a parameter $\theta > 0$. The four functions below have $R(0;\,\theta) = 1$ and decay as $|h|$ grows. In this convention a larger $\theta$ means a shorter correlation range.
 
-A stationary correlation function $R(h;\,\theta)$ depends only on the lag $h = x - x'$ between two locations and a positive length-scale parameter $\theta$. All functions satisfy $R(0;\,\theta) = 1$ and decay toward zero as $|h|$ grows.
+### Linear
 
-### Linear Correlation
+$$
+R(h;\,\theta) = \max\bigl(0,\; 1 - \theta|h|\bigr)
+$$
 
-$$R(h;\,\theta) = \max\!\bigl(0,\; 1 - \theta|h|\bigr)$$
+This is a tent function that is zero for $|h| \geq 1/\theta$. It has a kink at $h = 0$ and at the edge of its support.
 
-Piecewise linear and compactly supported on $|h| \leq 1/\theta$. Large $\theta$ yields a narrow tent function; small $\theta$ yields broad, slow decay.
+### Exponential
 
-### Exponential Correlation
+$$
+R(h;\,\theta) = e^{-\theta|h|}
+$$
 
-$$R(h;\,\theta) = e^{-\theta|h|}$$
+It has global support and correlation length $1/\theta$, and it is continuous but not differentiable at $h = 0$. It is the correlation function of the Ornstein–Uhlenbeck process.
 
-Globally supported with exponential decay. Corresponds to an Ornstein–Uhlenbeck process; the correlation length is $1/\theta$. The function is continuous but not differentiable at $h = 0$.
+### Gaussian
 
-### Gaussian Correlation
+$$
+R(h;\,\theta) = e^{-\theta h^2}
+$$
 
-$$R(h;\,\theta) = e^{-\theta h^2}$$
+It has global support and is infinitely differentiable. Its effective range scales as $1/\sqrt{\theta}$.
 
-Globally supported with super-exponential (Gaussian) decay. Infinitely differentiable everywhere; produces very smooth sample paths. The effective range is proportional to $1/\sqrt{\theta}$.
+### Cubic Spline
 
-### Cubic Spline Correlation
+In the scaled lag $\xi = \theta|h|$:
 
-$$R(h;\,\theta) = \begin{cases} 1 - \tfrac{3}{2}|h|^2 + \tfrac{3}{4}|h|^3, & |h| \leq 1, \\ \tfrac{1}{4}(2 - |h|)^3, & 1 < |h| \leq 2, \\ 0, & |h| > 2. \end{cases}$$
+$$
+R(h;\,\theta) = \begin{cases} 1 - \tfrac{3}{2}\xi^2 + \tfrac{3}{4}\xi^3, & \xi \leq 1, \\ \tfrac{1}{4}(2 - \xi)^3, & 1 < \xi \leq 2, \\ 0, & \xi > 2. \end{cases}
+$$
 
-Twice continuously differentiable ($C^2$) with compact support on $|h| \leq 2$. Balances smoothness and locality, making it a popular default in design-of-experiment surrogate models.
+This is the cubic B-spline scaled so that $R(0) = 1$. It is twice continuously differentiable and zero for $|h| \geq 2/\theta$.
 
 ## Implementation
 
-1. **Lag grid** — create a dense array of $h$ values in $[-2, 2]$ using `numpy.linspace`.
-2. **Parameter set** — define a list of $\theta$ values spanning a range from small (broad correlation) to large (narrow correlation).
-3. **Function evaluation** — for each correlation function, evaluate $R(h;\,\theta)$ vectorised over the lag grid using NumPy operations; `numpy.where` handles the piecewise cubic spline branches.
-4. **Plotting** — arrange four `Axes` objects in a $2 \times 2$ grid; for each panel, plot one curve per $\theta$ value with a distinct colour and label.
-5. **Formatting** — add axis labels ($h$ and $R$), a legend, and a title per panel; display the figure.
+- `linear`, `exponential`, `gaussian` and `cubic_spline` evaluate $R(h;\theta)$ element-wise. `cubic_spline` handles its three branches with nested `numpy.where` calls.
+- `CORRELATION_FUNCTIONS` maps each panel title to its function.
+- `plot_correlation_functions(h, thetas)` draws one panel per function and one curve per $\theta$.
+- `H_MAX`, `N_LAGS` and `THETAS` set the lag range, the number of lag samples and the parameter values.
+
+## Usage
+
+```bash
+python main.py                          # show the figure
+python main.py --no-show --output .     # save the figure as a PNG in the current directory
+```
 
 ## Output
 
-The script displays a single figure with four panels:
+![Linear, exponential, Gaussian and cubic spline correlation functions](correlation_functions.png)
 
-- **Top-left**: Linear correlation — tent-shaped curves collapsing toward the origin as $\theta$ increases.
-- **Top-right**: Exponential correlation — smooth exponential decay with rate controlled by $\theta$.
-- **Bottom-left**: Gaussian correlation — bell-shaped curves whose width narrows with increasing $\theta$.
-- **Bottom-right**: Cubic spline correlation — smooth compactly supported curves with zero value beyond $|h| = 2$.
+- **Linear** (top left): tents that reach zero at $|h| = 1/\theta$ (at $\pm 2$, $\pm 1$ and $\pm 0.5$).
+- **Exponential** (top right): sharp peaks at $h = 0$ with exponential tails that are still non-zero at $|h| = 2$.
+- **Gaussian** (bottom left): smooth bell curves that narrow as $\theta$ grows.
+- **Cubic spline** (bottom right): smooth curves that reach zero at $|h| = 2/\theta$. For $\theta = 0.5$ the support extends to $|h| = 4$, beyond the plotted range, so the curve is still 0.25 at $h = \pm 2$.
+
+## Related Notes
+
+- [Kriging](../../../notes/numerical/surrogates/kriging.md)
+- [Hierarchical Kriging](../../../notes/numerical/surrogates/hierarchical_kriging.md)
+- [Surrogate Modelling Introduction](../../../notes/numerical/surrogates/intro.md)

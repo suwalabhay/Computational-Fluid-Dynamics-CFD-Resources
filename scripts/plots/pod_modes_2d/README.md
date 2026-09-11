@@ -1,46 +1,70 @@
-# POD Modes of 2D Velocity Field
+# POD Modes of a Two-Point Velocity Signal
 
-This script applies Proper Orthogonal Decomposition to a synthetic time series of two-component (U, V) velocity data stored in a 1000×2 matrix. SVD extracts the dominant spatial modes and their temporal coefficients. The script then reconstructs the contributions of the first two POD modes separately and plots their individual and combined contributions to each velocity component, giving a direct view of how each mode shapes the flow.
+This script applies Proper Orthogonal Decomposition to velocity signals measured at two points, a and b, and plots how much each of the two POD modes contributes to each signal. It follows the two-dimensional POD example in the notes, in which an $m \times 2$ snapshot matrix is decomposed into two rank-one contributions $\tilde{\mathbf{U}}^1$ and $\tilde{\mathbf{U}}^2$. Here the synthetic signals share an in-phase 10 Hz component and carry an anti-phase 20 Hz harmonic. POD therefore separates them cleanly into a dominant mode with about 80% of the TKE and a secondary mode with about 20%.
 
 ## Overview
 
-- Generates a 1000×2 synthetic velocity matrix with U and V components
-- Performs SVD to extract POD modes and temporal coefficients
-- Computes the contribution of each of the first two modes to U and V
-- Plots mode 1, mode 2, and their sum for both velocity components
-- Uses subplots for clear side-by-side comparison
+- Generates $m = 1000$ samples over $0.9 \le t \le 1.1$ s of $u_a(t)$ and $u_b(t)$ with seeded measurement noise.
+- Stacks them into an $m \times 2$ snapshot matrix and subtracts the mean of each column.
+- Computes the SVD. The rows of $\boldsymbol{\Phi}^T$ are the modes, and $\mathbf{A} = \mathbf{W}\boldsymbol{\Sigma}$ holds the time coefficients.
+- Forms the contributions $\tilde{\mathbf{U}}^k = \mathbf{a}_k \boldsymbol{\phi}_k^T$ of modes 1 and 2, and prints each mode vector with its share of the TKE.
+- Plots mode 1, mode 2 and their sum for $u'_a$ (top panel) and $u'_b$ (bottom panel).
 
 ## Mathematical Background
 
-### Velocity Matrix and SVD
+### Synthetic signals
 
-The velocity snapshot matrix $\mathbf{q} \in \mathbb{R}^{N_t \times 2}$ is decomposed as:
+$$
+u_a = \sin(2\pi f t) + 0.5\sin(4\pi f t) + \epsilon_a, \qquad
+u_b = \sin(2\pi f t) - 0.5\sin(4\pi f t) + \epsilon_b
+$$
 
-$$\mathbf{q} = \Phi \Sigma \Psi^T$$
+with $f = 10$ Hz and $\epsilon \sim \mathcal{N}(0, 0.1^2)$. The covariance matrix is approximately $\begin{pmatrix} 0.625 & 0.375 \\ 0.375 & 0.625 \end{pmatrix}$. Its eigenvalues are $1.0$ and $0.25$, with eigenvectors $(1, 1)/\sqrt{2}$ and $(1, -1)/\sqrt{2}$, which gives the 80%/20% energy split.
 
-where $\Phi \in \mathbb{R}^{N_t \times r}$ contains temporal modes and $\Psi \in \mathbb{R}^{2 \times r}$ contains spatial modes.
+### Snapshot matrix and SVD
 
-### Mode Contribution
+$$
+\mathbf{U}' = \begin{pmatrix} u'_a(t_1) & u'_b(t_1) \\ \vdots & \vdots \\ u'_a(t_m) & u'_b(t_m) \end{pmatrix} = \mathbf{W}\,\boldsymbol{\Sigma}\,\boldsymbol{\Phi}^T
+$$
 
-The contribution of mode $k$ to the velocity field is:
+$\boldsymbol{\Phi} \in \mathbb{R}^{2 \times 2}$ holds the POD modes (principal axes) as columns. $\mathbf{A} = \mathbf{W}\boldsymbol{\Sigma} = \mathbf{U}'\boldsymbol{\Phi} \in \mathbb{R}^{m \times 2}$ holds the time coefficients.
 
-$$q^{(k)} = \phi_k \, a_k(t), \qquad a_k = \sigma_k \psi_k^T$$
+### Mode contributions and reconstruction
 
-where $\phi_k$ is the $k$-th column of $\Phi$ and $\psi_k$ is the $k$-th column of $\Psi$.
+$$
+\tilde{\mathbf{U}}^k = \mathbf{a}_k\, \boldsymbol{\phi}_k^T, \qquad \mathbf{U}' = \tilde{\mathbf{U}}^1 + \tilde{\mathbf{U}}^2
+$$
 
-### Reconstruction
-
-$$\mathbf{q} \approx \overline{U}_1 + \overline{U}_2 + \cdots = \sum_{k=1}^{r} \phi_k \sigma_k \psi_k^T$$
+Column 1 of $\tilde{\mathbf{U}}^k$ is the contribution of mode $k$ to $u'_a$, and column 2 is its contribution to $u'_b$. The fraction of TKE in mode $k$ is $\sigma_k^2 / \sum_j \sigma_j^2$. With only two points, the two modes together reconstruct the data exactly.
 
 ## Implementation
 
-1. Generate synthetic velocity data: sinusoidal U and V time series of length 1000.
-2. Stack into matrix `q = np.column_stack([U, V])` and subtract mean.
-3. Compute SVD: `Phi, sigma, PsiT = np.linalg.svd(q, full_matrices=False)`.
-4. Compute mode contributions `q1 = sigma[0] * Phi[:, 0:1] @ PsiT[0:1, :]` and similarly for mode 2.
-5. Plot mode 1, mode 2, and sum for U component and V component in separate subplots.
-6. Label axes, add legend, and display the figure.
+- Constants: `T_START = 0.9`, `T_END = 1.1` s, `N_SAMPLES = 1000`, `FREQUENCY = 10.0` Hz, `AMP_FUNDAMENTAL = 1.0`, `AMP_HARMONIC = 0.5`, `NOISE_STD = 0.1` and `SEED = 0`.
+- `generate_signals(n_samples, noise_std, seed)` returns $t$ and the $m \times 2$ matrix.
+- `pod_contributions(snapshots)` removes the mean, runs `numpy.linalg.svd` and returns the list of $\tilde{\mathbf{U}}^k$, the modes and the energy fractions.
+- `plot_contributions(t, contributions, energy_fraction)` draws the two stacked panels.
+- `main(argv)` handles the flags.
+
+## Usage
+
+```bash
+python main.py                      # open the plot window
+python main.py --no-show --output . # save pod_modes_2d.png without opening a window
+```
+
+| Flag | Effect |
+|------|--------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save `pod_modes_2d.png` in it |
 
 ## Output
 
-The script produces a multi-panel figure showing time series of the first and second POD mode contributions and their sum for both the U and V velocity components. The plot reveals how each mode captures a distinct oscillatory pattern and how their superposition reconstructs the original velocity signal.
+At both points, mode 1 (red) is the shared 10 Hz oscillation, and it carries about 80% of the TKE. Mode 2 (blue) is the 20 Hz harmonic, which appears with opposite sign at a and b. The dashed black curve is their sum, equal to the measured fluctuation $u'$.
+
+![pod_modes_2d](pod_modes_2d.png)
+
+## Related Notes
+
+- [Derivation of POD in 2D](../../../notes/numerical/pod/derivation_in_2d.md): the two-point example, covariance matrix, principal axes and the decomposition into $\tilde{\mathbf{U}}^1 + \tilde{\mathbf{U}}^2$.
+- [The SVD and POD](../../../notes/numerical/pod/pod_vs_svd.md): computing POD with the SVD.
+- [Derivation of POD for N Dimensions](../../../notes/numerical/pod/derivation_in_n_dim.md): the same decomposition for many spatial points.

@@ -1,59 +1,146 @@
-import numpy as np
+"""Sketch boundary-layer growth, separation, and the recirculation region.
+
+A schematic (not a solution of the boundary-layer equations): the edge of an
+attached laminar boundary layer grows as sqrt(x - x0) up to a separation point,
+after which a separated shear layer lifts away from the wall and encloses a
+recirculation region with reversed flow near the wall. Free-stream arrows that
+shorten downstream indicate the decelerating outer flow, i.e. an adverse
+pressure gradient.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Coordinates for the wall
-wall_x = np.linspace(-1, 2, 100)
-wall_y = np.zeros_like(wall_x)
+X_START = -1.0  # leading edge of the drawn wall
+X_SEP = 0.0  # separation point
+X_END = 1.5  # end of the drawn separated shear layer
+DELTA_COEFF = 0.3  # attached edge: delta = DELTA_COEFF * sqrt(x - X_START)
+SHEAR_COEFF = 0.5  # separated shear layer height above delta(X_SEP)
 
-# Coordinates for attached boundary layer
-attached_x = np.linspace(-1, 0, 100)
-attached_y = 0.3 * np.sqrt(np.abs(attached_x))
 
-# Coordinates for separated flow
-separated_x = np.linspace(0, 1.5, 100)
-separated_y = -0.5 * np.sqrt(separated_x)
+def boundary_layer_edge(x):
+    """Attached boundary-layer edge, delta ~ sqrt(distance from leading edge)."""
+    return DELTA_COEFF * np.sqrt(x - X_START)
 
-# Plotting
-plt.figure(figsize=(10, 6))
 
-# Wall
-plt.plot(wall_x, wall_y, "k-", linewidth=3, label="Wall")
+def separated_shear_layer(x):
+    """Dividing streamline leaving the wall at the separation point."""
+    return SHEAR_COEFF * np.sqrt(x - X_SEP)
 
-# Attached boundary layer
-plt.plot(attached_x, attached_y, "b-", linewidth=2, label="Attached Boundary Layer")
 
-# Separated flow region
-plt.plot(
-    separated_x,
-    separated_y,
-    "r-",
-    linewidth=2,
-    label="Separated Region (Recirculation)",
-)
+def make_figure():
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-# Free stream arrows (adverse pressure gradient)
-for x_pos in np.linspace(-0.9, 1.2, 5):
-    plt.arrow(
-        x_pos, 0.8, 0.3, 0, head_width=0.05, head_length=0.1, fc="green", ec="green"
+    # Wall
+    wall_x = np.linspace(X_START, 2, 100)
+    ax.plot(wall_x, np.zeros_like(wall_x), "k-", linewidth=3, label="Wall")
+    ax.fill_between(wall_x, -0.2, 0, color="lightgray", hatch="//", edgecolor="gray")
+
+    # Attached boundary layer
+    attached_x = np.linspace(X_START, X_SEP, 100)
+    attached_y = boundary_layer_edge(attached_x)
+    ax.plot(attached_x, attached_y, "b-", linewidth=2, label="Attached Boundary Layer")
+    ax.fill_between(attached_x, 0, attached_y, color="blue", alpha=0.1)
+
+    # Separated shear layer enclosing the recirculation region
+    separated_x = np.linspace(X_SEP, X_END, 100)
+    separated_y = separated_shear_layer(separated_x)
+    ax.plot(
+        separated_x,
+        separated_y,
+        "r-",
+        linewidth=2,
+        label="Separated Shear Layer",
+    )
+    ax.fill_between(
+        separated_x,
+        0,
+        separated_y,
+        color="red",
+        alpha=0.1,
+        label="Separated Region (Recirculation)",
     )
 
-# Annotations
-plt.text(0.1, 0.2, "Flow Separation Point", fontsize=12, color="purple")
-plt.annotate(
-    "High-momentum fluid brought by turbulence",
-    xy=(0.5, 0.1),
-    xytext=(0.8, 0.3),
-    arrowprops=dict(facecolor="black", arrowstyle="->"),
-)
+    # Reversed-flow arrows near the wall inside the recirculation region
+    for x_pos in (0.6, 1.0, 1.4):
+        ax.annotate(
+            "",
+            xy=(x_pos - 0.25, 0.06),
+            xytext=(x_pos, 0.06),
+            arrowprops=dict(arrowstyle="->", color="red", lw=1.5),
+        )
+    ax.annotate(
+        "",
+        xy=(1.3, 0.35),
+        xytext=(0.9, 0.3),
+        arrowprops=dict(
+            arrowstyle="->", color="red", lw=1.5, connectionstyle="arc3,rad=-0.4"
+        ),
+    )
 
-# Plot settings
-plt.title("Flow Separation in Boundary Layers", fontsize=14)
-plt.xlabel("Flow Direction (x)", fontsize=12)
-plt.ylabel("Vertical Direction (y)", fontsize=12)
-plt.grid(True)
-plt.legend()
+    # Free-stream arrows, shortening downstream (decelerating outer flow)
+    x_arrows = np.linspace(-0.9, 1.2, 5)
+    lengths = np.linspace(0.35, 0.15, 5)
+    for x_pos, dx in zip(x_arrows, lengths):
+        ax.arrow(
+            x_pos, 0.8, dx, 0, head_width=0.05, head_length=0.08, fc="green", ec="green"
+        )
+    ax.text(
+        0.15,
+        0.9,
+        r"Decelerating free stream: $\partial p/\partial x > 0$",
+        fontsize=11,
+        color="green",
+        ha="center",
+    )
 
-plt.xlim(-1, 2)
-plt.ylim(-1, 1)
+    # Separation point
+    ax.axvline(X_SEP, color="purple", linestyle="--", linewidth=1)
+    ax.plot(X_SEP, 0, "o", color="purple", markersize=8)
+    ax.text(X_SEP + 0.05, -0.12, "Flow Separation Point", fontsize=12, color="purple")
+    ax.annotate(
+        "Reversed flow\nnear the wall",
+        xy=(1.25, 0.08),
+        xytext=(1.55, 0.25),
+        arrowprops=dict(facecolor="black", arrowstyle="->"),
+    )
 
-plt.show()
+    ax.set_title("Flow Separation in Boundary Layers", fontsize=14)
+    ax.set_xlabel("Flow Direction (x)", fontsize=12)
+    ax.set_ylabel("Vertical Direction (y)", fontsize=12)
+    ax.grid(True)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2)
+    ax.set_xlim(-1, 2)
+    ax.set_ylim(-0.2, 1)
+    return fig
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = make_figure()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "flow_separation_boundary_layer.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

@@ -1,46 +1,78 @@
 # POD Analysis for Flow Fields
 
-This script performs Proper Orthogonal Decomposition (POD) on a synthetic 100×50 snapshot matrix using Singular Value Decomposition (SVD). It then visualises the eigenvalue spectrum and the percentage of turbulent kinetic energy (%TKE) captured by each of the first ten modes on a dual y-axis plot. POD is widely used in CFD to identify the dominant coherent structures in a flow field and to build reduced-order models.
+This script performs Proper Orthogonal Decomposition (POD) on a synthetic 100 × 50 snapshot matrix with the singular value decomposition (SVD) and plots the eigenvalue spectrum with the share of turbulent kinetic energy (TKE) in each mode. The snapshots are built from three travelling waves of decreasing amplitude plus random noise. Each travelling wave appears as a pair of modes with equal energy, as vortex shedding does in real flows. The plot shows how many modes are needed to capture most of the fluctuation energy.
 
 ## Overview
 
-- Generates a synthetic 100×50 snapshot matrix representing spatial-temporal flow data
-- Applies SVD to extract POD modes, singular values, and temporal coefficients
-- Computes eigenvalues and percentage TKE for each mode
-- Plots eigenvalue magnitude and cumulative energy content on dual y-axes
-- Provides a clear view of how many modes are needed to capture most of the flow energy
+- Builds a snapshot matrix with $M = 100$ time instants (rows) and $N = 50$ spatial points (columns): a uniform mean, three travelling waves and seeded Gaussian noise.
+- Subtracts the temporal mean at every spatial point to obtain the velocity fluctuations.
+- Applies `numpy.linalg.svd` and converts singular values to eigenvalues $\lambda_i = \sigma_i^2/(M-1)$.
+- Computes the percentage of TKE per mode and its cumulative sum, and prints both for the first ten modes.
+- Plots the first ten eigenvalues as bars (left axis), with per-mode and cumulative %TKE as lines (right axis).
 
 ## Mathematical Background
 
-### Snapshot Matrix and SVD
+### Synthetic snapshots
 
-Given snapshot matrix $U \in \mathbb{R}^{100 \times 50}$, SVD decomposes it as:
+$$
+u(x_j, t_i) = 1 + \sum_{k=1}^{3} a_k \sin(k x_j - \omega_k t_i) + \epsilon_{ij}
+$$
 
-$$U = \Phi \Sigma \Psi^T$$
+with $(a_k, \omega_k) = (1, 2),\ (0.5, 5),\ (0.25, 9)$, $x_j, t_i \in [0, 2\pi)$ and $\epsilon_{ij} \sim \mathcal{N}(0, 0.3^2)$. Each wave $\sin(kx - \omega t) = \sin kx\cos\omega t - \cos kx\sin\omega t$ contributes two spatial modes of equal energy.
 
-where $\Phi$ contains spatial modes, $\Sigma = \text{diag}(\sigma_1, \sigma_2, \ldots)$, and $\Psi$ contains temporal coefficients.
+### Snapshot matrix and SVD
+
+With the temporal mean removed, the fluctuation matrix $\mathbf{U}' \in \mathbb{R}^{M \times N}$ is factorised as
+
+$$
+\mathbf{U}' = \mathbf{W}\,\boldsymbol{\Sigma}\,\boldsymbol{\Phi}^T
+$$
+
+The rows of $\boldsymbol{\Phi}^T$ are the spatial POD modes. The columns of $\mathbf{A} = \mathbf{W}\boldsymbol{\Sigma} = \mathbf{U}'\boldsymbol{\Phi}$ are the temporal coefficients. $\boldsymbol{\Sigma} = \mathrm{diag}(\sigma_1, \sigma_2, \ldots)$ holds the singular values.
 
 ### Eigenvalues
 
-$$\lambda_i = \frac{\sigma_i^2}{M - 1}$$
+The eigenvalues of the spatial covariance matrix $\mathbf{C} = \mathbf{U}'^T\mathbf{U}'/(M-1)$ are
 
-where $M = 50$ is the number of snapshots and $\sigma_i$ are the singular values.
+$$
+\lambda_i = \frac{\sigma_i^2}{M - 1}, \qquad M = 100 \text{ snapshots}
+$$
 
-### Percentage Turbulent Kinetic Energy
+### Percentage of turbulent kinetic energy
 
-$$\text{TKE}_i = \frac{\lambda_i}{\sum_j \lambda_j} \times 100\%$$
-
-This quantifies the fraction of total energy captured by mode $i$.
+$$
+\%\text{TKE}_i = 100\,\frac{\lambda_i}{\sum_j \lambda_j}, \qquad \text{cumulative}_n = \sum_{i=1}^{n} \%\text{TKE}_i
+$$
 
 ## Implementation
 
-1. Generate synthetic snapshot matrix `U = np.random.randn(100, 50)`.
-2. Subtract the temporal mean to centre the data.
-3. Compute SVD: `Phi, sigma, PsiT = np.linalg.svd(U, full_matrices=False)`.
-4. Calculate eigenvalues `lam = sigma**2 / (M - 1)` and `%TKE` for modes 1–10.
-5. Create a figure with dual y-axes: bar chart of eigenvalues (left) and line plot of %TKE (right).
-6. Label axes, add legend, and display the figure.
+- Constants: `N_SAMPLES = 100`, `N_POINTS = 50`, `WAVES` (amplitude, wavenumber, angular frequency), `MEAN_VELOCITY = 1.0`, `NOISE_STD = 0.3`, `SEED = 42` and `N_PLOT = 10`.
+- `generate_snapshots(n_samples, n_points, noise_std, seed)` builds the matrix.
+- `pod(data)` subtracts the mean, runs the SVD and returns the eigenvalues, spatial modes and temporal coefficients.
+- `plot_spectrum(eigenvalues, n_plot)` draws the bar chart and the twin-axis %TKE lines.
+- `main(argv)` handles the flags and prints the energy table.
+
+## Usage
+
+```bash
+python main.py                      # open the plot window
+python main.py --no-show --output . # save pod_analysis_for_flow_fields.png without opening a window
+```
+
+| Flag | Effect |
+|------|--------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save `pod_analysis_for_flow_fields.png` in it |
 
 ## Output
 
-The script displays a dual y-axis bar/line chart for the first ten POD modes. The left axis shows eigenvalue magnitude, decaying rapidly for higher modes. The right axis shows the percentage of TKE, illustrating how the first few modes dominate the energy content of the synthetic flow field.
+The eigenvalues come in pairs, one pair per travelling wave. Modes 1–2 hold about 34% and 33% of the TKE, modes 3–4 about 9% each, and modes 5–6 about 2.5% each. From mode 7 on, the modes hold only noise (about 0.5% each). The cumulative curve passes 85% after four modes and 90% after six.
+
+![pod_analysis_for_flow_fields](pod_analysis_for_flow_fields.png)
+
+## Related Notes
+
+- [Proper Orthogonal Decomposition in CFD](../../../notes/numerical/pod/pod_intro.md): motivation and formulation of POD.
+- [Derivation of POD for N Dimensions](../../../notes/numerical/pod/derivation_in_n_dim.md): snapshot matrix, eigenvalues and TKE contribution.
+- [The SVD and POD](../../../notes/numerical/pod/pod_vs_svd.md): why the SVD of the snapshot matrix gives the POD modes and eigenvalues.
+- [The Snapshot POD](../../../notes/numerical/pod/snapshot_pod.md): the method of snapshots.

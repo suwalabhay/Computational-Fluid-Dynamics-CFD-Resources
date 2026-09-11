@@ -41,6 +41,7 @@ Different objective functions attempt to quantify what it means for a design to 
 I. **Minimax criterion**: Minimize the largest empty ball in $\Omega$ that does not contain any design point. Formally:
 
 $$X^* = \arg\min_{X \subset \Omega, |X|=N} \max_{x \in \Omega} \text{dist}(x, X),$$
+
 where $\text{dist}(x, X) = \min_{x^{(i)} \in X}\|x - x^{(i)}\|$.
 
 II. **Maximin criterion**: Maximize the minimum distance between any pair of points:
@@ -56,6 +57,7 @@ Minimizing $\phi_p(X)$ for large $p$ approximates a maximin design, while other 
 IV. **Low-discrepancy criteria**: Discrepancy measures how much the empirical distribution of design points deviates from a uniform distribution over $\Omega$:
 
 $$D_N(X) = \sup_{I \in \mathcal{I}} \left|\frac{\#\{X \cap I\}}{N} - \frac{\text{Vol}(I)}{\text{Vol}(\Omega)}\right|,$$
+
 where $\mathcal{I}$ is a family of axis-aligned boxes. Minimizing discrepancy leads to designs with more uniform coverage.
 
 ## Classical One-Stage Designs: Factorial and Fractional Factorials
@@ -117,6 +119,7 @@ Alternatively, one can sample uniformly at random within the chosen interval. Th
 Rather than relying on heuristics (like LHD), one can numerically optimize a design according to a chosen criterion (minimax, maximin, $\phi_p$, or discrepancy). The optimization problem:
 
 $$X^* = \arg\min_{X \subset \Omega} C(X)$$
+
 where $C(X)$ is a cost function (e.g., $\phi_p$ or discrepancy).
 
 Solving this optimally is often combinatorially hard and computationally expensive, especially in higher dimensions. Thus, heuristics like simulated annealing, genetic algorithms, or gradient-based optimization of continuous representations (like moving points around in $[0,1]^d$) are used.
@@ -147,10 +150,10 @@ Each one-stage design method has trade-offs:
 
 | **Design Type**                | **Pros**                                                                                              | **Cons**                                                                                                    |
 |--------------------------------|-------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| **Factorial and Fractional Factorial** | Simple, historically understood.                                                                   | Not scalable to high \(d\), limited flexibility in choosing \(N\).                                         |
+| **Factorial and Fractional Factorial** | Simple, historically understood.                                                                   | Not scalable to high $d$, limited flexibility in choosing $N$.                                         |
 | **Latin Hypercube Designs**    | Very flexible, easy to generate, can be improved with post-processing.                                | Without optimization, random LHDs might not be optimal; requires refinement if maximal space-filling is desired. |
-| **Distance-Based Optimal Designs** | Can produce highly uniform or carefully balanced sets of points.                                     | Computationally expensive, no closed-form solutions, limited to moderate \(N, d\).                         |
-| **Low-Discrepancy Designs**    | Strong theoretical guarantees, easily generate large \(N\) sets, good uniformity properties.           | Some sequences degrade in very high dimensions or have subtle correlation patterns.                        |
+| **Distance-Based Optimal Designs** | Can produce highly uniform or carefully balanced sets of points.                                     | Computationally expensive, no closed-form solutions, limited to moderate $N, d$.                         |
+| **Low-Discrepancy Designs**    | Strong theoretical guarantees, easily generate large $N$ sets, good uniformity properties.           | Some sequences degrade in very high dimensions or have subtle correlation patterns.                        |
 
 
 In practice, many researchers start with a baseline method (e.g., a random LHD) and then refine it by:
@@ -248,8 +251,72 @@ The accuracy of any surrogate model depends on how well the training points cove
 | **Inputs** | Design space dimension $d$, number of sample points $N$, space-filling criterion (maximin, minimax, discrepancy), sequence type |
 | **Outputs** | Set of design points $\{x^{(i)}\}_{i=1}^N \subset \mathbb{R}^d$, space-filling metric values |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/plots/design_space_distribution/main.py` | Generates and visualizes a 2-D Sobol-sequence design, illustrating the low-discrepancy sampling discussed in this note. |
+- [Design Space Distribution via Sobol Sequences](../../../scripts/plots/design_space_distribution/): draws a four-dimensional scrambled Sobol design of 512 geometry variants and plots two 2D projections of it, showing how evenly a low-discrepancy sequence covers a design space.
+
+## Exercises
+
+**Exercise 1.** How many points does a full factorial design with 4 levels per variable need for $d = 6$? How many distinct midpoint Latin hypercube designs exist for $N$ points in $d$ dimensions (counting designs as point sets), and how many for $N = 9$, $d = 2$?
+
+<details>
+<summary>Answer</summary>
+
+Full factorial: $4^6 = 4096$ points.
+
+LHDs: order the points by their first coordinate. Each of the remaining $d - 1$ coordinates can be any permutation of $\{1, \ldots, N\}$, giving $(N!)^{d-1}$ distinct designs. For $N = 9$, $d = 2$: $9! = 362880$ designs.
+
+</details>
+
+**Exercise 2.** Low-discrepancy sequences achieve $D_N = \mathcal{O}((\log N)^d/N)$ against $\mathcal{O}(N^{-1/2})$ for random sampling. Evaluate both rates for $N = 10^4$ with $d = 2$ and $d = 10$ (ignoring constants). What does the comparison suggest?
+
+<details>
+<summary>Answer</summary>
+
+$N^{-1/2} = 0.01$.
+
+- $d = 2$: $(\ln 10^4)^2/10^4 = 9.21^2/10^4 = 0.0085$, already slightly better than random.
+- $d = 10$: $9.21^{10}/10^4 \approx 4.4 \times 10^5$, meaningless as a bound.
+
+The asymptotic advantage appears only for very large $N$ when $d$ is high. In practice Sobol sequences still perform well in moderate dimensions, but the bound alone does not guarantee it.
+
+</details>
+
+**Exercise 3.** For the worked example ($\pi_1 = (2,9,4,1,8,3,7,5,6)$, $\pi_2 = (5,2,1,8,4,9,6,7,3)$, midpoints), list the nine points, verify that they form a Latin hypercube, and compute $\delta_{\min}$.
+
+<details>
+<summary>Answer</summary>
+
+In units of $1/18$, the points $(2\pi_1(i) - 1, 2\pi_2(i) - 1)$ are $(3,9), (17,3), (7,1), (1,15), (15,7), (5,17), (13,11), (9,13), (11,5)$. Each coordinate uses every odd number $1, 3, \ldots, 17$ exactly once, so every interval in each dimension holds one point.
+
+The smallest squared distance is $4^2 + 2^2 = 20$ (in units of $1/18^2$). It is attained by five pairs, for example $(13,11)$–$(9,13)$ and $(17,3)$–$(15,7)$. So $\delta_{\min} = \sqrt{20}/18 \approx 0.2485$.
+
+</details>
+
+**Exercise 4.** For the design of Exercise 3, evaluate the $\phi_p$ criterion of this note for $p = 2$ and $p = 50$, and compare with $1/\delta_{\min}$. Explain the limit $p \to \infty$.
+
+<details>
+<summary>Answer</summary>
+
+Computing over all 36 pairwise distances gives $\phi_2 = 2.347$ and $\phi_{50} = 3.869$, while $1/\delta_{\min} = 4.025$.
+
+For large $p$ the sum is dominated by the $k$ smallest distances, so $\phi_p \approx (k/\binom{N}{2})^{1/p}/\delta_{\min}$. Here $k = 5$, and $(5/36)^{1/50} \times 4.025 = 3.869$. As $p \to \infty$ the prefactor tends to 1, and minimizing $\phi_p$ becomes maximizing $\delta_{\min}$, i.e. the maximin criterion.
+
+</details>
+
+**Exercise 5.** Write a short script that enumerates all $9!$ midpoint LHDs with $\pi_1$ equal to the identity and finds the design with the largest $\delta_{\min}$. Report the best $\delta_{\min}$, a permutation that attains it, and the improvement over the worked example.
+
+<details>
+<summary>Answer</summary>
+
+The exhaustive search gives $\delta_{\min} = \sqrt{40}/18 \approx 0.3514$, attained by $\pi_2 = (3, 6, 9, 2, 5, 8, 1, 4, 7)$ (that is, $\pi_2(i) = 3i \bmod 10$) and by its mirror image $(7, 4, 1, 8, 5, 2, 9, 6, 3)$. The points form a rotated lattice in which each nearest-neighbour pair is offset by $(1, 3)$ or $(3, -1)$ interval units. The improvement over the random design is a factor $\sqrt{40}/\sqrt{20} = \sqrt{2} \approx 1.41$. Exhaustive search is only possible for tiny $N$, which is why larger designs rely on heuristics such as simulated annealing.
+
+</details>
+
+## References
+
+- M. D. McKay, R. J. Beckman and W. J. Conover, "A comparison of three methods for selecting values of input variables in the analysis of output from a computer code", *Technometrics* 21(2), 1979.
+- M. E. Johnson, L. M. Moore and D. Ylvisaker, "Minimax and maximin distance designs", *Journal of Statistical Planning and Inference* 26(2), 1990.
+- M. D. Morris and T. J. Mitchell, "Exploratory designs for computational experiments", *Journal of Statistical Planning and Inference* 43(3), 1995.
+- H. Niederreiter, *Random Number Generation and Quasi-Monte Carlo Methods*, SIAM, 1992.
+- T. J. Santner, B. J. Williams and W. I. Notz, *The Design and Analysis of Computer Experiments*, Springer, 2003.

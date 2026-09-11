@@ -1,59 +1,103 @@
+"""Compare two synthetic drag-coefficient predictors against reference values.
+
+Fifty reference drag coefficients are drawn uniformly in [0.15, 0.35] and two
+predicted data sets are formed by adding independent uniform errors of up to
++/-0.025. Each predictor is plotted against the reference values together with
+its least-squares regression line and the line of perfect prediction, and the
+legend reports the slope, intercept, and coefficient of determination.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import linregress
 
-# Generate sample data
-np.random.seed(0)
-Cd = np.random.rand(50) * 0.2 + 0.15  # Random data for Cd in range 0.15 to 0.35
-Cd_pred_red = Cd + (np.random.rand(50) * 0.05 - 0.025)  # Red markers
-Cd_pred_blue = Cd + (np.random.rand(50) * 0.05 - 0.025)  # Blue markers
+SEED = 0
+N_SAMPLES = 50
+CD_MIN, CD_RANGE = 0.15, 0.2  # reference Cd drawn uniformly in [0.15, 0.35]
+ERROR_HALF_WIDTH = 0.025  # predictions = Cd + U(-0.025, 0.025)
 
-# Perform linear regression
-slope_red, intercept_red, r_value_red, p_value_red, std_err_red = linregress(
-    Cd, Cd_pred_red
-)
-slope_blue, intercept_blue, r_value_blue, p_value_blue, std_err_blue = linregress(
-    Cd, Cd_pred_blue
-)
-regression_line_red = slope_red * Cd + intercept_red
-regression_line_blue = slope_blue * Cd + intercept_blue
 
-# Plot the data
-plt.figure(figsize=(8, 6))
-plt.scatter(Cd, Cd_pred_red, color="red", marker="+", label="Red markers", s=100)
-plt.scatter(Cd, Cd_pred_blue, color="blue", marker="o", label="Blue markers", s=60)
+def generate_data(n=N_SAMPLES, seed=SEED):
+    """Return reference Cd and two noisy predictions of it."""
+    rng = np.random.default_rng(seed)
+    cd = CD_MIN + CD_RANGE * rng.random(n)
+    pred_red = cd + ERROR_HALF_WIDTH * (2.0 * rng.random(n) - 1.0)
+    pred_blue = cd + ERROR_HALF_WIDTH * (2.0 * rng.random(n) - 1.0)
+    return cd, pred_red, pred_blue
 
-# Plot regression lines
-plt.plot(
-    Cd,
-    regression_line_red,
-    color="red",
-    linestyle="--",
-    label=f"Red Fit: y={slope_red:.2f}x+{intercept_red:.2f}",
-)
-plt.plot(
-    Cd,
-    regression_line_blue,
-    color="blue",
-    linestyle="-.",
-    label=f"Blue Fit: y={slope_blue:.2f}x+{intercept_blue:.2f}",
-)
 
-# Add titles and labels
-plt.title("Model C", fontsize=14)
-plt.xlabel("Cd", fontsize=12)
-plt.ylabel("Cd_pred", fontsize=12)
+def r_squared(reference, predicted):
+    """Coefficient of determination of the predictions about y = x."""
+    ss_res = np.sum((predicted - reference) ** 2)
+    ss_tot = np.sum((reference - reference.mean()) ** 2)
+    return 1.0 - ss_res / ss_tot
 
-# Add legend
-plt.legend(loc="upper left", fontsize=10)
 
-# Add grid
-plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+def make_figure(cd, pred_red, pred_blue):
+    """Scatter both predictors with their regression lines and the identity line."""
+    fig, ax = plt.subplots(figsize=(8, 6))
+    lo = min(cd.min(), pred_red.min(), pred_blue.min()) - 0.01
+    hi = max(cd.max(), pred_red.max(), pred_blue.max()) + 0.01
+    x_line = np.array([lo, hi])
 
-# Set axis limits for better visualization
-plt.xlim(0.14, 0.36)
-plt.ylim(0.14, 0.37)
+    ax.plot(x_line, x_line, color="gray", linewidth=1, label="Perfect prediction y=x")
 
-# Show plot
-plt.tight_layout()
-plt.show()
+    series = [
+        (pred_red, "red", "+", 100, "--", "Predictor A"),
+        (pred_blue, "blue", "o", 60, "-.", "Predictor B"),
+    ]
+    for pred, color, marker, size, style, name in series:
+        fit = linregress(cd, pred)
+        r2 = r_squared(cd, pred)
+        ax.scatter(cd, pred, color=color, marker=marker, s=size, label=name)
+        ax.plot(
+            x_line,
+            fit.slope * x_line + fit.intercept,
+            color=color,
+            linestyle=style,
+            label=(
+                f"{name} fit: y={fit.slope:.2f}x{fit.intercept:+.3f}, $R^2$={r2:.3f}"
+            ),
+        )
+
+    ax.set_title("Predicted vs. Reference Drag Coefficient", fontsize=14)
+    ax.set_xlabel("$C_d$ (reference)", fontsize=12)
+    ax.set_ylabel("$C_{d,pred}$", fontsize=12)
+    ax.legend(loc="lower right", fontsize=9)
+    ax.grid(True, which="both", linestyle="--", linewidth=0.5)
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
+    ax.set_aspect("equal")
+    fig.tight_layout()
+    return fig
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = make_figure(*generate_data())
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "drag_coefficient_prediction.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

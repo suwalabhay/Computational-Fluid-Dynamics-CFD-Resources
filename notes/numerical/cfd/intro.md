@@ -122,11 +122,87 @@ This note introduces the foundations of Computational Fluid Dynamics. It explain
 | **Typical Inputs** | Geometry definition, mesh/grid, fluid properties ($\rho$, $\mu$, $k$, $c_p$), boundary conditions (velocity, pressure, temperature), initial conditions |
 | **Typical Outputs** | Velocity field $\mathbf{v}(x,t)$, pressure field $p(x,t)$, temperature field $T(x,t)$, derived quantities (drag, lift, heat flux) |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/lid_driven_cavity/main.py` | Solves the incompressible Navier–Stokes equations for the classic lid-driven cavity benchmark using a pressure-based method. |
-| `scripts/simulations/backward_facing_step_simple/main.py` | Implements the SIMPLE algorithm for a 2-D backward-facing step, demonstrating the full CFD workflow from grid setup to convergence monitoring. |
-| `scripts/simulations/eulerian_cylinder_flow/main.py` | Eulerian CFD solver for 2-D flow around a cylinder with velocity and pressure field visualization. |
-| `scripts/plots/comparing_grid_convergence/main.py` | Plots how numerical solutions converge as the grid is refined, illustrating the verification step discussed above. |
+- [Backward-Facing Step Flow (SIMPLE Algorithm)](../../../scripts/simulations/backward_facing_step_simple/): solves steady 2D laminar incompressible flow over a backward-facing step with the finite volume method and the SIMPLE pressure–velocity coupling algorithm.
+- [Eulerian Cylinder Flow](../../../scripts/simulations/eulerian_cylinder_flow/): simulates 2D incompressible, inviscid flow past a circular cylinder on a fixed Eulerian grid and renders a dye tracer in real time with Pygame.
+- [Grid Convergence Comparison](../../../scripts/plots/comparing_grid_convergence/): illustrates grid convergence by plotting the model numerical solutions $u_N(x) = e^{-x(1 + x/N)}$ for $N = 4, 8, 16$ against the exact solution $u(x) = e^{-x}$ on $[0, 1]$.
+- [Lid-Driven Cavity Flow Simulation](../../../scripts/simulations/lid_driven_cavity/): solves the 2D incompressible Navier-Stokes equations for flow in a square cavity driven by a moving lid at a Reynolds number of 100 and animates the velocity field.
+
+## Exercises
+
+**Exercise 1.** The mean free path of air at sea level is about 68 nm. Compute the Knudsen number $Kn = \lambda/L$ for a car ($L = 1$ m) and for a microchannel ($L = 10$ µm). No-slip continuum models are usually trusted only for $Kn$ below about $10^{-3}$. Is the continuum hypothesis safe in each case?
+
+<details>
+<summary>Answer</summary>
+
+Car: $Kn = 6.8 \times 10^{-8}/1 = 6.8 \times 10^{-8}$. The continuum hypothesis is completely safe.
+
+Microchannel: $Kn = 6.8 \times 10^{-8}/10^{-5} = 6.8 \times 10^{-3}$. This is in the slip-flow range: the Navier–Stokes equations can still be used, but with velocity-slip and temperature-jump wall conditions instead of no-slip.
+
+</details>
+
+**Exercise 2.** A car travels at 30 m/s in air ($\nu = 1.5 \times 10^{-5}$ m²/s, speed of sound 343 m/s) and is 4.5 m long. Compute the Reynolds and Mach numbers and decide whether the incompressible form of the equations in this note is appropriate. Estimate the relative density change using $\Delta\rho/\rho \approx M^2/2$.
+
+<details>
+<summary>Answer</summary>
+
+$Re = 30 \times 4.5/1.5 \times 10^{-5} = 9 \times 10^6$, so the flow is turbulent and a turbulence model is required.
+
+$M = 30/343 \approx 0.087$, so $\Delta\rho/\rho \approx 0.0875^2/2 \approx 0.4\%$.
+
+$M$ is well below the usual 0.3 limit, so the incompressible equations are appropriate.
+
+</details>
+
+**Exercise 3.** A virtual wind tunnel around the car is 20 m × 8 m × 6 m. How many cells does a uniform mesh with 1 cm cells need? And with 2 cm cells? What does this imply for mesh generation, step 2 of the workflow?
+
+<details>
+<summary>Answer</summary>
+
+The domain volume is 960 m³.
+
+1 cm cells: $960/10^{-6} = 9.6 \times 10^8$ cells. 2 cm cells: $1.2 \times 10^8$ cells.
+
+Halving the cell size multiplies the count by 8 in 3D. Uniform meshes are unaffordable, so practical meshes are fine only near the body, in the wake and in the boundary layer, and coarse far away.
+
+</details>
+
+**Exercise 4.** Discretize $-\dfrac{d^2T}{dx^2} = 1$ on $[0, 1]$ with $T(0) = T(1) = 0$, using central differences with $h = 0.25$ (three interior nodes). Solve the system and compare with the exact solution $T = x(1 - x)/2$.
+
+<details>
+<summary>Answer</summary>
+
+At each interior node, $-T_{i-1} + 2T_i - T_{i+1} = h^2 = 0.0625$, giving
+
+$$\begin{bmatrix} 2 & -1 & 0 \\ -1 & 2 & -1 \\ 0 & -1 & 2 \end{bmatrix}\begin{bmatrix} T_1 \\ T_2 \\ T_3 \end{bmatrix} = \begin{bmatrix} 0.0625 \\ 0.0625 \\ 0.0625 \end{bmatrix}.$$
+
+The solution is $T = (0.09375, 0.125, 0.09375)$.
+
+The exact solution at $x = 0.25, 0.5, 0.75$ gives the same values. The central difference is exact for quadratics, because its truncation error involves the fourth derivative, which is zero here.
+
+</details>
+
+**Exercise 5.** Classify each activity as verification or validation: (a) a grid-refinement study shows an observed order of 1.98 for a second-order scheme; (b) the predicted drag of a car is compared with wind-tunnel data; (c) a source term is added so that a chosen analytical function becomes the exact solution, and the code's error is measured (method of manufactured solutions); (d) the reattachment length behind a backward-facing step is compared with PIV measurements.
+
+<details>
+<summary>Answer</summary>
+
+(a) Verification: it checks that the equations are solved correctly at the expected order.
+
+(b) Validation: it checks the model against physical reality.
+
+(c) Verification: it checks the code against a known mathematical solution.
+
+(d) Validation.
+
+Verification should come first. Agreement with experiment on an unverified code may be the result of cancelling errors.
+
+</details>
+
+## References
+
+- Anderson, J. D., *Computational Fluid Dynamics: The Basics with Applications*, McGraw-Hill, 1995.
+- Moukalled, F., Mangani, L., & Darwish, M., *The Finite Volume Method in Computational Fluid Dynamics*, Springer, 2016.
+- Roache, P. J., *Verification and Validation in Computational Science and Engineering*, Hermosa Publishers, 1998.
+- Oberkampf, W. L., & Roy, C. J., *Verification and Validation in Scientific Computing*, Cambridge University Press, 2010.

@@ -92,7 +92,7 @@ This converts the dynamic problem into a pseudo-static equilibrium, allowing the
 A solid cylinder of mass 8 kg and radius 0.2 m rolls without slipping down a 25° incline.
 
 **Given:**
-- $m = 8$ kg, $R = 0.2$ m, $\theta = 25°$
+- $m = 8$ kg, $R = 0.2$ m, $\theta = 25^\circ$
 - Rolling without slipping: $a_G = \alpha R$
 - $I_G = \frac{1}{2}mR^2 = \frac{1}{2}(8)(0.04) = 0.16$ kg·m²
 
@@ -101,20 +101,28 @@ A solid cylinder of mass 8 kg and radius 0.2 m rolls without slipping down a 25�
 **Solution:**
 
 **Force equation along the incline** (positive down the slope):
+
 $$mg\sin\theta - f = ma_G$$
-$$8(9.81)\sin 25° - f = 8a_G$$
-$$33.15 - f = 8a_G \quad \text{...(1)}$$
+
+$$8(9.81)\sin 25^\circ - f = 8a_G$$
+
+$$33.17 - f = 8a_G \quad \text{...(1)}$$
 
 **Moment equation about $G$:**
+
 $$fR = I_G \alpha = I_G \frac{a_G}{R}$$
+
 $$f(0.2) = 0.16 \frac{a_G}{0.2}$$
+
 $$f = 4a_G \quad \text{...(2)}$$
 
 Substituting (2) into (1):
-$$33.15 - 4a_G = 8a_G$$
-$$a_G = \frac{33.15}{12} = 2.76 \text{ m/s}^2$$
 
-$$f = 4(2.76) = 11.05 \text{ N}$$
+$$33.17 - 4a_G = 8a_G$$
+
+$$a_G = \frac{33.17}{12} = 2.76 \text{ m/s}^2$$
+
+$$f = 4(2.764) = 11.06 \text{ N}$$
 
 Note: The acceleration is $\frac{2}{3}g\sin\theta$, less than that of a sliding block ($g\sin\theta$), because energy goes into rotation.
 
@@ -134,15 +142,21 @@ A uniform rod of mass 3 kg and length 1.2 m is pivoted at one end and released f
 **At $\theta = 0$ (horizontal):**
 
 Taking moments about pivot $O$:
+
 $$mg\frac{L}{2} = I_O \alpha$$
+
 $$3(9.81)(0.6) = 1.44\alpha$$
+
 $$\alpha = \frac{17.66}{1.44} = 12.26 \text{ rad/s}^2$$
 
-**Angular velocity at vertical ($\theta = 90°$):**
+**Angular velocity at vertical ($\theta = 90^\circ$):**
 
 Using energy methods (gravity does work as the center of mass drops $L/2$):
+
 $$mg\frac{L}{2} = \frac{1}{2}I_O \omega^2$$
+
 $$3(9.81)(0.6) = \frac{1}{2}(1.44)\omega^2$$
+
 $$\omega = \sqrt{\frac{2(17.66)}{1.44}} = 4.95 \text{ rad/s}$$
 
 ### Example 3: Pulley with Hanging Masses
@@ -160,17 +174,23 @@ A solid disk pulley of mass 4 kg and radius 0.15 m supports two masses: $m_1 = 6
 Let $a$ be the downward acceleration of $m_1$ (upward for $m_2$), and $\alpha = a/R$.
 
 **Mass 1** (moving down): $m_1 g - T_1 = m_1 a$
+
 $$6(9.81) - T_1 = 6a \quad \text{...(1)}$$
 
 **Mass 2** (moving up): $T_2 - m_2 g = m_2 a$
+
 $$T_2 - 4(9.81) = 4a \quad \text{...(2)}$$
 
 **Pulley** (rotation): $T_1 R - T_2 R = I_p \alpha = I_p \frac{a}{R}$
+
 $$T_1 - T_2 = \frac{I_p a}{R^2} = \frac{0.045a}{0.0225} = 2a \quad \text{...(3)}$$
 
 Adding equations (1), (2), (3):
+
 $$(6)(9.81) - (4)(9.81) = (6 + 4 + 2)a$$
+
 $$19.62 = 12a$$
+
 $$a = 1.635 \text{ m/s}^2$$
 
 From (1): $T_1 = 58.86 - 6(1.635) = 49.05$ N
@@ -224,3 +244,72 @@ From (2): $T_2 = 39.24 + 4(1.635) = 45.78$ N
 - For impacts, impulse-momentum methods are more direct
 
 Rigid body kinetics provides the tools for analyzing real-world mechanical systems, from simple pendulums to complex machinery, and forms the basis for multibody dynamics and finite element analysis.
+
+## Exercises
+
+**Exercise 1.** A uniform slender rod of mass 2 kg and length 1.5 m rotates about a perpendicular axis 0.25 m from its centre. Find its moment of inertia and radius of gyration about that axis.
+
+<details>
+<summary>Answer</summary>
+
+$$I = \frac{1}{12}mL^2 + md^2 = \frac{1}{12}(2)(2.25) + 2(0.25)^2 = 0.375 + 0.125 = 0.5 \text{ kg·m}^2$$
+
+$$k = \sqrt{I/m} = \sqrt{0.25} = 0.5 \text{ m}$$
+
+</details>
+
+**Exercise 2.** Show that a body with radius of gyration $k_G$ rolling without slipping down an incline has $a_G = \frac{g\sin\theta}{1 + k_G^2/R^2}$. Evaluate $a_G$ on a $25^\circ$ incline for a thin hoop, a solid cylinder and a solid sphere, and find the minimum $\mu_s$ for the cylinder to roll without slipping.
+
+<details>
+<summary>Answer</summary>
+
+Along the slope: $mg\sin\theta - f = ma_G$. About $G$: $fR = mk_G^2\,a_G/R$, so $f = mk_G^2a_G/R^2$. Substituting gives the stated result.
+
+- Hoop ($k_G^2/R^2 = 1$): $a_G = 2.07$ m/s².
+- Solid cylinder ($1/2$): $a_G = 2.76$ m/s² (matches Example 1).
+- Solid sphere ($2/5$): $a_G = 2.96$ m/s².
+
+For the cylinder $f = \frac{1}{3}mg\sin\theta$ and $N = mg\cos\theta$, so no slipping requires $\mu_s \geq \frac{1}{3}\tan 25^\circ = 0.155$.
+
+</details>
+
+**Exercise 3.** For the rod of Example 2 (3 kg, 1.2 m, pivoted at one end and released from horizontal), find the pin reaction immediately after release.
+
+<details>
+<summary>Answer</summary>
+
+Just after release $\omega = 0$, so the mass centre has only tangential (vertical) acceleration: $a_G = \alpha L/2 = 12.26 \times 0.6 = 7.36$ m/s² $= \frac{3}{4}g$ downward.
+
+Vertical: $mg - R_y = ma_G$, so $R_y = m(g - \frac{3}{4}g) = \frac{1}{4}mg = 7.36$ N upward. With $\omega = 0$ there is no normal acceleration, so the horizontal reaction is zero.
+
+</details>
+
+**Exercise 4.** A 5 kg mass hangs from a cord wrapped around a solid disk pulley (mass 10 kg, radius 0.2 m) on a frictionless fixed axle. Find the acceleration of the mass and the cord tension.
+
+<details>
+<summary>Answer</summary>
+
+Mass: $mg - T = ma$. Pulley: $TR = \frac{1}{2}MR^2(a/R)$, so $T = \frac{1}{2}Ma$. Combining:
+
+$$a = \frac{mg}{m + M/2} = \frac{5 \times 9.81}{5 + 5} = 4.91 \text{ m/s}^2, \quad T = \frac{1}{2}(10)(4.905) = 24.5 \text{ N}$$
+
+</details>
+
+**Exercise 5.** A uniform crate 2 m tall and 1 m deep (in the direction of travel) sits on a truck bed with enough friction to prevent sliding. Using D'Alembert's principle, find the truck acceleration at which the crate starts to tip.
+
+<details>
+<summary>Answer</summary>
+
+On the crate's FBD the inertia force $ma$ acts backward through $G$, at height $h/2 = 1$ m. At the point of tipping the normal force and friction act at the rear bottom edge. Summing moments about that edge:
+
+$$ma\frac{h}{2} = mg\frac{b}{2} \implies a = g\frac{b}{h} = 9.81 \times \frac{1}{2} = 4.91 \text{ m/s}^2$$
+
+Above this acceleration the crate tips backward, provided the friction coefficient exceeds $a/g = 0.5$ so that it does not slide first.
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Dynamics*, 14th ed., Pearson, 2016.
+- J. L. Meriam, L. G. Kraige, *Engineering Mechanics: Dynamics*, Wiley.
+- F. P. Beer, E. R. Johnston, P. J. Cornwell, *Vector Mechanics for Engineers: Dynamics*, McGraw-Hill.

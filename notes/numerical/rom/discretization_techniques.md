@@ -153,7 +153,9 @@ II. **Basis Extraction (e.g., via POD)**
 III. **Online Phase: Reduced Basis (RB) Approximation**  
 
    - **Approximate Solution**: For a new parameter $\mu$, approximate the solution in the low-dimensional subspace spanned by the POD modes:  
+
      $$u_{N_h}(\mu) = \sum_{i=1}^N a_i(\mu)\,\xi_i$$  
+
      where the vectors $\xi_i \in V_h$ are the reduced basis vectors, and $a_i(\mu)$ are the new unknowns (much fewer in number than $N_h$).  
 
    - **Reduced Problem**: By restricting the problem to this reduced subspace $V_{N_h} = \text{span}\{\xi_1,\dots,\xi_N\}$, one obtains a system of $\mathcal{O}(N)$ unknowns instead of $\mathcal{O}(N_h)$. Solving for $a_i(\mu)$ is thus much cheaper computationally.
@@ -193,9 +195,66 @@ Before building a ROM one must have a high-fidelity discrete model. This note ex
 | **Inputs** | Parameterized bilinear form $a(u,v;\mu)$, linear form $f(v;\mu)$, finite-element space $V_h$ of dimension $N_h$, parameter $\mu \in \mathcal{P}$ |
 | **Outputs** | High-fidelity solution $u_h(\mu) \in V_h$, stiffness matrix $A_h \in \mathbb{R}^{N_h \times N_h}$, error estimate via Céa's lemma |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/pod/main.py` | The POD step that follows high-fidelity discretization to build the reduced basis. |
+- [2D Schrödinger Equation Simulation](../../../scripts/simulations/schroedinger_equation/): solves the time-dependent Schrödinger equation for a free particle in two dimensions with the split-step Fourier method and animates the probability density of the spreading wavepacket as a 3D surface.
+- [Proper Orthogonal Decomposition (POD)](../../../scripts/algorithms/pod/): performs Proper Orthogonal Decomposition on a synthetic spatio-temporal field by taking the singular value decomposition of the mean-subtracted snapshot matrix.
 
+## Exercises
+
+**Exercise 1.** A truth problem has $N_h = 10^6$ unknowns and a reduced model has $N = 20$. Using the dense direct-solver estimates $\mathcal{O}(N_h^3)$ and $\mathcal{O}(N^3)$, what is the cost ratio? At $10^9$ floating-point operations per second, how long would each solve take?
+
+<details>
+<summary>Answer</summary>
+
+$N_h^3 = 10^{18}$ and $N^3 = 8000$, a ratio of $1.25 \times 10^{14}$. At $10^9$ operations per second, the dense truth solve would take $10^9$ s (about 32 years), while the reduced solve takes about 8 µs. Real truth solvers exploit sparsity and iterative methods and are far faster than the dense estimate. The reduced system, however, remains tiny regardless.
+
+</details>
+
+**Exercise 2.** Solve $-u'' = 1$ on $(0, 1)$ with $u(0) = u(1) = 0$ using piecewise-linear finite elements on a uniform mesh, for $h = 1/2$ and $h = 1/4$. Assemble $A_{N_h}$ and $f_{N_h}$ from $a(u, v) = \int_0^1 u'v' \, dx$ and $f(v) = \int_0^1 v \, dx$, solve, and compare with the exact solution $u(x) = x(1 - x)/2$.
+
+<details>
+<summary>Answer</summary>
+
+For hat functions, $a(\phi_i, \phi_i) = 2/h$, $a(\phi_i, \phi_{i \pm 1}) = -1/h$ and $f(\phi_i) = h$.
+
+$h = 1/2$ (one interior node): $A = [4]$ and $f = [1/2]$, so $u(1/2) = 0.125$. The exact value is $0.125$.
+
+$h = 1/4$ (three interior nodes):
+
+$$
+A = \begin{pmatrix} 8 & -4 & 0 \\ -4 & 8 & -4 \\ 0 & -4 & 8 \end{pmatrix}, \qquad f = \begin{pmatrix} 0.25 \\ 0.25 \\ 0.25 \end{pmatrix}, \qquad u = \begin{pmatrix} 0.09375 \\ 0.125 \\ 0.09375 \end{pmatrix}.
+$$
+
+These equal the exact values $x(1-x)/2$ at $x = 0.25, 0.5, 0.75$. The nodal values are exact for this 1D problem, but between nodes the piecewise-linear interpolant still differs from the parabola.
+
+</details>
+
+**Exercise 3.** Now make the problem parametric: $-\mu u'' = 1$ with $\mu \in [0.1, 10]$. Show that $A_{N_h}^\mu = \mu A_1$, where $A_1$ is the matrix of Exercise 2, and that $u_{N_h}^\mu = u_{N_h}^1/\mu$. What does this imply about the discrete solution manifold and the smallest exact reduced basis?
+
+<details>
+<summary>Answer</summary>
+
+$a(\phi_i, \phi_j; \mu) = \mu\int\phi_i'\phi_j' \, dx$, so $A_{N_h}^\mu = \mu A_1$, while $f$ does not depend on $\mu$. Then $u_{N_h}^\mu = (\mu A_1)^{-1} f = u_{N_h}^1/\mu$. Every truth solution is a multiple of the single vector $u_{N_h}^1$, so the solution manifold lies in a one-dimensional subspace. A reduced basis with $N = 1$, $\xi_1 = u_{N_h}^1/\|u_{N_h}^1\|$, reproduces the truth solution exactly for every $\mu$. Most problems are not this simple, but fast singular-value decay reflects the same idea.
+
+</details>
+
+**Exercise 4.** For the convection–diffusion form $a(u, v) = \mu\int_0^1 u'v' \, dx + b\int_0^1 u'v \, dx$ on $V = H_0^1(0, 1)$ with $\|v\|_V = \|v'\|_{L^2}$, show that $\alpha = \mu$ and $\gamma \le \mu + |b|/\pi$ (use the Poincaré inequality $\|v\|_{L^2} \le \|v'\|_{L^2}/\pi$). Evaluate the Céa factor $\gamma/\alpha$ for $\mu = 0.01$ and $b = 1$, and interpret it.
+
+<details>
+<summary>Answer</summary>
+
+Coercivity: $\int_0^1 v'v \, dx = [v^2/2]_0^1 = 0$ for $v \in H_0^1$, so $a(v, v) = \mu\|v'\|^2$ and $\alpha = \mu$.
+
+Continuity: $|a(u, v)| \le \mu\|u'\|\|v'\| + |b|\,\|u'\|\,\|v\| \le (\mu + |b|/\pi)\|u'\|\|v'\|$.
+
+The Céa factor is $\gamma/\alpha = 1 + |b|/(\pi\mu) = 1 + 1/(0.01\pi) \approx 32.8$. The Galerkin error may be up to about 33 times the best approximation error in $V_h$. Convection-dominated problems therefore need fine meshes or stabilization (e.g. SUPG), and reduced models inherit the same difficulty.
+
+</details>
+
+## References
+
+- S. C. Brenner and L. R. Scott, *The Mathematical Theory of Finite Element Methods*, 3rd ed., Springer, 2008.
+- A. Ern and J.-L. Guermond, *Theory and Practice of Finite Elements*, Springer, 2004.
+- A. Quarteroni, A. Manzoni and F. Negri, *Reduced Basis Methods for Partial Differential Equations: An Introduction*, Springer, 2016.
+- J. S. Hesthaven, G. Rozza and B. Stamm, *Certified Reduced Basis Methods for Parametrized Partial Differential Equations*, Springer, 2016.

@@ -152,9 +152,9 @@ Rule of thumb: $T_s \leq T_u / 10$ or equivalently the sampling frequency should
 
 Pure derivative amplifies noise. A practical derivative term includes a low-pass filter:
 
-$$D(s) = \frac{K_d s}{1 + (K_d / N) s}$$
+$$D(s) = \frac{K_d s}{1 + (T_d / N) s}$$
 
-where $N$ is the filter coefficient, typically $N = 8$ to $20$. This limits the derivative gain at high frequencies to $N \cdot K_p$.
+where $T_d = K_d / K_p$ and $N$ is the filter coefficient, typically $N = 8$ to $20$. This limits the derivative gain at high frequencies to $N \cdot K_p$.
 
 ### Setpoint Weighting
 
@@ -251,3 +251,75 @@ $$T_d = T_u / 8 = 0.5\;\text{s} \implies K_d = K_p \cdot T_d = 0.765\;\text{s}$$
 - Ziegler-Nichols rules give an **aggressive starting point** — expect to de-tune for less overshoot
 - Anti-windup is **essential** in any system with actuator limits
 - For oscillatory loops, check for **mechanical backlash or stiction** before increasing gains
+
+## Exercises
+
+**Exercise 1.** A parallel PID controller has $K_p = 4$, $K_i = 2\;\text{s}^{-1}$ and $K_d = 0.5$ s. Convert it to the ideal form $K_p(1 + \frac{1}{T_i s} + T_d s)$. If the closed-loop response overshoots too much, which gain changes does the summary table suggest?
+
+<details>
+<summary>Answer</summary>
+
+$T_i = K_p/K_i = 4/2 = 2$ s and $T_d = K_d/K_p = 0.5/4 = 0.125$ s.
+
+To reduce overshoot: increase $K_d$ (more damping), or reduce $K_i$ and/or $K_p$. Reducing $K_i$ slows the removal of steady-state error; reducing $K_p$ slows the response.
+
+</details>
+
+**Exercise 2.** An ultimate-gain test gives $K_u = 8$ and $T_u = 2.5$ s. Find the Ziegler-Nichols PI and PID settings in both ideal ($T_i$, $T_d$) and parallel ($K_i$, $K_d$) form.
+
+<details>
+<summary>Answer</summary>
+
+PI: $K_p = 0.45 \times 8 = 3.6$, $T_i = T_u/1.2 = 2.08$ s, so $K_i = K_p/T_i = 1.73\;\text{s}^{-1}$.
+
+PID: $K_p = 0.6 \times 8 = 4.8$, $T_i = T_u/2 = 1.25$ s, $T_d = T_u/8 = 0.3125$ s, so $K_i = 4.8/1.25 = 3.84\;\text{s}^{-1}$ and $K_d = 4.8 \times 0.3125 = 1.5$ s.
+
+</details>
+
+**Exercise 3.** Apply the Cohen-Coon PID rules to the thermal process of Example 1 (process gain $K = 2$, $L = 3$ s, $T = 10$ s) and compare with the Ziegler-Nichols result from that example.
+
+<details>
+<summary>Answer</summary>
+
+With $L/T = 0.3$:
+
+$$K_c = \frac{1}{K}\frac{T}{L}\left(\frac{4}{3} + \frac{L}{4T}\right) = \frac{1}{2} \times 3.333 \times (1.333 + 0.075) = 2.35$$
+
+$$T_i = L\frac{32 + 6L/T}{13 + 8L/T} = 3 \times \frac{33.8}{15.4} = 6.58 \text{ s}, \quad T_d = L\frac{4}{11 + 2L/T} = \frac{12}{11.6} = 1.03 \text{ s}$$
+
+Ziegler-Nichols gave $K_p = 2.0$, $T_i = 6$ s, $T_d = 1.5$ s. Because $L/T = 0.3 > 0.25$, Cohen-Coon is the more appropriate rule here. It gives about 17% more gain, similar integral time, and less derivative action. Both are starting points to be refined by simulation.
+
+</details>
+
+**Exercise 4.** A filtered derivative term $D(s) = \frac{K_d s}{1 + (T_d/N)s}$ is used with $K_p = 2$, $T_d = 0.5$ s and $N = 10$. Find $K_d$, the filter corner frequency, and $|D(j\omega)|$ at $\omega = 1$ rad/s and $\omega = 200$ rad/s. Compare with an ideal derivative $K_d s$.
+
+<details>
+<summary>Answer</summary>
+
+$K_d = K_p T_d = 1$ s. The filter time constant is $T_d/N = 0.05$ s, so the corner frequency is 20 rad/s.
+
+$$|D(j1)| = \frac{1}{\sqrt{1 + 0.05^2}} = 0.999 \quad (\text{ideal: } 1.0)$$
+
+$$|D(j200)| = \frac{200}{\sqrt{1 + 10^2}} = 19.9 \quad (\text{ideal: } 200)$$
+
+Well below the corner the filter acts as a true derivative. At high frequency its gain levels off at $K_d N/T_d = N K_p = 20$, instead of growing without bound and amplifying noise.
+
+</details>
+
+**Exercise 5.** A velocity-form PID with $K_p = 2$, $K_i = 0.5\;\text{s}^{-1}$, $K_d = 0.1$ s and $T_s = 0.1$ s has error samples $e[k-2] = 1.0$, $e[k-1] = 0.8$ and $e[k] = 0.5$. Compute $\Delta u[k]$. Explain why the velocity form has built-in protection against integral windup when the actuator saturates.
+
+<details>
+<summary>Answer</summary>
+
+$$\Delta u[k] = 2(0.5 - 0.8) + 0.5 \times 0.1 \times 0.5 + 0.1\,\frac{0.5 - 1.6 + 1.0}{0.1} = -0.6 + 0.025 - 0.1 = -0.675$$
+
+The controller outputs an increment that is added to the previous applied value. If $u[k-1]$ is the saturated actuator value, no integral state keeps growing beyond the limit. As soon as the error changes sign, the increments move the output back off the limit, so there is no stored windup to unwind.
+
+</details>
+
+## References
+
+- K. J. Åström, T. Hägglund, *Advanced PID Control*, ISA, 2006.
+- J. G. Ziegler, N. B. Nichols, "Optimum settings for automatic controllers", *Transactions of the ASME* 64, 759–768, 1942.
+- G. H. Cohen, G. A. Coon, "Theoretical consideration of retarded control", *Transactions of the ASME* 75, 1953.
+- K. Ogata, *Modern Control Engineering*, 5th ed., Prentice Hall, 2010.

@@ -150,3 +150,73 @@ This balance must be carefully managed to make sure that the entire dataset can 
 - Geometry decimation and flow-field interpolation should preserve critical aerodynamic features (separation lines, high-curvature edges) while reducing data to a size compatible with GPU memory constraints.
 - Exploiting geometric symmetry (e.g., half-models) effectively doubles the usable data density for a given memory budget.
 - Stratified partitioning of training, validation, and test sets guarantees that model performance metrics reflect true generalization across the entire design space.
+
+### Exercises
+
+**Exercise 1.** Use the memory guideline from the note to estimate the size of a dataset of 600 samples, each with 200,000 decimated points and 7 variables ($x, y, z, p, u, v, w$) stored as 32-bit floats. What is the size of the training portion under an 80/10/10 split, and what if a half-model with symmetry halves the point count?
+
+<details>
+<summary>Answer</summary>
+
+$600 \times 200{,}000 \times 7 \times 4 = 3.36 \times 10^9$ bytes, or about 3.36 GB.
+
+The training portion (80%) is about 2.69 GB.
+
+With a half-model (100,000 points) everything halves: 1.68 GB in total.
+
+</details>
+
+**Exercise 2.** Row 9 of the dataset table lists an inlet velocity of 40 m/s with $Re \approx 8 \times 10^6$. Taking $\nu = 1.5 \times 10^{-5}$ m²/s, what reference length does this imply? What would $Re$ be based on a 4.5 m vehicle length, and why does this matter when datasets are merged?
+
+<details>
+<summary>Answer</summary>
+
+$L = Re\,\nu/U = 8 \times 10^6 \times 1.5 \times 10^{-5} / 40 = 3.0$ m.
+
+With $L = 4.5$ m, $Re = 40 \times 4.5 / 1.5 \times 10^{-5} = 1.2 \times 10^7$.
+
+The same physical case can carry Reynolds numbers that differ by 50% depending on the reference length. If one study used wheelbase and another used overall length, the Reynolds-number feature would be inconsistent. Always store the reference length (and area) with every case.
+
+</details>
+
+**Exercise 3.** A legacy study reports $C_d = 0.320$ for a vehicle using a reference area of 2.10 m². The new campaign uses 2.25 m² for the same vehicle. Convert the legacy value to the new convention, and explain the risk of skipping this step.
+
+<details>
+<summary>Answer</summary>
+
+The drag force is the same, so $C_d A$ is conserved: $C_{d,\text{new}} = 0.320 \times 2.10/2.25 \approx 0.299$.
+
+Left uncorrected, the legacy cases would carry a spurious offset of about 0.02 in $C_d$. That is larger than many of the geometry effects the network is meant to learn, and it would be learned as a bias tied to whatever features distinguish the legacy cases.
+
+</details>
+
+**Exercise 4.** A surface mesh with $N = 2.5 \times 10^6$ points is decimated with $\alpha = 0.1$. How many points remain, and by what factor does the average point spacing grow if the points stay uniformly distributed over the surface? What does this mean for small features?
+
+<details>
+<summary>Answer</summary>
+
+$\alpha N = 250{,}000$ points remain.
+
+On a surface the number of points scales with $1/h^2$, so the spacing grows by $1/\sqrt{\alpha} = 1/\sqrt{0.1} \approx 3.16$.
+
+Features smaller than about three original spacings (thin trailing edges, mirror gaps, grille bars) may disappear. This is why the note recommends preserving leading edges and high-curvature regions, with adaptive rather than uniform decimation near them.
+
+</details>
+
+**Exercise 5.** The crosswind study (row 8) has yaw angles $5^\circ$, $10^\circ$ and $15^\circ$ for the same geometry. A 90/10 random split of all simulations puts the $10^\circ$ case in the test set and the other two in training. Is the resulting test error a fair measure of generalization? Propose a better test design.
+
+<details>
+<summary>Answer</summary>
+
+No. The model sees the same geometry at $5^\circ$ and $15^\circ$, so predicting $10^\circ$ is interpolation in a single variable for a known shape. The test error will be optimistic.
+
+A better design uses two held-out sets. An interpolation set holds out complete geometric variants (all yaw angles of a variant together). An extrapolation set holds out a whole vehicle (for example, all Vehicle B cases). Stratify so that both sets span the range of the flow parameters, and report the errors on each separately.
+
+</details>
+
+### References
+
+- McKay, M. D., Beckman, R. J., & Conover, W. J., "A Comparison of Three Methods for Selecting Values of Input Variables in the Analysis of Output from a Computer Code", *Technometrics* 21(2), 1979.
+- Garland, M., & Heckbert, P. S., "Surface Simplification Using Quadric Error Metrics", Proceedings of SIGGRAPH, 1997.
+- Hucho, W.-H. (Ed.), *Aerodynamics of Road Vehicles*, 4th ed., SAE International, 1998.
+- Hastie, T., Tibshirani, R., & Friedman, J., *The Elements of Statistical Learning*, 2nd ed., Springer, 2009.

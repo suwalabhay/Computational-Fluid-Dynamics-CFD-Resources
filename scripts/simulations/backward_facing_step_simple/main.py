@@ -1,57 +1,61 @@
 #!/usr/bin/env python3
-import argparse, time, os
+"""Solve steady 2D laminar flow over a backward-facing step with SIMPLE.
+
+The incompressible Navier-Stokes equations are discretised with the finite
+volume method on a staggered (MAC) grid using first-order upwind convection
+and central diffusion. Pressure and velocity are coupled with Patankar's SIMPLE
+algorithm; every linear system is relaxed with Gauss-Seidel/SOR sweeps
+compiled with Numba. A live figure shows the velocity magnitude with arrows,
+the residual history and the global mass imbalance. The reattachment length of
+the recirculation zone behind the step is printed at the end.
+"""
+
+import argparse
+import time
 from dataclasses import dataclass
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
-import matplotlib.pyplot as plt
+from numba import njit
 
-# limit NumPy BLAS threads (keeps CPU from pegging all cores)
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
-os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
-plt.style.use("dark_background")
-
-# ---- use float32 everywhere ----
 DTYPE = np.float32
-FZERO = DTYPE(0.0)
-FONE = DTYPE(1.0)
-FBIG = DTYPE(1e10)  # safe "infinity" for float32
-FSIX = DTYPE(6.0)
-FHALF = DTYPE(0.5)
-FMINUS_FIVE = DTYPE(-5.0)
-FFIVE = DTYPE(5.0)
 
 
 @dataclass
 class Params:
-    nx: int = 240
-    ny: int = 80
-    Re: float = 200.0
-    H: float = 1.0
-    h: float = 0.5
-    Lx: float = 24.0
-    Ly: float = 1.5
-    rho: float = 1.0
-    alpha_u: float = 0.2
-    alpha_p: float = 0.3
-    omega_mom: float = 1.0
-    omega_p: float = 1.5
-    mom_sweeps: int = 1
+    nx: int = 240  # pressure cells in x
+    ny: int = 80  # pressure cells in y
+    Re: float = 200.0  # Reynolds number rho*U_avg*H/mu
+    H: float = 1.0  # inlet channel height
+    h: float = 0.5  # step height
+    step_length: float = 4.0  # length of the inlet channel above the step
+    Lx: float = 24.0  # domain length
+    Ly: float = 1.5  # domain height (= H + h)
+    rho: float = 1.0  # density
+    U_avg: float = 1.0  # mean inlet velocity
+    alpha_u: float = 0.7  # momentum under-relaxation
+    alpha_p: float = 0.3  # pressure under-relaxation
+    omega_mom: float = 1.0  # SOR factor for the momentum sweeps
+    omega_p: float = 1.7  # SOR factor for the pressure-correction sweeps
+    mom_sweeps: int = 2
     pcor_sweeps: int = 40
     max_iters: int = 3000
     plot_interval: int = 20
-    quiver_ds: int = 3
-    seed: int = 0
+    quiver_ds: int = 3  # plot every quiver_ds-th arrow
 
 
-def build_geometry_masks(nx, ny, Lx, Ly, H, h):
-    dx = DTYPE(Lx / nx)
-    dy = DTYPE(Ly / ny)
+def build_geometry_masks(prm):
+    """Return fluid masks for pressure cells, u faces and v faces plus grid."""
+    nx, ny = prm.nx, prm.ny
+    dx = DTYPE(prm.Lx / nx)
+    dy = DTYPE(prm.Ly / ny)
     xP = (np.arange(nx, dtype=DTYPE) + DTYPE(0.5)) * dx
     yP = (np.arange(ny, dtype=DTYPE) + DTYPE(0.5)) * dy
     XP, YP = np.meshgrid(xP, yP, indexing="ij")
     fluid_P = np.ones((nx, ny), dtype=bool)
-    fluid_P[(XP < DTYPE(4.0)) & (YP < DTYPE(h))] = False
+    fluid_P[(XP < prm.step_length) & (YP < prm.h)] = False
     fluid_u = np.zeros((nx + 1, ny), dtype=bool)
     fluid_u[1:nx, :] = fluid_P[:-1, :] & fluid_P[1:, :]
     fluid_u[0, :] = fluid_P[0, :]
@@ -63,12 +67,10 @@ def build_geometry_masks(nx, ny, Lx, Ly, H, h):
     return fluid_P, fluid_u, fluid_v, dx, dy, XP, YP
 
 
-def inlet_parabolic_profile(y, H, Uavg=1.0):
-    y = y.astype(DTYPE, copy=False)
-    H = DTYPE(H)
-    Uavg = DTYPE(Uavg)
-    y_prime = y - FHALF * H
-    return FSIX * Uavg * (y_prime / H) * (FONE - y_prime / H)
+def inlet_parabolic_profile(y, h, H, U_avg=1.0):
+    """Fully developed channel profile between y = h and y = h + H."""
+    eta = (y - h) / H
+    return (6.0 * U_avg * eta * (1.0 - eta)).astype(DTYPE)
 
 
 def precompute_indices(mask):
@@ -76,15 +78,18 @@ def precompute_indices(mask):
     return idx[:, 0].astype(np.int32), idx[:, 1].astype(np.int32)
 
 
+@njit(cache=True)
 def gs_sor_scalar(AW, AE, AS, AN, AP, b, phi, idx_i, idx_j, omega, sweeps):
+    """SOR sweeps for AP*phi = AW*phi_W + AE*phi_E + AS*phi_S + AN*phi_N + b."""
     nx, ny = phi.shape
-    omega = DTYPE(omega)
     for _ in range(sweeps):
-        for i, j in zip(idx_i, idx_j):
+        for k in range(idx_i.size):
+            i = idx_i[k]
+            j = idx_j[k]
             ap = AP[i, j]
-            if ap == FZERO:
+            if ap == 0.0:
                 continue
-            nb = FZERO
+            nb = 0.0
             if i > 0:
                 nb += AW[i, j] * phi[i - 1, j]
             if i < nx - 1:
@@ -93,344 +98,250 @@ def gs_sor_scalar(AW, AE, AS, AN, AP, b, phi, idx_i, idx_j, omega, sweeps):
                 nb += AS[i, j] * phi[i, j - 1]
             if j < ny - 1:
                 nb += AN[i, j] * phi[i, j + 1]
-            phi[i, j] += omega * (((b[i, j] + nb) / ap) - phi[i, j])
-    return phi
+            phi[i, j] += omega * ((b[i, j] + nb) / ap - phi[i, j])
 
 
-def compute_face_fluxes_u(u, v, dx, dy, Fe, Fw, Fn, Fs):
-    rho = DTYPE(1.0)
-    nxp1, ny = u.shape
-    nx = nxp1 - 1
-    Fe[:, :] = rho * u[2 : nx + 1, :] * dy
-    Fw[:, :] = rho * u[0 : nx - 1, :] * dy
-    Fn[:, :] = rho * DTYPE(0.5) * (v[0 : nx - 1, 1 : ny + 1] + v[1:nx, 1 : ny + 1]) * dx
-    Fs[:, :] = rho * DTYPE(0.5) * (v[0 : nx - 1, 0:ny] + v[1:nx, 0:ny]) * dx
-
-
-def compute_face_fluxes_v(u, v, dx, dy, Fe, Fw, Fn, Fs):
-    rho = DTYPE(1.0)
-    nx, nyp1 = v.shape
-    ny = nyp1 - 1
-    Fe[:, :] = rho * DTYPE(0.5) * (u[1 : nx + 1, 1:ny] + u[1 : nx + 1, 0 : ny - 1]) * dy
-    Fw[:, :] = rho * DTYPE(0.5) * (u[0:nx, 1:ny] + u[0:nx, 0 : ny - 1]) * dy
-    Fn[:, :] = rho * v[:, 2 : ny + 1] * dx
-    Fs[:, :] = rho * v[:, 0 : ny - 1] * dx
-
-
+@njit(cache=True)
 def build_momentum_u(
-    u,
-    v,
-    p,
-    mu,
-    dx,
-    dy,
-    fluid_u,
-    fluid_P,
-    alpha_u,
-    AW,
-    AE,
-    AS,
-    AN,
-    AP,
-    b,
-    Fe,
-    Fw,
-    Fn,
-    Fs,
-    idx_i,
-    idx_j,
+    u, v, p, mu, rho, dx, dy, fluid_P, alpha_u, AW, AE, AS, AN, AP, b, idx_i, idx_j
 ):
+    """Assemble the under-relaxed x-momentum equations on the u faces."""
     nxp1, ny = u.shape
     nx = nxp1 - 1
-    De = DTYPE(mu * dy / dx)
-    Dw = De
-    Dn = DTYPE(mu * dx / dy)
-    Ds = Dn
-    AW.fill(FZERO)
-    AE.fill(FZERO)
-    AS.fill(FZERO)
-    AN.fill(FZERO)
-    AP.fill(FZERO)
-    b.fill(FZERO)
-    compute_face_fluxes_u(u, v, dx, dy, Fe, Fw, Fn, Fs)
-    for i, j in zip(idx_i, idx_j):
-        if i == 0 or i == nx:  # BCs
+    De = mu * dy / dx
+    Dn = mu * dx / dy
+    AW[:] = 0.0
+    AE[:] = 0.0
+    AS[:] = 0.0
+    AN[:] = 0.0
+    AP[:] = 0.0
+    b[:] = 0.0
+    for k in range(idx_i.size):
+        i = idx_i[k]
+        j = idx_j[k]
+        if i == 0 or i == nx:  # inlet / outlet faces are set by the BCs
             continue
         if (not fluid_P[i - 1, j]) or (not fluid_P[i, j]):
-            AP[i, j] = FONE
-            b[i, j] = FZERO
+            AP[i, j] = 1.0  # face touches a solid cell: u = 0
             continue
-        aE = De + max(-Fe[i - 1, j], FZERO)
-        aW = Dw + max(Fw[i - 1, j], FZERO)
-        aN = Dn + max(-Fn[i - 1, j], FZERO)
-        aS = Ds + max(Fs[i - 1, j], FZERO)
-        aP = (
-            aE
-            + aW
-            + aN
-            + aS
-            + (Fe[i - 1, j] - Fw[i - 1, j] + Fn[i - 1, j] - Fs[i - 1, j])
-        )
-        bsrc = (p[i - 1, j] - p[i, j]) * dy
-        AP[i, j] = aP / DTYPE(alpha_u)
+        # mass fluxes through the faces of the u control volume
+        fe = rho * 0.5 * (u[i, j] + u[i + 1, j]) * dy
+        fw = rho * 0.5 * (u[i - 1, j] + u[i, j]) * dy
+        fn = rho * 0.5 * (v[i - 1, j + 1] + v[i, j + 1]) * dx
+        fs = rho * 0.5 * (v[i - 1, j] + v[i, j]) * dx
+        aE = De + max(-fe, 0.0)
+        aW = De + max(fw, 0.0)
+        aN = Dn + max(-fn, 0.0)
+        aS = Dn + max(fs, 0.0)
+        aP = aE + aW + aN + aS + (fe - fw + fn - fs)
+        # no-slip wall half a cell above/below: double the diffusion conductance
+        if j == ny - 1 or ((not fluid_P[i - 1, j + 1]) and (not fluid_P[i, j + 1])):
+            aP += Dn
+            aN = 0.0
+        if j == 0 or ((not fluid_P[i - 1, j - 1]) and (not fluid_P[i, j - 1])):
+            aP += Dn
+            aS = 0.0
+        AP[i, j] = aP / alpha_u
         AW[i, j] = aW
         AE[i, j] = aE
         AS[i, j] = aS
         AN[i, j] = aN
-        b[i, j] = bsrc + (FONE - DTYPE(alpha_u)) / DTYPE(alpha_u) * aP * u[i, j]
+        b[i, j] = (p[i - 1, j] - p[i, j]) * dy + (1.0 - alpha_u) / alpha_u * aP * u[
+            i, j
+        ]
 
 
+@njit(cache=True)
 def build_momentum_v(
-    u,
-    v,
-    p,
-    mu,
-    dx,
-    dy,
-    fluid_v,
-    fluid_P,
-    alpha_u,
-    AW,
-    AE,
-    AS,
-    AN,
-    AP,
-    b,
-    Fe,
-    Fw,
-    Fn,
-    Fs,
-    idx_i,
-    idx_j,
+    u, v, p, mu, rho, dx, dy, fluid_P, alpha_u, AW, AE, AS, AN, AP, b, idx_i, idx_j
 ):
+    """Assemble the under-relaxed y-momentum equations on the v faces."""
     nx, nyp1 = v.shape
     ny = nyp1 - 1
-    De = DTYPE(mu * dy / dx)
-    Dw = De
-    Dn = DTYPE(mu * dx / dy)
-    Ds = Dn
-    AW.fill(FZERO)
-    AE.fill(FZERO)
-    AS.fill(FZERO)
-    AN.fill(FZERO)
-    AP.fill(FZERO)
-    b.fill(FZERO)
-    compute_face_fluxes_v(u, v, dx, dy, Fe, Fw, Fn, Fs)
-    for i, j in zip(idx_i, idx_j):
-        if j == 0 or j == ny:
+    De = mu * dy / dx
+    Dn = mu * dx / dy
+    AW[:] = 0.0
+    AE[:] = 0.0
+    AS[:] = 0.0
+    AN[:] = 0.0
+    AP[:] = 0.0
+    b[:] = 0.0
+    for k in range(idx_i.size):
+        i = idx_i[k]
+        j = idx_j[k]
+        if j == 0 or j == ny:  # bottom / top walls: v = 0
             continue
         if (not fluid_P[i, j - 1]) or (not fluid_P[i, j]):
-            AP[i, j] = FONE
-            b[i, j] = FZERO
+            AP[i, j] = 1.0
             continue
-        aE = De + max(-Fe[i, j - 1], FZERO)
-        aW = Dw + max(Fw[i, j - 1], FZERO)
-        aN = Dn + max(-Fn[i, j - 1], FZERO)
-        aS = Ds + max(Fs[i, j - 1], FZERO)
-        aP = (
-            aE
-            + aW
-            + aN
-            + aS
-            + (Fe[i, j - 1] - Fw[i, j - 1] + Fn[i, j - 1] - Fs[i, j - 1])
-        )
-        bsrc = (p[i, j - 1] - p[i, j]) * dx
-        AP[i, j] = aP / DTYPE(alpha_u)
+        fe = rho * 0.5 * (u[i + 1, j - 1] + u[i + 1, j]) * dy
+        fw = rho * 0.5 * (u[i, j - 1] + u[i, j]) * dy
+        fn = rho * 0.5 * (v[i, j] + v[i, j + 1]) * dx
+        fs = rho * 0.5 * (v[i, j - 1] + v[i, j]) * dx
+        aE = De + max(-fe, 0.0)
+        aW = De + max(fw, 0.0)
+        aN = Dn + max(-fn, 0.0)
+        aS = Dn + max(fs, 0.0)
+        aP = aE + aW + aN + aS + (fe - fw + fn - fs)
+        # inlet plane (v = 0) or vertical step face half a cell to the west
+        if i == 0 or ((not fluid_P[i - 1, j - 1]) and (not fluid_P[i - 1, j])):
+            aP += De
+            aW = 0.0
+        if i == nx - 1:  # outlet: zero normal gradient, v_E = v_P
+            aP -= aE
+            aE = 0.0
+        AP[i, j] = aP / alpha_u
         AW[i, j] = aW
         AE[i, j] = aE
         AS[i, j] = aS
         AN[i, j] = aN
-        b[i, j] = bsrc + (FONE - DTYPE(alpha_u)) / DTYPE(alpha_u) * aP * v[i, j]
+        b[i, j] = (p[i, j - 1] - p[i, j]) * dx + (1.0 - alpha_u) / alpha_u * aP * v[
+            i, j
+        ]
 
 
-def apply_velocity_bcs(u, v, params, fluid_u, fluid_v, dy, *, stage="pre"):
-    """
-    stage="pre":  enforce all BCs (including outlet zero-grad for u)
-    stage="post": enforce BCs EXCEPT outlet u, so pressure-correction can set the outflow.
-    """
-    H = DTYPE(params.H)
-    Ly = DTYPE(params.Ly)
-    nxp1, ny = u.shape
-    nx = nxp1 - 1
-    nyp1 = v.shape[1]
-    ny_v = nyp1 - 1
+@njit(cache=True)
+def momentum_residual(AW, AE, AS, AN, AP, b, phi, idx_i, idx_j):
+    """Mean absolute residual of the assembled momentum equations."""
+    nx, ny = phi.shape
+    s = 0.0
+    c = 0
+    for k in range(idx_i.size):
+        i = idx_i[k]
+        j = idx_j[k]
+        if AP[i, j] == 0.0 or AP[i, j] == 1.0 and b[i, j] == 0.0 and AE[i, j] == 0.0:
+            continue
+        r = b[i, j] - AP[i, j] * phi[i, j]
+        if i > 0:
+            r += AW[i, j] * phi[i - 1, j]
+        if i < nx - 1:
+            r += AE[i, j] * phi[i + 1, j]
+        if j > 0:
+            r += AS[i, j] * phi[i, j - 1]
+        if j < ny - 1:
+            r += AN[i, j] * phi[i, j + 1]
+        s += abs(r)
+        c += 1
+    return s / max(c, 1)
 
-    # ---- inlet: parabolic u on open portion, zero-grad v ----
-    y_vc = (np.arange(ny, dtype=DTYPE) + DTYPE(0.5)) * (Ly / DTYPE(ny))
-    u_in = np.zeros(ny, dtype=DTYPE)
-    mask_open = y_vc >= FHALF * H
-    u_in[mask_open] = inlet_parabolic_profile(y_vc[mask_open], H, Uavg=1.0)
 
-    u[0, :].fill(FZERO)
-    m = fluid_u[0, :]
-    u[0, m] = u_in[m]
-    # inlet: no penetration, only on open faces
-    v[0, fluid_v[0, :]] = FZERO
-
-    # ---- outlet ----
-    if stage == "pre":
-        # before pressure correction, keep usual zero-gradient
-        u[nx, :] = u[nx - 1, :]
-    # always zero-grad for v at outlet
-    v[nx - 1, :] = v[nx - 2, :]
-
-    # ---- walls (no-slip) ----
-    v[:, ny_v].fill(FZERO)  # top wall
-    v[:, 0].fill(FZERO)  # bottom wall
-    u[:, 0].fill(FZERO)
-    u[:, ny - 1].fill(FZERO)
-
-    # ---- obstacles ----
-    u[~fluid_u] = FZERO
-    v[~fluid_v] = FZERO
-
-    # ---- safety clamp ----
-    np.clip(u, FMINUS_FIVE, FFIVE, out=u)
-    np.clip(v, FMINUS_FIVE, FFIVE, out=v)
+def apply_velocity_bcs(u, v, prm, fluid_u, fluid_v, dy):
+    """Inlet profile, zero-gradient outlet, no-slip walls, zero velocity in solids."""
+    nx = u.shape[0] - 1
+    ny = u.shape[1]
+    y_c = (np.arange(ny, dtype=DTYPE) + DTYPE(0.5)) * dy
+    open_rows = fluid_u[0, :]
+    u[0, :] = 0.0
+    u[0, open_rows] = inlet_parabolic_profile(y_c[open_rows], prm.h, prm.H, prm.U_avg)
+    u[nx, :] = u[nx - 1, :]  # outlet: du/dx = 0
+    v[:, 0] = 0.0  # bottom wall
+    v[:, ny] = 0.0  # top wall
+    u[~fluid_u] = 0.0
+    v[~fluid_v] = 0.0
+    np.clip(u, -5.0, 5.0, out=u)  # safety clamp against divergence
+    np.clip(v, -5.0, 5.0, out=v)
 
 
 def build_pressure_correction(
-    u_star, v_star, APu, APv, fluid_P, dx, dy, AW, AE, AS, AN, AP, b, d_e, d_w, d_n, d_s
+    u_star, v_star, APu, APv, prm, fluid_P, fluid_u, fluid_v, dx, dy
 ):
+    """Assemble the SIMPLE pressure-correction equation.
+
+    Returns (AW, AE, AS, AN, AP, b, du, dv) where du = dy/a_u and dv = dx/a_v
+    are the velocity-correction coefficients (zero on boundary and solid faces).
+    """
     nx, ny = fluid_P.shape
-    Ae = dy
-    Aw = dy
-    An = dx
-    As = dx
+    rho = DTYPE(prm.rho)
+    du = np.zeros_like(u_star)
+    dv = np.zeros_like(v_star)
+    mu_ = fluid_u.copy()
+    mu_[0, :] = mu_[nx, :] = False
+    mv_ = fluid_v.copy()
+    mv_[:, 0] = mv_[:, ny] = False
+    du[mu_] = dy / APu[mu_]
+    dv[mv_] = dx / APv[mv_]
 
-    # Clear/output arrays (keep dtypes)
-    np.copyto(d_e, FZERO)
-    np.copyto(d_w, FZERO)
-    np.copyto(d_n, FZERO)
-    np.copyto(d_s, FZERO)
-    AW.fill(FZERO)
-    AE.fill(FZERO)
-    AS.fill(FZERO)
-    AN.fill(FZERO)
-    AP.fill(FZERO)
-    b.fill(FZERO)
-
-    # Safe denominators (avoid 1/0) for momentum AP*
-    APu_safe = np.where(APu == FZERO, FBIG, APu)
-    APv_safe = np.where(APv == FZERO, FBIG, APv)
-
-    # Face "d" coefficients (Rhie–Chow-like) on the collocated pressure grid
-    d_e[0 : nx - 1, :] = Ae / APu_safe[1:nx, :]
-    d_w[1:nx, :] = Aw / APu_safe[0 : nx - 1, :]
-    d_n[:, 0 : ny - 1] = An / APv_safe[:, 1:ny]
-    d_s[:, 1:ny] = As / APv_safe[:, 0 : ny - 1]
-
-    # Discrete divergence of predictor field (RHS)
-    b[:, :] = (
-        -(u_star[1 : nx + 1, :] - u_star[0:nx, :]) * dy
-        - (v_star[:, 1 : ny + 1] - v_star[:, 0:ny]) * dx
+    AE = rho * dy * du[1:, :]
+    AW = rho * dy * du[:-1, :]
+    AN = rho * dx * dv[:, 1:]
+    AS = rho * dx * dv[:, :-1]
+    AP = AE + AW + AN + AS
+    # b = mass imbalance of the predicted velocity field (inflow - outflow)
+    b = -rho * (
+        (u_star[1:, :] - u_star[:-1, :]) * dy + (v_star[:, 1:] - v_star[:, :-1]) * dx
     )
-
-    # Cell coefficients (interior)
-    AE[:, :] = d_e
-    AW[:, :] = d_w
-    AN[:, :] = d_n
-    AS[:, :] = d_s
-    AP[:, :] = AE + AW + AN + AS
-
-    # Mask out solids
-    mask = fluid_P
-    AW[~mask] = AE[~mask] = AS[~mask] = AN[~mask] = FZERO
-    AP[~mask] = FZERO
-    b[~mask] = FZERO
-
-    # ---- Pressure-outlet for the correction on the right boundary: p' = 0 ----
-    i_out = nx - 1
-    AW[i_out, :] = AE[i_out, :] = AS[i_out, :] = AN[i_out, :] = FZERO
-    AP[i_out, :] = FONE
-    b[i_out, :] = FZERO
+    for arr in (AW, AE, AS, AN, AP, b):
+        arr[~fluid_P] = 0.0
+    # pressure outlet: p' = 0 in the last column
+    AW[-1, :] = AE[-1, :] = AS[-1, :] = AN[-1, :] = 0.0
+    AP[-1, :] = 1.0
+    b[-1, :] = 0.0
+    return AW, AE, AS, AN, AP, b, du, dv
 
 
-def correct_uvp(u, v, p, pcor, fluid_P, dx, dy, d_e, d_w, d_n, d_s, alpha_p):
-    # vectorized corrections (same as loop but slice-wise)
-    nx, ny = fluid_P.shape
-
-    # u faces i=1..nx-1
-    dp_u = pcor[0 : nx - 1, :] - pcor[1:nx, :]
-    dface_u = DTYPE(0.5) * (d_e[0 : nx - 1, :] + d_w[1:nx, :])
-    u[1:nx, :] += dface_u * dp_u
-
-    # v faces j=1..ny-1
-    dp_v = pcor[:, 0 : ny - 1] - pcor[:, 1:ny]
-    dface_v = DTYPE(0.5) * (d_n[:, 0 : ny - 1] + d_s[:, 1:ny])
-    v[:, 1:ny] += dface_v * dp_v
-
+def correct_uvp(u, v, p, pcor, du, dv, alpha_p):
+    """Apply the SIMPLE velocity and (under-relaxed) pressure corrections."""
+    u[1:-1, :] += du[1:-1, :] * (pcor[:-1, :] - pcor[1:, :])
+    v[:, 1:-1] += dv[:, 1:-1] * (pcor[:, :-1] - pcor[:, 1:])
     p += DTYPE(alpha_p) * pcor
 
 
-def compute_residuals_u(AW, AE, AS, AN, AP, b, u, idx_i, idx_j):
-    nxp1, ny = u.shape
-    s = DTYPE(0.0)
-    c = 0
-    for i, j in zip(idx_i, idx_j):
-        if i == 0 or i == nxp1 - 1:
-            continue
-        r = b[i, j]
-        if i > 0:
-            r += AW[i, j] * u[i - 1, j]
-        if i < nxp1 - 1:
-            r += AE[i, j] * u[i + 1, j]
-        if j > 0:
-            r += AS[i, j] * u[i, j - 1]
-        if j < ny - 1:
-            r += AN[i, j] * u[i, j + 1]
-        r -= AP[i, j] * u[i, j]
-        s += abs(r)
-        c += 1
-    return (s / DTYPE(max(c, 1))).astype(DTYPE)
+def global_mass_imbalance(u, fluid_P, dy):
+    nx = fluid_P.shape[0]
+    inlet_flux = float(np.sum(u[0, :][fluid_P[0, :]]) * dy)
+    outlet_flux = float(np.sum(u[nx, :][fluid_P[nx - 1, :]]) * dy)
+    denom = abs(inlet_flux) if abs(inlet_flux) > 1e-12 else 1.0
+    return abs(inlet_flux - outlet_flux) / denom, inlet_flux, outlet_flux
 
 
-def compute_residuals_v(AW, AE, AS, AN, AP, b, v, idx_i, idx_j):
-    nx, nyp1 = v.shape
-    s = DTYPE(0.0)
-    c = 0
-    for i, j in zip(idx_i, idx_j):
-        if j == 0 or j == nyp1 - 1:
-            continue
-        r = b[i, j]
-        if i > 0:
-            r += AW[i, j] * v[i - 1, j]
-        if i < nx - 1:
-            r += AE[i, j] * v[i + 1, j]
-        if j > 0:
-            r += AS[i, j] * v[i, j - 1]
-        if j < nyp1 - 1:
-            r += AN[i, j] * v[i, j + 1]
-        r -= AP[i, j] * v[i, j]
-        s += abs(r)
-        c += 1
-    return (s / DTYPE(max(c, 1))).astype(DTYPE)
+def reattachment_length(u, prm, dx):
+    """Distance from the step to where the bottom-wall recirculation ends (in h).
+
+    Looks at u in the first cell row (y = dy/2) downstream of the step and
+    returns the first sign change from negative to positive, or None.
+    """
+    x_faces = np.arange(u.shape[0]) * dx
+    row = u[:, 0].astype(float)
+    down = x_faces > prm.step_length
+    xs, us = x_faces[down], row[down]
+    neg = np.nonzero(us < 0)[0]
+    if neg.size == 0:
+        return None
+    for k in range(neg[0], len(us) - 1):
+        if us[k] < 0 <= us[k + 1]:
+            x_r = xs[k] - us[k] * (xs[k + 1] - xs[k]) / (us[k + 1] - us[k])
+            return (x_r - prm.step_length) / prm.h
+    return None
 
 
-def global_mass_imbalance(u, v, fluid_P, dx, dy):
-    nx, ny = fluid_P.shape
-    inlet_flux = DTYPE(np.sum(u[0, :][fluid_P[0, :]] * dy))
-    outlet_flux = DTYPE(np.sum(u[nx, :][fluid_P[nx - 1, :]] * dy))
-    net = inlet_flux - outlet_flux
-    denom = abs(inlet_flux) if abs(inlet_flux) > DTYPE(1e-12) else FONE
-    return DTYPE(abs(net) / denom), inlet_flux, outlet_flux
+def cell_centre_velocity(u, v):
+    Uc = DTYPE(0.5) * (u[:-1, :] + u[1:, :])
+    Vc = DTYPE(0.5) * (v[:, :-1] + v[:, 1:])
+    return Uc, Vc
 
 
-def setup_plot(XP, YP, fluid_P, Uc, Vc, res_hist, imb_hist, params):
-    plt.ion()
+def quiver_component(comp, fac, fluid_P, ds):
+    """Scaled, subsampled velocity component with arrows hidden inside solids."""
+    return np.where(fluid_P, comp * fac, np.nan)[::ds, ::ds]
+
+
+def setup_plot(XP, YP, fluid_P, Uc, Vc, res_hist, imb_hist, params, interactive=True):
+    if interactive:
+        plt.ion()
     fig = plt.figure(figsize=(11, 8))
     gs = fig.add_gridspec(2, 2, height_ratios=[2.0, 1.0])
     ax0 = fig.add_subplot(gs[0, :])  # field
     ax1 = fig.add_subplot(gs[1, 0])  # residuals
     ax2 = fig.add_subplot(gs[1, 1])  # mass imbalance
 
-    # --- field (imshow + quiver) ---
     speed = np.sqrt(Uc**2 + Vc**2, dtype=DTYPE)
     speed_masked = ma.array(speed.T, mask=~fluid_P.T)
+    dx_cell = float(XP[1, 0] - XP[0, 0])
+    dy_cell = float(YP[0, 1] - YP[0, 0])
     im = ax0.imshow(
         speed_masked,
         origin="lower",
-        extent=[float(XP.min()), float(XP.max()), float(YP.min()), float(YP.max())],
+        extent=[0.0, float(XP.max()) + dx_cell / 2, 0.0, float(YP.max()) + dy_cell / 2],
         aspect="auto",
         cmap="viridis",
     )
@@ -438,249 +349,178 @@ def setup_plot(XP, YP, fluid_P, Uc, Vc, res_hist, imb_hist, params):
     cbar.set_label("|U|")
 
     ds = params.quiver_ds
-    Xc = XP[::ds, ::ds]
-    Yc = YP[::ds, ::ds]
-
-    # --- pre-scale velocities so the 95th percentile vector ≈ 0.7 * smallest cell ---
-    dx_cell = float(XP[1, 0] - XP[0, 0])
-    dy_cell = float(YP[0, 1] - YP[0, 0])
+    # pre-scale velocities so the 95th percentile arrow is ~0.7 of a cell
     cell = min(dx_cell, dy_cell)
     ref = float(np.nanpercentile(speed[fluid_P], 95)) if np.any(fluid_P) else 1.0
-    ref = max(ref, 1e-6)  # guard against tiny/zero fields
-    fac = (0.7 * cell) / ref  # scale factor in data units
-    Uq = Uc * fac
-    Vq = Vc * fac
-
+    fac = min(max((0.7 * cell) / max(ref, 1e-6), 0.1), 1.5)  # same clamp as updates
     qv = ax0.quiver(
-        Xc,
-        Yc,
-        Uq[::ds, ::ds],
-        Vq[::ds, ::ds],
+        XP[::ds, ::ds],
+        YP[::ds, ::ds],
+        quiver_component(Uc, fac, fluid_P, ds),
+        quiver_component(Vc, fac, fluid_P, ds),
         color="white",
-        scale=1.0,  # we pre-scaled U,V; keep quiver scale = 1
+        scale=1.0,
         scale_units="xy",
         angles="xy",
         pivot="mid",
         width=0.0025,
         zorder=3,
     )
-    ax0._qfac = fac  # remember scale for EMA updates
+    ax0._qfac = fac  # remembered for the smoothed updates in update_plot
 
     ax0.set_title("Velocity magnitude with quiver (Backward-Facing Step)")
-    ax0.set_xlim([float(XP.min()), float(XP.max())])
-    ax0.set_ylim([float(YP.min()), float(YP.max())])
-
-    # store vmax for gentle EMA updates in update_plot
+    ax0.set_xlabel("x")
+    ax0.set_ylabel("y")
+    ax0.set_xlim([0.0, params.Lx])
+    ax0.set_ylim([0.0, params.Ly])
     im_vmax = max(1.0, float(speed_masked.max()))
     im.set_clim(vmin=0.0, vmax=im_vmax)
     ax0._im_vmax = im_vmax
 
-    # --- residuals ---
     ax1.set_title("Residuals")
     ax1.set_yscale("log")
-    (line_ru,) = ax1.plot(res_hist["u"], label="u")
-    (line_rv,) = ax1.plot(res_hist["v"], label="v")
-    (line_rp,) = ax1.plot(res_hist["p"], label="p")
+    (line_ru,) = ax1.plot(res_hist["u"], label="u-momentum")
+    (line_rv,) = ax1.plot(res_hist["v"], label="v-momentum")
+    (line_rp,) = ax1.plot(res_hist["p"], label="continuity")
     ax1.set_xlabel("Iteration")
-    ax1.set_ylabel("Residual")
+    ax1.set_ylabel("Mean |residual|")
     ax1.legend(loc="best")
 
-    # --- mass imbalance (adaptive log axis) ---
     ax2.set_title("Global mass imbalance")
     imb_percent = np.clip(np.array(imb_hist, dtype=float), 1e-12, None) * 100.0
     (line_imb,) = ax2.plot(imb_percent)
     ax2.set_xlabel("Iteration")
     ax2.set_ylabel("Imbalance (% of inlet)")
     ax2.set_yscale("log")
-    if np.isfinite(imb_percent).any():
-        lo = max(1e-6, 0.5 * np.nanmin(imb_percent[np.isfinite(imb_percent)]))
-        hi = max(1e-2, 2.0 * np.nanmax(imb_percent[np.isfinite(imb_percent)]))
-        ax2.set_ylim(lo, hi)
-    else:
-        ax2.set_ylim(1e-6, 1e2)
+    set_imbalance_limits(ax2, imb_percent)
 
     fig.tight_layout()
-    fig.canvas.draw()
-    try:
+    if interactive:
+        fig.canvas.draw()
         plt.show(block=False)
-    except TypeError:
-        plt.show()
-    plt.pause(0.001)
-
+        plt.pause(0.001)
     return fig, (ax0, ax1, ax2), im, qv, (line_ru, line_rv, line_rp), line_imb, ds
+
+
+def set_imbalance_limits(ax, imb_percent):
+    finite = imb_percent[np.isfinite(imb_percent)]
+    if finite.size:
+        ax.set_ylim(max(1e-6, 0.5 * finite.min()), max(1e-2, 2.0 * finite.max()))
+    else:
+        ax.set_ylim(1e-6, 1e2)
 
 
 def update_plot(
     axs, im, qv, lines_res, line_imb, XP, YP, fluid_P, Uc, Vc, res_hist, imb_hist, ds
 ):
-    # --- field ---
     speed = np.sqrt(Uc**2 + Vc**2, dtype=DTYPE)
     speed_masked = ma.array(speed.T, mask=~fluid_P.T)
     im.set_data(speed_masked)
 
-    # gentle color scaling (EMA)
+    # smoothed (exponential moving average) colour limit
     ax0 = axs[0]
-    new_max = float(speed_masked.max())
-    ax0._im_vmax = 0.9 * getattr(ax0, "_im_vmax", max(1.0, new_max)) + 0.1 * max(
-        1.0, new_max
-    )
+    new_max = max(1.0, float(speed_masked.max()))
+    ax0._im_vmax = 0.9 * ax0._im_vmax + 0.1 * new_max
     im.set_clim(vmin=0.0, vmax=ax0._im_vmax)
 
-    # --- quiver: recompute scale factor gently (EMA) and pre-scale U,V ---
-    dx_cell = float(XP[1, 0] - XP[0, 0])
-    dy_cell = float(YP[0, 1] - YP[0, 0])
-    cell = min(dx_cell, dy_cell)
+    cell = min(float(XP[1, 0] - XP[0, 0]), float(YP[0, 1] - YP[0, 0]))
     ref = float(np.nanpercentile(speed[fluid_P], 95)) if np.any(fluid_P) else 1.0
-    ref = max(ref, 1e-6)
-    fac_new = (0.7 * cell) / ref
-    fac = 0.9 * getattr(ax0, "_qfac", fac_new) + 0.1 * fac_new
-    fac = min(fac, 1.5)
-    fac = max(fac, 0.1)
-
+    fac_new = (0.7 * cell) / max(ref, 1e-6)
+    fac = min(max(0.9 * ax0._qfac + 0.1 * fac_new, 0.1 * cell), 1.5)
     ax0._qfac = fac
+    qv.set_UVC(
+        quiver_component(Uc, fac, fluid_P, ds), quiver_component(Vc, fac, fluid_P, ds)
+    )
 
-    Uq = Uc * fac
-    Vq = Vc * fac
-    qv.set_UVC(Uq[::ds, ::ds], Vq[::ds, ::ds])
-
-    # --- residuals ---
-    lines_res[0].set_data(np.arange(len(res_hist["u"])), res_hist["u"])
-    lines_res[1].set_data(np.arange(len(res_hist["v"])), res_hist["v"])
-    lines_res[2].set_data(np.arange(len(res_hist["p"])), res_hist["p"])
+    for line, key in zip(lines_res, ("u", "v", "p")):
+        line.set_data(np.arange(len(res_hist[key])), res_hist[key])
     axs[1].relim()
     axs[1].autoscale_view()
 
-    # --- mass imbalance (adaptive limits) ---
     imb_percent = np.clip(np.array(imb_hist, dtype=float), 1e-12, None) * 100.0
     line_imb.set_data(np.arange(len(imb_percent)), imb_percent)
-    if np.isfinite(imb_percent).any():
-        lo = max(1e-6, 0.5 * np.nanmin(imb_percent[np.isfinite(imb_percent)]))
-        hi = max(1e-2, 2.0 * np.nanmax(imb_percent[np.isfinite(imb_percent)]))
-        axs[2].set_ylim(lo, hi)
     axs[2].relim()
     axs[2].autoscale_view()
-
-    # draw
-    fig = axs[0].figure
-    fig.canvas.draw_idle()
-    try:
-        fig.canvas.flush_events()
-    except Exception:
-        pass
-    plt.pause(0.001)
+    set_imbalance_limits(axs[2], imb_percent)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="2D BFS SIMPLE (NumPy, float32, throttled)"
-    )
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--nx", type=int, default=240)
     parser.add_argument("--ny", type=int, default=80)
     parser.add_argument("--max-iters", type=int, default=3000)
     parser.add_argument("--plot-interval", type=int, default=20)
     parser.add_argument(
+        "--steps",
+        type=int,
+        default=None,
+        help="run at most this many SIMPLE iterations (overrides --max-iters)",
+    )
+    parser.add_argument(
         "--throttle-ms",
         type=int,
         default=0,
-        help="Sleep this many ms every 5 iterations",
+        help="sleep this many ms every 5 iterations",
     )
     parser.add_argument(
         "--demo",
         action="store_true",
-        help="Run a quick demo (smaller grid, fewer iterations)",
+        help="quick demo: 120x40 grid, 400 iterations, plot every 5",
     )
-    args = parser.parse_args()
+    parser.add_argument("--no-show", action="store_true", help="do not open a window")
+    parser.add_argument("--output", metavar="DIR", help="save the final figure as PNG")
+    args = parser.parse_args(argv)
 
+    plt.style.use("dark_background")
     if args.demo:
-        nx, ny = 120, 40
-        max_iters = 400
-        plot_interval = 5
+        nx, ny, max_iters, plot_interval = 120, 40, 400, 5
     else:
         nx, ny = args.nx, args.ny
-        max_iters = args.max_iters
-        plot_interval = args.plot_interval
+        max_iters, plot_interval = args.max_iters, args.plot_interval
+    if args.steps is not None:
+        max_iters = args.steps
+    interactive = not args.no_show
 
     prm = Params(nx=nx, ny=ny, max_iters=max_iters, plot_interval=plot_interval)
-    np.random.seed(prm.seed)
+    fluid_P, fluid_u, fluid_v, dx, dy, XP, YP = build_geometry_masks(prm)
 
-    fluid_P, fluid_u, fluid_v, dx, dy, XP, YP = build_geometry_masks(
-        prm.nx, prm.ny, prm.Lx, prm.Ly, prm.H, prm.h
-    )
-
-    # state arrays as float32
     p = np.zeros((prm.nx, prm.ny), dtype=DTYPE)
     u = np.zeros((prm.nx + 1, prm.ny), dtype=DTYPE)
     v = np.zeros((prm.nx, prm.ny + 1), dtype=DTYPE)
-    mu = DTYPE(prm.rho / prm.Re)
-
-    # initial BCs (pre-correction style)
-    apply_velocity_bcs(u, v, prm, fluid_u, fluid_v, dy, stage="pre")
-
-    Uc = DTYPE(0.5) * (u[0 : prm.nx, :] + u[1 : prm.nx + 1, :])
-    Vc = DTYPE(0.5) * (v[:, 0 : prm.ny] + v[:, 1 : prm.ny + 1])
+    mu = prm.rho * prm.U_avg * prm.H / prm.Re
+    apply_velocity_bcs(u, v, prm, fluid_u, fluid_v, dy)
 
     res_hist = {"u": [], "v": [], "p": []}
     imb_hist = []
-
-    fig, axs, im, qv, lines_res, line_imb, ds = setup_plot(
-        XP, YP, fluid_P, Uc, Vc, res_hist, imb_hist, prm
-    )
+    if interactive:
+        Uc, Vc = cell_centre_velocity(u, v)
+        fig, axs, im, qv, lines_res, line_imb, ds = setup_plot(
+            XP, YP, fluid_P, Uc, Vc, res_hist, imb_hist, prm
+        )
 
     idx_u_i, idx_u_j = precompute_indices(fluid_u)
     idx_v_i, idx_v_j = precompute_indices(fluid_v)
     idx_p_i, idx_p_j = precompute_indices(fluid_P)
 
-    # coefficient arrays (inherit dtype from like-arrays)
-    AWu = np.zeros_like(u)
-    AEu = np.zeros_like(u)
-    ASu = np.zeros_like(u)
-    ANu = np.zeros_like(u)
-    APu = np.zeros_like(u)
-    bu = np.zeros_like(u)
-    AWv = np.zeros_like(v)
-    AEv = np.zeros_like(v)
-    ASv = np.zeros_like(v)
-    ANv = np.zeros_like(v)
-    APv = np.zeros_like(v)
-    bv = np.zeros_like(v)
-    AWp = np.zeros_like(p)
-    AEp = np.zeros_like(p)
-    ASp = np.zeros_like(p)
-    ANp = np.zeros_like(p)
-    APp = np.zeros_like(p)
-    bp = np.zeros_like(p)
-    d_e = np.zeros_like(p)
-    d_w = np.zeros_like(p)
-    d_n = np.zeros_like(p)
-    d_s = np.zeros_like(p)
-
-    Fe_u = np.zeros((prm.nx - 1, prm.ny), dtype=DTYPE)
-    Fw_u = np.zeros((prm.nx - 1, prm.ny), dtype=DTYPE)
-    Fn_u = np.zeros((prm.nx - 1, prm.ny), dtype=DTYPE)
-    Fs_u = np.zeros((prm.nx - 1, prm.ny), dtype=DTYPE)
-
-    Fe_v = np.zeros((prm.nx, prm.ny - 1), dtype=DTYPE)
-    Fw_v = np.zeros((prm.nx, prm.ny - 1), dtype=DTYPE)
-    Fn_v = np.zeros((prm.nx, prm.ny - 1), dtype=DTYPE)
-    Fs_v = np.zeros((prm.nx, prm.ny - 1), dtype=DTYPE)
-
+    AWu, AEu, ASu, ANu, APu, bu = (np.zeros_like(u) for _ in range(6))
+    AWv, AEv, ASv, ANv, APv, bv = (np.zeros_like(v) for _ in range(6))
     u_star = u.copy()
     v_star = v.copy()
     pcor = np.zeros_like(p)
-
-    init_res = None
+    ref_res = None
     start = time.time()
+    it = 0
 
     for it in range(1, prm.max_iters + 1):
-        # --- predictor (momentum) ---
+        # --- predictor: momentum equations with the current pressure ---
         build_momentum_u(
             u,
             v,
             p,
             mu,
+            prm.rho,
             dx,
             dy,
-            fluid_u,
             fluid_P,
             prm.alpha_u,
             AWu,
@@ -689,10 +529,6 @@ def main():
             ANu,
             APu,
             bu,
-            Fe_u,
-            Fw_u,
-            Fn_u,
-            Fs_u,
             idx_u_i,
             idx_u_j,
         )
@@ -701,9 +537,9 @@ def main():
             v,
             p,
             mu,
+            prm.rho,
             dx,
             dy,
-            fluid_v,
             fluid_P,
             prm.alpha_u,
             AWv,
@@ -712,14 +548,11 @@ def main():
             ANv,
             APv,
             bv,
-            Fe_v,
-            Fw_v,
-            Fn_v,
-            Fs_v,
             idx_v_i,
             idx_v_j,
         )
-
+        ru = momentum_residual(AWu, AEu, ASu, ANu, APu, bu, u, idx_u_i, idx_u_j)
+        rv = momentum_residual(AWv, AEv, ASv, ANv, APv, bv, v, idx_v_i, idx_v_j)
         np.copyto(u_star, u)
         np.copyto(v_star, v)
         gs_sor_scalar(
@@ -748,30 +581,14 @@ def main():
             prm.omega_mom,
             prm.mom_sweeps,
         )
+        apply_velocity_bcs(u_star, v_star, prm, fluid_u, fluid_v, dy)
 
-        apply_velocity_bcs(u_star, v_star, prm, fluid_u, fluid_v, dy, stage="pre")
-
-        # --- pressure correction (with p' outlet) ---
-        build_pressure_correction(
-            u_star,
-            v_star,
-            APu,
-            APv,
-            fluid_P,
-            dx,
-            dy,
-            AWp,
-            AEp,
-            ASp,
-            ANp,
-            APp,
-            bp,
-            d_e,
-            d_w,
-            d_n,
-            d_s,
+        # --- pressure correction (p' = 0 at the outlet) ---
+        AWp, AEp, ASp, ANp, APp, bp, du, dv = build_pressure_correction(
+            u_star, v_star, APu, APv, prm, fluid_P, fluid_u, fluid_v, dx, dy
         )
-        pcor.fill(FZERO)
+        rp = float(np.mean(np.abs(bp[fluid_P])))  # continuity residual of u*
+        pcor.fill(0.0)
         gs_sor_scalar(
             AWp,
             AEp,
@@ -789,43 +606,27 @@ def main():
         # --- corrector ---
         np.copyto(u, u_star)
         np.copyto(v, v_star)
-        correct_uvp(u, v, p, pcor, fluid_P, dx, dy, d_e, d_w, d_n, d_s, prm.alpha_p)
-
-        np.clip(u, FMINUS_FIVE, FFIVE, out=u)
-        np.clip(v, FMINUS_FIVE, FFIVE, out=v)
-        apply_velocity_bcs(
-            u, v, prm, fluid_u, fluid_v, dy, stage="post"
-        )  # don't overwrite outlet u
+        correct_uvp(u, v, p, pcor, du, dv, prm.alpha_p)
+        apply_velocity_bcs(u, v, prm, fluid_u, fluid_v, dy)
 
         # --- monitors ---
-        ru = float(
-            compute_residuals_u(AWu, AEu, ASu, ANu, APu, bu, u, idx_u_i, idx_u_j)
-        )
-        rv = float(
-            compute_residuals_v(AWv, AEv, ASv, ANv, APv, bv, v, idx_v_i, idx_v_j)
-        )
-        div = (u[1 : prm.nx + 1, :] - u[0 : prm.nx, :]) * dy + (
-            v[:, 1 : prm.ny + 1] - v[:, 0 : prm.ny]
-        ) * dx
-        rp = float(np.mean(np.abs(div[fluid_P])))
         res_hist["u"].append(ru)
         res_hist["v"].append(rv)
         res_hist["p"].append(rp)
+        imb, _, _ = global_mass_imbalance(u, fluid_P, dy)
+        imb_hist.append(imb)
 
-        imb, inflow, outflow = global_mass_imbalance(u, v, fluid_P, dx, dy)
-        imb_hist.append(float(imb))
-
-        if init_res is None and len(res_hist["u"]) >= 2:
-            init_res = (res_hist["u"][0], res_hist["v"][0], res_hist["p"][0])
+        if it == 10:
+            ref_res = [max(res_hist[k]) for k in ("u", "v", "p")]
 
         if it % 10 == 0 or it == 1:
             print(
-                f"Iter {it:5d}: Ru={ru:.3e}, Rv={rv:.3e}, Rp={rp:.3e}, MassImb={float(imb)*100:.2f}%"
+                f"Iter {it:5d}: Ru={ru:.3e}, Rv={rv:.3e}, Rp={rp:.3e}, "
+                f"MassImb={imb * 100:.2f}%"
             )
 
-        if (it % prm.plot_interval == 0) or (it == 1):
-            Uc = DTYPE(0.5) * (u[0 : prm.nx, :] + u[1 : prm.nx + 1, :])
-            Vc = DTYPE(0.5) * (v[:, 0 : prm.ny] + v[:, 1 : prm.ny + 1])
+        if interactive and (it % prm.plot_interval == 0 or it == 1):
+            Uc, Vc = cell_centre_velocity(u, v)
             update_plot(
                 axs,
                 im,
@@ -841,31 +642,60 @@ def main():
                 imb_hist,
                 ds,
             )
+            fig.canvas.draw_idle()
+            plt.pause(0.001)
 
-        done = False
-        if init_res is not None:
-            ruf = res_hist["u"][-1] / (init_res[0] + 1e-30)
-            rvf = res_hist["v"][-1] / (init_res[1] + 1e-30)
-            rpf = res_hist["p"][-1] / (init_res[2] + 1e-30)
-            if (
-                (ruf <= 1e-3)
-                and (rvf <= 1e-3)
-                and (rpf <= 1e-3)
-                and (imb <= DTYPE(5e-3))
-            ):
-                done = True
-        if done:
-            print("Converged: residuals dropped >=3 orders and mass imbalance <= 0.5%.")
-            break
+        if ref_res is not None:
+            drops = [
+                res_hist[k][-1] / (r + 1e-30) for k, r in zip(("u", "v", "p"), ref_res)
+            ]
+            if max(drops) <= 1e-3 and imb <= 5e-3:
+                print(
+                    "Converged: residuals dropped >= 3 orders below their early "
+                    "maximum and mass imbalance <= 0.5%."
+                )
+                break
 
-        # ---- gentle throttle (optional) ----
-        if args.throttle_ms > 0 and (it % 5 == 0):
+        if args.throttle_ms > 0 and it % 5 == 0:
             time.sleep(args.throttle_ms / 1000.0)
 
-    elapsed = time.time() - start
-    print(f"Finished at iter {it} in {elapsed:.1f}s.")
-    plt.ioff()
-    plt.show()
+    print(f"Finished at iter {it} in {time.time() - start:.1f}s.")
+    x_r = reattachment_length(u, prm, dx)
+    if x_r is None:
+        print("No recirculation zone found on the bottom wall.")
+    else:
+        print(f"Bottom-wall reattachment length: x_r/h = {x_r:.2f} step heights")
+
+    Uc, Vc = cell_centre_velocity(u, v)
+    if interactive:
+        update_plot(
+            axs,
+            im,
+            qv,
+            lines_res,
+            line_imb,
+            XP,
+            YP,
+            fluid_P,
+            Uc,
+            Vc,
+            res_hist,
+            imb_hist,
+            ds,
+        )
+    else:
+        fig, axs, im, qv, lines_res, line_imb, ds = setup_plot(
+            XP, YP, fluid_P, Uc, Vc, res_hist, imb_hist, prm, interactive=False
+        )
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "backward_facing_step.png", dpi=100, bbox_inches="tight")
+    if interactive:
+        plt.ioff()
+        plt.show()
+    plt.close(fig)
 
 
 if __name__ == "__main__":

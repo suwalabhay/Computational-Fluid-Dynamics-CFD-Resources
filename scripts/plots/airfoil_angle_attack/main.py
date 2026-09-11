@@ -1,103 +1,155 @@
-import numpy as np
+"""Plot a NACA 2412 airfoil at several angles of attack.
+
+Builds the NACA 4-digit airfoil geometry (camber line plus thickness
+distribution), pitches it nose-up about the leading edge for each angle of
+attack, and draws the chord lines and the free-stream direction.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+MAX_CAMBER = 0.02  # m: maximum camber as a fraction of chord
+CAMBER_POSITION = 0.4  # p: chordwise position of maximum camber
+THICKNESS = 0.12  # t: maximum thickness as a fraction of chord
+CHORD = 2.0  # chord length (arbitrary length units)
+N_POINTS = 200  # chordwise stations per surface
+DEFAULT_ANGLES = [10.0, 60.0]  # angles of attack in degrees
 
 
 def naca4_airfoil(m, p, t, c=1.0, n=100):
-    # x-coordinates from 0 to c
+    """Upper and lower surface coordinates of a NACA 4-digit airfoil."""
     x = np.linspace(0, c, n)
+    xc = x / c
 
-    # Thickness distribution formula for NACA 4-digit airfoils
+    # Thickness distribution for NACA 4-digit airfoils
     yt = (
         (t / 0.2)
         * c
         * (
-            0.2969 * np.sqrt(x / c)
-            - 0.1260 * (x / c)
-            - 0.3516 * (x / c) ** 2
-            + 0.2843 * (x / c) ** 3
-            - 0.1015 * (x / c) ** 4
+            0.2969 * np.sqrt(xc)
+            - 0.1260 * xc
+            - 0.3516 * xc**2
+            + 0.2843 * xc**3
+            - 0.1015 * xc**4
         )
     )
 
     # Camber line and its slope
-    yc = np.where(
-        x < p * c,
-        m / p**2 * (2 * p * x / c - (x / c) ** 2),
-        m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * x / c - (x / c) ** 2),
+    yc = c * np.where(
+        xc < p,
+        m / p**2 * (2 * p * xc - xc**2),
+        m / (1 - p) ** 2 * ((1 - 2 * p) + 2 * p * xc - xc**2),
     )
-    dyc_dx = np.where(
-        x < p * c, 2 * m / p**2 * (p - x / c), 2 * m / (1 - p) ** 2 * (p - x / c)
-    )
+    dyc_dx = np.where(xc < p, 2 * m / p**2 * (p - xc), 2 * m / (1 - p) ** 2 * (p - xc))
     theta = np.arctan(dyc_dx)
 
-    # Upper and lower surface coordinates
+    # Surfaces offset perpendicular to the camber line
     xu = x - yt * np.sin(theta)
     yu = yc + yt * np.cos(theta)
     xl = x + yt * np.sin(theta)
     yl = yc - yt * np.cos(theta)
-
     return xu, yu, xl, yl
 
 
-def rotate_airfoil(x, y, angle):
-    # Rotate points around origin by angle (in degrees)
-    theta = np.radians(angle)
+def pitch_airfoil(x, y, angle_of_attack):
+    """Rotate points about the origin (leading edge) nose-up by angle_of_attack.
+
+    The free stream flows in the +x direction, so a positive angle of attack
+    is a clockwise rotation that moves the trailing edge below the leading
+    edge.
+    """
+    alpha = np.radians(angle_of_attack)
     rotation_matrix = np.array(
-        [[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]]
+        [[np.cos(alpha), np.sin(alpha)], [-np.sin(alpha), np.cos(alpha)]]
     )
-    coords = np.vstack((x, y))
-    rotated_coords = rotation_matrix @ coords
-    return rotated_coords[0], rotated_coords[1]
+    rotated = rotation_matrix @ np.vstack((x, y))
+    return rotated[0], rotated[1]
 
 
 def plot_multiple_airfoils(angles_of_attack):
-    plt.figure(figsize=(14, 7))
+    fig, ax = plt.subplots(figsize=(14, 7))
 
-    for angle_of_attack in angles_of_attack:
-        xu, yu, xl, yl = naca4_airfoil(
-            m=0.02, p=0.4, t=0.12, c=2.0, n=200
-        )  # Increased chord length
-
-        # Rotate upper and lower surfaces
-        xu_rot, yu_rot = rotate_airfoil(xu, yu, angle_of_attack)
-        xl_rot, yl_rot = rotate_airfoil(xl, yl, angle_of_attack)
-
-        # Plotting airfoil
-        plt.plot(
-            xu_rot, yu_rot, label=f"Upper Surface ({angle_of_attack}°)", linestyle="-"
-        )
-        plt.plot(xl_rot, yl_rot, linestyle="-")
-
-        # Indicating the chord line for each airfoil with dashed, unfilled arrows
-        plt.annotate(
-            "",
-            xy=(
-                np.cos(np.radians(angle_of_attack)) * 2,
-                np.sin(np.radians(angle_of_attack)) * 2,
-            ),
-            xytext=(0, 0),
-            arrowprops=dict(arrowstyle="->", linestyle="--", fill=False),
-            label=f"Chord Line ({angle_of_attack}°)",
-        )
-
-    # Indicating the free-stream flow from -1 to 10 with dashed arrow
-    plt.annotate(
-        "",
-        xy=(10, 0),
-        xytext=(-1, 0),
-        arrowprops=dict(arrowstyle="->", linestyle="--", fill=False),
-        label="Free-stream flow",
+    xu, yu, xl, yl = naca4_airfoil(
+        m=MAX_CAMBER, p=CAMBER_POSITION, t=THICKNESS, c=CHORD, n=N_POINTS
     )
+    name = f"NACA {round(MAX_CAMBER * 100)}{round(CAMBER_POSITION * 10)}"
+    name += f"{round(THICKNESS * 100):02d}"
 
-    plt.title("Comparison of Airfoils with Angles of Attack: 10° and 60°")
-    plt.gca().set_aspect("equal", adjustable="datalim")
-    plt.grid(True)
-    plt.legend(loc="upper right")
-    plt.xlim(-2, 4)
-    plt.ylim(-2, 3)
+    for angle in angles_of_attack:
+        xu_rot, yu_rot = pitch_airfoil(xu, yu, angle)
+        xl_rot, yl_rot = pitch_airfoil(xl, yl, angle)
 
-    plt.show()
+        (line,) = ax.plot(
+            xu_rot, yu_rot, linestyle="-", label=f"{name}, $\\alpha = {angle:g}^\\circ$"
+        )
+        ax.plot(xl_rot, yl_rot, linestyle="-", color=line.get_color())
+
+        # Chord line from the leading edge to the trailing edge
+        alpha = np.radians(angle)
+        ax.annotate(
+            "",
+            xy=(CHORD * np.cos(alpha), -CHORD * np.sin(alpha)),
+            xytext=(0, 0),
+            arrowprops=dict(
+                arrowstyle="->", linestyle="--", fill=False, color=line.get_color()
+            ),
+        )
+
+    # Free-stream direction along +x
+    ax.annotate(
+        "",
+        xy=(3.5, 0.5),
+        xytext=(-1.5, 0.5),
+        arrowprops=dict(arrowstyle="->", linestyle="--", fill=False),
+    )
+    ax.text(-1.5, 0.6, r"Free stream $V_\infty$")
+
+    angle_text = " and ".join(f"{a:g}°" for a in angles_of_attack)
+    ax.set_title(f"Comparison of Airfoils with Angles of Attack: {angle_text}")
+    ax.set_aspect("equal", adjustable="box")
+    ax.grid(True)
+    ax.legend(loc="upper right")
+    ax.set_xlim(-2, 4)
+    ax.set_ylim(-2, 1)
+    return fig
 
 
-# Example usage with angles of attack 10° and 60°
-plot_multiple_airfoils(angles_of_attack=[10, 60])
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--angles",
+        type=float,
+        nargs="+",
+        default=DEFAULT_ANGLES,
+        metavar="DEG",
+        help="angles of attack in degrees (default: 10 60)",
+    )
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    fig = plot_multiple_airfoils(args.angles)
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "airfoil_angle_attack.png", dpi=100, bbox_inches="tight")
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

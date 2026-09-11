@@ -1,52 +1,62 @@
 # Turbulent Boundary Layer Velocity Profile
 
-This script plots the velocity profile within a turbulent boundary layer using the empirical one-seventh power law. The profile describes how the streamwise velocity $u$ varies from zero at the wall (no-slip condition) to the free-stream value $U_\infty$ at the edge of the boundary layer $\delta$. The resulting curve is plotted against the wall-normal coordinate $y$, with the boundary layer thickness and wall position clearly indicated.
+This script plots the one-seventh power-law velocity profile of a turbulent boundary layer in normalised form, $u/U_\infty$ against $y/\delta$. The curve runs from zero velocity at the wall to the free-stream value at the boundary layer edge, which is marked by a dashed line.
 
 ## Overview
 
-- Implements the 1/7 power law as the turbulent boundary layer velocity profile
-- Enforces the no-slip condition $u(0) = 0$ at the wall
-- Shows the free-stream condition $u(\delta) = U_\infty$ at the boundary layer edge
-- Marks the boundary layer thickness $\delta$ with a horizontal reference line
-- Produces a clean, labeled plot of $u/U_\infty$ versus $y/\delta$
+- Evaluates $u/U_\infty = (y/\delta)^{1/7}$ at 1000 points in $0 \leq y/\delta \leq 1$.
+- Satisfies $u = 0$ at the wall and $u = U_\infty$ at $y = \delta$.
+- Marks the boundary layer edge $y = \delta$ with a dashed red line and the wall with a thick black line.
+- Plots $u/U_\infty$ on the horizontal axis and $y/\delta$ on the vertical axis, with the power-law formula in the legend.
 
 ## Mathematical Background
 
 ### One-Seventh Power Law
 
-The turbulent boundary layer velocity profile is approximated by:
+$$
+\frac{u}{U_\infty} = \left(\frac{y}{\delta}\right)^{1/7}, \qquad 0 \leq y \leq \delta
+$$
 
-$$\frac{u}{U_\infty} = \left(\frac{y}{\delta}\right)^{1/7}$$
+where $y$ is the distance from the wall, $\delta$ the boundary layer thickness and $U_\infty$ the free-stream velocity. The law is an empirical fit to the outer part of turbulent flat-plate boundary layers. It gives a fuller profile than a laminar layer.
 
-where $y$ is the wall-normal distance, $\delta$ is the boundary layer thickness, and $U_\infty$ is the free-stream velocity.
+### Boundary Values
 
-### Boundary Conditions
+$$
+u(0) = 0, \qquad u(\delta) = U_\infty
+$$
 
-No-slip at the wall:
+In this profile $u$ equals $U_\infty$ exactly at $y = \delta$. This differs from the usual $u = 0.99\,U_\infty$ definition of $\delta$.
 
-$$u(0) = 0$$
+### Limitation at the Wall
 
-Free-stream velocity at the boundary layer edge:
+The gradient
 
-$$u(\delta) = U_\infty$$
+$$
+\frac{\partial u}{\partial y} = \frac{U_\infty}{7\delta}\left(\frac{y}{\delta}\right)^{-6/7}
+$$
 
-### Wall Shear Stress
-
-The steeper near-wall gradient of the turbulent profile implies a higher wall shear stress compared with the laminar case:
-
-$$\tau_w = \mu \left.\frac{\partial u}{\partial y}\right|_{y=0}$$
+is infinite at $y = 0$, so the power law cannot give the wall shear stress $\tau_w = \mu\,(\partial u/\partial y)_{y=0}$. In practice $\tau_w$ comes from an empirical skin-friction correlation used together with the power law, for example $C_f \approx 0.0592\,\mathrm{Re}_x^{-1/5}$. The script does not compute this. The steep rise near the wall is why the script samples the profile at 1000 points.
 
 ## Implementation
 
-1. Define the free-stream velocity $U_\infty$ and boundary layer thickness $\delta$.
-2. Generate a uniform array of wall-normal positions $y \in [0, \delta]$.
-3. Evaluate $u/U_\infty = (y/\delta)^{1/7}$ at each point.
-4. Plot $u/U_\infty$ on the horizontal axis and $y$ on the vertical axis.
-5. Add horizontal lines marking the wall ($y = 0$) and boundary layer edge ($y = \delta$).
-6. Label axes and annotate the profile with the power-law formula.
+- `power_law_profile(eta, power)` returns $u/U_\infty$ for $\eta = y/\delta$, with `POWER = 1/7`.
+- `plot_profile(eta, u_ratio)` draws the profile, the edge and wall lines, the labels and the legend.
+- `N_POINTS` sets the number of samples.
+
+## Usage
+
+```bash
+python main.py                          # show the figure
+python main.py --no-show --output .     # save the figure as a PNG in the current directory
+```
 
 ## Output
 
-The script produces a figure showing the turbulent velocity profile as a smooth curve from the origin to the free-stream value. A dashed horizontal line marks the boundary layer thickness $\delta$, and the wall is indicated at $y = 0$. Axis labels and a legend identify the profile type and key parameters.
+![One-seventh power-law boundary layer profile](boundary_layer_velocity_profile.png)
 
-![boundary_layer_velocity_profile](https://github.com/user-attachments/assets/0b3f51b4-7771-4d87-b59a-0bde6705b383)
+The profile rises steeply from the wall: $u/U_\infty$ is already 0.5 at $y/\delta \approx 0.008$ and 0.8 at $y/\delta \approx 0.21$. It reaches 1 at the dashed boundary layer edge.
+
+## Related Notes
+
+- [Boundary Layers](../../../notes/fluid_mechanics/viscous_flow/boundary_layers.md)
+- [Drag](../../../notes/fluid_mechanics/viscous_flow/drag.md)

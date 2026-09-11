@@ -1,44 +1,61 @@
 # Laminar vs. Turbulent Boundary Layer Profiles
 
-This script compares the normalised velocity profiles of laminar and turbulent boundary layers on the same axes. The laminar profile follows a quadratic approximation while the turbulent profile uses the empirical one-seventh power law. Plotting both together makes the fundamental difference in profile shape immediately visible: the turbulent boundary layer is fuller and carries higher momentum near the wall, which directly raises wall shear stress.
+This script plots normalised laminar and turbulent boundary-layer velocity profiles on the same axes to show how much fuller the turbulent profile is. The laminar profile is the quadratic (Pohlhausen-type) approximation $u/U_\infty = 2\eta - \eta^2$, and the turbulent profile is the empirical one-seventh power law $u/U_\infty = \eta^{1/7}$. Both are plotted against $\eta = y/\delta$. Because both are scaled by their own thickness $\delta$, the plot compares profile shape only, not the fact that a turbulent layer is thicker.
 
 ## Overview
 
-- Computes laminar profile using the quadratic Blasius-like approximation
-- Computes turbulent profile using the 1/7 power law
-- Plots both normalised velocity profiles against the normalised wall distance $\eta = y/\delta$
-- Annotates each curve with descriptive labels (thin/smooth vs. thicker/fuller)
-- Highlights the higher near-wall gradient of the turbulent profile
+- Evaluates both profiles at 200 points in $0 \le \eta \le 1$
+- Plots velocity ratio $u/U_\infty$ on the horizontal axis against $\eta$ on the vertical axis
+- Annotates the laminar curve (gradual rise, lower near-wall momentum) and the turbulent curve (fuller, steep at the wall)
+- Adds a legend, grid, and axis labels
 
 ## Mathematical Background
 
-### Laminar Boundary Layer Approximation
+### Laminar Profile (Quadratic Approximation)
 
-$$\frac{u}{U_\infty} = 2\frac{y}{\delta} - \left(\frac{y}{\delta}\right)^2 = 2\eta - \eta^2$$
+$$\frac{u}{U_\infty} = 2\eta - \eta^2, \qquad \eta = \frac{y}{\delta}$$
 
-This quadratic profile satisfies the no-slip condition at the wall and matches the free-stream velocity at $\eta = 1$.
+This profile meets the no-slip condition $u(0) = 0$ and the edge conditions $u(\delta) = U_\infty$ and $\partial u / \partial y|_{\delta} = 0$. It is a simple approximation used in the momentum-integral (Pohlhausen) method, not the exact Blasius solution.
 
-### Turbulent Boundary Layer Power Law
+### Turbulent Profile (1/7 Power Law)
 
-$$\frac{u}{U_\infty} = \left(\frac{y}{\delta}\right)^{1/7} = \eta^{1/7}$$
+$$\frac{u}{U_\infty} = \eta^{1/7}$$
 
-The 1/7 power law is an empirical fit valid for moderate Reynolds numbers and gives a much fuller profile than the laminar case.
+This is an empirical fit to the mean velocity of turbulent flat-plate boundary layers at moderate Reynolds numbers. Its velocity is much closer to $U_\infty$ over most of the layer.
 
-### Wall Shear Stress
+### Wall Gradient and Wall Shear Stress
 
-$$\tau_w = \mu \left.\frac{\partial u}{\partial y}\right|_{y=0}$$
+$$\tau_w = \mu \left.\frac{\partial u}{\partial y}\right|_{y=0} = \frac{\mu U_\infty}{\delta}\left.\frac{d(u/U_\infty)}{d\eta}\right|_{\eta=0}$$
 
-The steeper near-wall gradient of the turbulent profile yields a larger $\tau_w$ compared with the laminar case.
+For the quadratic profile the wall gradient is 2, so $\tau_w = 2\mu U_\infty/\delta$. For the power law, $d(\eta^{1/7})/d\eta = \tfrac{1}{7}\eta^{-6/7}$ grows without bound as $\eta \to 0$. The power law does not hold in the viscous sublayer and cannot be used to compute $\tau_w$. The steep near-wall rise does, however, reflect the much larger wall shear stress of turbulent layers.
 
 ## Implementation
 
-1. Define `eta = np.linspace(0, 1, 200)` as the normalised wall-distance array.
-2. Compute laminar profile: `u_lam = 2*eta - eta**2`.
-3. Compute turbulent profile: `u_turb = eta**(1/7)`.
-4. Plot both profiles with `eta` on the y-axis and velocity ratio on the x-axis.
-5. Add annotations labelling each curve and describing the profile character.
-6. Set axis labels, title, legend, and grid; display the figure.
+- `laminar_profile(eta)` returns $2\eta - \eta^2$.
+- `turbulent_profile(eta)` returns $\eta^{1/7}$.
+- `make_figure(n_points)` builds `eta = np.linspace(0, 1, n_points)` (`N_POINTS = 200`), plots both profiles, and places the annotations on points of the curves.
+- `main(argv=None)` handles the flags.
+
+## Usage
+
+```bash
+python main.py                          # open the figure window
+python main.py --no-show --output out   # save laminar_vs_turbulent_boundary_layer.png into out/
+```
+
+| Flag | Meaning |
+|------|---------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save the figure as a PNG |
 
 ## Output
 
-The script displays a single figure with two normalised velocity profiles plotted against $\eta$. The turbulent curve sits noticeably to the right of the laminar curve, illustrating its fuller shape and higher near-wall momentum. Annotations on the plot identify each profile and note the physical implications for wall shear stress.
+The laminar curve rises gradually from the wall. The turbulent curve jumps to about 60% of $U_\infty$ within the first 3% of the layer and then stays close to $U_\infty$, lying to the right of the laminar curve almost everywhere. The two curves meet at $\eta = 1$.
+
+![Laminar vs. turbulent boundary layer profiles](laminar_vs_turbulent_boundary_layer.png)
+
+## Related Notes
+
+- [Boundary Layers](../../../notes/fluid_mechanics/viscous_flow/boundary_layers.md)
+- [Turbulence Modeling](../../../notes/numerical/cfd/turbulence_modeling.md)
+- [Understanding Drag](../../../notes/fluid_mechanics/viscous_flow/drag.md)

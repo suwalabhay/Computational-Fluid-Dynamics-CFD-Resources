@@ -9,6 +9,7 @@ The core idea behind RBF interpolation is to construct a surrogate model $\hat{y
 A general RBF surrogate takes the form:
 
 $$\hat{y}(x) := \sum_{i=1}^{N} w_i R(\| x - x^{(i)} \|),$$
+
 where $\| \cdot \|$ is typically the Euclidean norm, and the centers $x^{(i)}$ correspond to the known sample locations. In principle, one could also choose different centers $c^{(i)}$ not coinciding with the sample points, but the standard approach sets centers equal to sample locations for simplicity.
 
 ## Interpolation Conditions and Solving for the Weights
@@ -20,9 +21,11 @@ $$\hat{y}(x^{(i)}) = y(x^{(i)}), \quad \text{for } i=1,\ldots,N.$$
 Substituting into the surrogate model yields a system of linear equations:
 
 $$\sum_{j=1}^{N} w_j R(\| x^{(i)} - x^{(j)} \|) = y_i, \quad i=1,\ldots,N,$$
+
 which can be written in matrix form as:
 
 $$R w = Y,$$
+
 where:
 
 $$R := [R(\| x^{(i)} - x^{(j)} \|)]_{i,j=1}^{N,N} \quad \text{and} \quad w := (w_1, \ldots, w_N)^T, \quad Y := (y_1, \ldots, y_N)^T.$$
@@ -72,26 +75,16 @@ For such cases, more sophisticated methods like Kriging offer a built-in way to 
 Consider a set of data points:
 
 $$\begin{array}{|c|c|}
-
 \hline
 x & y(x) \\
-
 \hline
-
 0.0 & 0.0 \\
-
 0.2 & 0.4 \\
-
 0.4 & 0.8 \\
-
 0.6 & 1.2 \\
-
 0.8 & 1.6 \\
-
 1.0 & 2.0 \\
-
 \hline
-
 \end{array}$$
 
 Using an RBF interpolation with, for instance, the polyharmonic spline $R(h) = h^3$, one can reconstruct a smooth curve passing exactly through these points. Even for more complex functions like $y(x) = (6x - 2)^2 \sin(12x - 4)$, an RBF interpolant using $R(h) = h^3$ can capture the nonlinear oscillations accurately, outperforming simple polynomial fits.
@@ -113,8 +106,76 @@ RBF interpolation provides a flexible, mesh-free surrogate that can handle scatt
 | **Inputs** | Sample points $\{x^{(i)}\}_{i=1}^N$, observations $Y$, choice of radial function $R(\cdot)$, scaling parameter $c$ |
 | **Outputs** | Weight vector $w = R^{-1}Y$, surrogate prediction $\hat{y}(x)$ at new points, interpolation system matrix $R$ |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/radial_basis_functions/main.py` | Performs 1-D RBF interpolation using the multiquadric basis function, demonstrating weight computation and prediction. |
+- [Condition Number of the Correlation Matrix](../../../scripts/algorithms/condition_number_of_the_correlation_matrix/): plots how the condition number of a kriging correlation matrix changes with the correlation parameter $\theta$ for the linear, exponential, Gaussian and cubic spline correlation functions.
+- [Kriging Interpolation](../../../scripts/algorithms/kriging_interpolation/): interpolates 11 samples of $y(x) = (3x-3)^2 \sin(2x-10)$ with a kriging-type predictor built on the cubic spline correlation function, for four values of the correlation parameter $\theta$.
+- [Radial Basis Functions](../../../scripts/algorithms/radial_basis_functions/): fits a multiquadric radial basis function (RBF) interpolant through 11 data points on $[0, 1]$ using SciPy's `Rbf` class and plots it on a fine grid.
+
+## Exercises
+
+**Exercise 1.** Interpolate the data $(0, 1)$ and $(1, 2)$ with the Gaussian RBF $R(h) = \exp(-\kappa^2)$, $\kappa = \theta h$, $\theta = 1$. Compute the weights and $\hat{y}(0.5)$. What does the surrogate predict far from the data, and how can this be fixed?
+
+<details>
+<summary>Answer</summary>
+
+$R = \begin{pmatrix} 1 & e^{-1} \\ e^{-1} & 1 \end{pmatrix}$ with $\det R = 1 - e^{-2} = 0.8647$. Then
+
+$$
+w = R^{-1}Y = \frac{1}{1 - e^{-2}}\begin{pmatrix} 1 - 2e^{-1} \\ 2 - e^{-1} \end{pmatrix} = \begin{pmatrix} 0.3056 \\ 1.8876 \end{pmatrix},
+$$
+
+and $\hat{y}(0.5) = e^{-0.25}(w_1 + w_2) = 0.7788 \times 2.1932 = 1.7080$. Far from the data every Gaussian decays, so $\hat{y} \to 0$. Adding a regression term $f(x)^T\beta$ (e.g. a constant or linear trend) gives sensible behaviour away from the samples.
+
+</details>
+
+**Exercise 2.** For six equally spaced points on $[0, 1]$ (spacing 0.2), compute the 2-norm condition number of the Gaussian RBF matrix for $\theta = 1$, $10$ and $100$. Discuss the trade-off in choosing $\theta$.
+
+<details>
+<summary>Answer</summary>
+
+$\text{cond}(R) \approx 3.4 \times 10^6$ for $\theta = 1$, $1.07$ for $\theta = 10$, and $1.00$ for $\theta = 100$.
+
+Small $\theta$ gives wide, nearly identical basis functions: the matrix is almost singular, but the interpolant is smooth. Large $\theta$ gives narrow bumps that barely overlap ($e^{-(10 \times 0.2)^2} = e^{-4} \approx 0.018$ between neighbours): the matrix is well conditioned, but the interpolant drops toward zero between samples. Good choices balance accuracy and conditioning, often by cross-validation.
+
+</details>
+
+**Exercise 3.** Interpolate the linear table of the example ($y = 2x$ at $x = 0, 0.2, \ldots, 1$) with the cubic RBF $R(h) = h^3$, first without and then with an appended linear polynomial, $\hat{y}(x) = \sum_i w_i|x - x^{(i)}|^3 + c_0 + c_1 x$ with side conditions $\sum_i w_i = 0$ and $\sum_i w_i x^{(i)} = 0$. Evaluate $\hat{y}(0.1)$ in both cases.
+
+<details>
+<summary>Answer</summary>
+
+Without the polynomial, the weights are $w \approx (9.010, -15.179, 3.447, 1.392, -9.015, 4.216)$ and $\hat{y}(0.1) = 0.2421$ against the exact $0.2$, a 21% error, even though the data are linear.
+
+With the polynomial, the augmented system
+
+$$
+\begin{pmatrix} R & P \\ P^T & 0 \end{pmatrix}\begin{pmatrix} w \\ c \end{pmatrix} = \begin{pmatrix} Y \\ 0 \end{pmatrix}, \qquad P = [\mathbf{1}, X],
+$$
+
+gives $w = 0$ and $(c_0, c_1) = (0, 2)$, so $\hat{y}(x) = 2x$ exactly and $\hat{y}(0.1) = 0.2$. The cubic RBF is only conditionally positive definite, so a low-degree polynomial tail is the standard way to guarantee solvability and to reproduce polynomial trends.
+
+</details>
+
+**Exercise 4.** Show that the Gaussian RBF matrix $R_{ij} = \exp(-\theta^2(x_i - x_j)^2)$ is positive definite for distinct points $x_1, \ldots, x_N \in \mathbb{R}$, so the interpolation system always has a unique solution. Use the Fourier representation $e^{-\theta^2 h^2} = \frac{1}{2\theta\sqrt{\pi}}\int_{-\infty}^{\infty} e^{-\omega^2/(4\theta^2)}\,e^{i\omega h}\,d\omega$.
+
+<details>
+<summary>Answer</summary>
+
+For any real $w \ne 0$,
+
+$$
+w^T R w = \sum_{j,k} w_j w_k e^{-\theta^2(x_j - x_k)^2} = \frac{1}{2\theta\sqrt{\pi}}\int_{-\infty}^{\infty} e^{-\omega^2/(4\theta^2)}\left|\sum_j w_j e^{i\omega x_j}\right|^2 d\omega \ge 0.
+$$
+
+The weight $e^{-\omega^2/(4\theta^2)}$ is strictly positive, so the integral vanishes only if $\sum_j w_j e^{i\omega x_j} = 0$ for all $\omega$. For distinct $x_j$ the exponentials are linearly independent, which forces $w = 0$. Hence $w^T R w > 0$ for all $w \ne 0$, and $R$ is nonsingular. The same argument (Bochner's theorem) holds in $\mathbb{R}^d$.
+
+</details>
+
+## References
+
+- M. D. Buhmann, *Radial Basis Functions: Theory and Implementations*, Cambridge University Press, 2003.
+- R. L. Hardy, "Multiquadric equations of topography and other irregular surfaces", *Journal of Geophysical Research* 76(8), 1971.
+- C. A. Micchelli, "Interpolation of scattered data: distance matrices and conditionally positive definite functions", *Constructive Approximation* 2, 1986.
+- G. E. Fasshauer, *Meshfree Approximation Methods with MATLAB*, World Scientific, 2007.
+- A. I. J. Forrester, A. Sóbester and A. J. Keane, *Engineering Design via Surrogate Modelling: A Practical Guide*, Wiley, 2008.

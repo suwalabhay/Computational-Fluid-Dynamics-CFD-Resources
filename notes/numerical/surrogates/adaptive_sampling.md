@@ -33,14 +33,11 @@ A common approach to adaptive sampling is based on the mean squared error (MSE) 
 For a Kriging surrogate,
 
 $$\text{MSE}[\hat{y}(x)] = \sigma^2 \left\{ 1 - 
-
 \begin{pmatrix} r(x)^T & f(x)^T \end{pmatrix} 
-
 \begin{pmatrix} R & F \\ F^T & 0 \end{pmatrix}^{-1}
-
 \begin{pmatrix} r(x) \\ f(x) \end{pmatrix}
-
 \right\},$$
+
 where $r(x)$ is the correlation vector between $x$ and the sample points, and $F$ is the regression matrix for the trend. The MSE vanishes at existing samples and grows with increasing distance from known data points. As $\|x - X\|$ becomes large, $r(x)$ approaches zero, and the MSE approaches a finite limit related to $\sigma^2$ and the chosen trend.
 
 Selecting new points $x^{(N+1)}$ based on maximum MSE leads to what is essentially a space-filling approach informed by the current surrogate. Such MSE-based selection aims to reduce global uncertainty, benefiting exploration. However, the MSE does not incorporate the actual response values $y_i$, focusing solely on distance-based measures and hyperparameters. This can make MSE a poor local error indicator if the function is highly nonlinear or if certain regions require finer sampling due to complexity rather than just distance from known samples.
@@ -102,9 +99,73 @@ When computational budgets are tight, it is more efficient to add sample points 
 | **Inputs** | Current surrogate model $\hat{y}(x)$, existing sample set, infill criterion (max MSE, max cross-validation error), budget for new samples |
 | **Outputs** | Next sample location(s) $x_{\text{new}}$, updated surrogate after evaluating the CFD solver at $x_{\text{new}}$, convergence metric |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/kriging_interpolation/main.py` | The Kriging model whose MSE estimate drives the adaptive infill criteria described in this note. |
-| `scripts/plots/design_space_distribution/main.py` | Visualizes initial space-filling designs that serve as starting points before adaptive refinement. |
+- [Design Space Distribution via Sobol Sequences](../../../scripts/plots/design_space_distribution/): draws a four-dimensional scrambled Sobol design of 512 geometry variants and plots two 2D projections of it, showing how evenly a low-discrepancy sequence covers a design space.
+- [Kriging Interpolation](../../../scripts/algorithms/kriging_interpolation/): interpolates 11 samples of $y(x) = (3x-3)^2 \sin(2x-10)$ with a kriging-type predictor built on the cubic spline correlation function, for four values of the correlation parameter $\theta$.
+
+## Exercises
+
+**Exercise 1.** A 1D surrogate is the piecewise-linear interpolant of the data $(0, 0)$, $(0.5, 1)$ and $(1, 0)$, extended linearly beyond its end points. For each sample compute the leave-one-out error $|\hat{y}_{-i}(x^{(i)}) - y_i|$. Which samples are most influential, and what does this say about CV-based criteria near the domain boundary?
+
+<details>
+<summary>Answer</summary>
+
+- Remove $x = 0.5$: the interpolant of $(0,0)$ and $(1,0)$ is $0$, so the error is $1$.
+- Remove $x = 0$: the line through $(0.5, 1)$ and $(1, 0)$ is $2 - 2x$, which predicts $2$ at $x = 0$, so the error is $2$.
+- Remove $x = 1$: the line $2x$ predicts $2$ at $x = 1$, so the error is $2$.
+
+The end points look most influential because removing them turns interpolation into extrapolation. CV error indicators tend to be inflated near the boundary of $\Omega$, and in practice they are often combined with a distance or MSE factor, as in the note.
+
+</details>
+
+**Exercise 2.** For minimization, the expected improvement criterion used by EGO is $\text{EI}(x) = (y_{\min} - \hat{y})\,\Phi(z) + s\,\varphi(z)$ with $z = (y_{\min} - \hat{y})/s$. Here $s = \sqrt{\text{MSE}}$, and $\Phi$ and $\varphi$ are the standard normal CDF and PDF. With $y_{\min} = 1.0$, compare candidate A ($\hat{y} = 1.2$, $s = 0.3$) with candidate B ($\hat{y} = 0.95$, $s = 0.05$). Which is chosen, and what happens if $s_A = 0.4$?
+
+<details>
+<summary>Answer</summary>
+
+- A: $z = -0.667$, $\Phi = 0.2525$, $\varphi = 0.3194$, so $\text{EI} = -0.2 \times 0.2525 + 0.3 \times 0.3194 = 0.0453$.
+- B: $z = 1$, $\Phi = 0.8413$, $\varphi = 0.2420$, so $\text{EI} = 0.05 \times 0.8413 + 0.05 \times 0.2420 = 0.0542$.
+
+B is chosen: exploitation near the current best. With $s_A = 0.4$: $z = -0.5$, $\Phi = 0.3085$, $\varphi = 0.3521$, so $\text{EI}_A = 0.0791$ and A (exploration) wins. EI balances the two through the uncertainty $s$.
+
+</details>
+
+**Exercise 3.** An ordinary Kriging model (constant trend, $f(x) = 1$) has samples at $x = 0$ and $x = 1$ and correlation $R(h) = \exp(-\theta h^2)$ with $\theta = 2$. Evaluate $\text{MSE}/\sigma^2$ at $x = 0.5$ with the formula of this note. Is $x = 0.5$ the maximum-MSE point in $[0, 1]$?
+
+<details>
+<summary>Answer</summary>
+
+$R = \begin{pmatrix} 1 & \rho \\ \rho & 1 \end{pmatrix}$ with $\rho = e^{-2} = 0.1353$, $F = (1, 1)^T$, and $r(0.5) = (e^{-0.5}, e^{-0.5}) = (0.6065, 0.6065)$. Eliminating the block system gives
+
+$$
+\frac{\text{MSE}}{\sigma^2} = 1 - r^T R^{-1} r + \frac{\left(F^T R^{-1} r - 1\right)^2}{F^T R^{-1} F}.
+$$
+
+The pieces are $r^T R^{-1} r = 2r^2/(1 + \rho) = 0.6480$, $F^T R^{-1} r = 2r/(1 + \rho) = 1.0685$ and $F^T R^{-1} F = 2/(1 + \rho) = 1.7616$. So $\text{MSE}/\sigma^2 = 1 - 0.6480 + 0.0685^2/1.7616 = 0.3546$. By symmetry $x = 0.5$ is a stationary point, and a scan over $[0, 1]$ confirms it is the maximum. The max-MSE criterion therefore picks the midpoint, as a space-filling rule would.
+
+</details>
+
+**Exercise 4.** Show that far from all samples, where $r(x) \to 0$, the MSE formula tends to $\sigma^2\left(1 + f(x)^T (F^T R^{-1} F)^{-1} f(x)\right)$. Evaluate the limit for the model of Exercise 3, and explain why it exceeds $\sigma^2$.
+
+<details>
+<summary>Answer</summary>
+
+With $S = F^T R^{-1} F$, the block inverse is
+
+$$
+\begin{pmatrix} R & F \\ F^T & 0 \end{pmatrix}^{-1} = \begin{pmatrix} R^{-1} - R^{-1}F S^{-1} F^T R^{-1} & R^{-1}F S^{-1} \\ S^{-1}F^T R^{-1} & -S^{-1} \end{pmatrix}.
+$$
+
+With $r = 0$ the quadratic form reduces to the lower-right block: $(0, f)^T M^{-1} (0, f) = -f^T S^{-1} f$. Hence $\text{MSE} \to \sigma^2(1 + f^T S^{-1} f)$.
+
+For Exercise 3, $S = 1.7616$, so the limit is $\sigma^2(1 + 1/1.7616) = 1.5677\,\sigma^2$. It exceeds the process variance because, besides the random fluctuation $z(x)$, the trend coefficient $\beta$ is estimated from only two samples, and its uncertainty adds to the prediction error.
+
+</details>
+
+## References
+
+- D. R. Jones, M. Schonlau and W. J. Welch, "Efficient global optimization of expensive black-box functions", *Journal of Global Optimization* 13, 1998.
+- J. Sacks, W. J. Welch, T. J. Mitchell and H. P. Wynn, "Design and analysis of computer experiments", *Statistical Science* 4(4), 1989.
+- A. I. J. Forrester, A. Sóbester and A. J. Keane, *Engineering Design via Surrogate Modelling: A Practical Guide*, Wiley, 2008.
+- H. Liu, Y.-S. Ong and J. Cai, "A survey of adaptive sampling for global metamodeling in support of simulation-based complex engineering design", *Structural and Multidisciplinary Optimization*, 2018.

@@ -39,7 +39,7 @@ ASCII Diagram: Large-Scale Fluid Data vs. Machine Learning Methods
 Dimensionality reduction is fundamental to flow feature extraction, seeking to represent high-dimensional, spatiotemporal fluid data in a lower-dimensional space that is easier to interpret. Traditional linear methods provide valuable first steps, while nonlinear embeddings promise to uncover richer, more intricate structures hidden in the flow.
 
   
-For linear reduction, **proper orthogonal decomposition (POD)** stands as a cornerstone, introduced by Sirovich in the 1980s. POD identifies an **orthogonal basis** of modes extracted directly from empirical data, capturing the most energetic structures in descending order of importance. Its snapshot-based formulation uses singular value decomposition to transform a large set of measured or computed flow states into a small number of modes that retain most of the kinetic energy.
+For linear reduction, **proper orthogonal decomposition (POD)** stands as a cornerstone, introduced to turbulence research by Lumley in 1967 and made practical for large datasets by Sirovich's method of snapshots in 1987. POD identifies an **orthogonal basis** of modes extracted directly from empirical data, capturing the most energetic structures in descending order of importance. Its snapshot-based formulation uses singular value decomposition to transform a large set of measured or computed flow states into a small number of modes that retain most of the kinetic energy.
 
 Concretely, given $m$ flow snapshots $\mathbf{x}_1, \dots, \mathbf{x}_m \in \mathbb{R}^n$ arranged column-wise into a data matrix $\mathbf{X} \in \mathbb{R}^{n \times m}$, POD computes the singular value decomposition
 
@@ -259,3 +259,84 @@ The future lies in carefully curating comprehensive databases of fluid phenomena
 - Clustering and classification turn continuous flow fields into discrete, interpretable states that enable regime identification and Markov-based modeling.
 - Combining multiple techniques—linear reduction, nonlinear encoding, sparse sensing, and clustering—yields a layered feature extraction pipeline that balances efficiency with fidelity.
 - Extracted features are only as trustworthy as the physics they represent; always validate against domain knowledge, known flow behavior, and independent measurements.
+
+## Exercises
+
+**Exercise 1.** A snapshot matrix has singular values $\sigma = (10, 5, 2, 1, 0.5)$. Compute the cumulative energy fraction $E_r / E_{\text{total}}$ for $r = 1, \dots, 5$ and find the smallest $r$ that captures at least 99% of the energy.
+
+<details>
+<summary>Answer</summary>
+
+The energies are $\sigma_i^2 = (100, 25, 4, 1, 0.25)$, which sum to 130.25.
+
+The cumulative fractions are $0.768$, $0.960$, $0.990$, $0.998$ and $1.000$.
+
+$r = 3$ is the smallest rank that captures at least 99% (99.04%).
+
+</details>
+
+**Exercise 2.** For the same data, what is the smallest possible squared reconstruction error $\|\mathbf{X} - \tilde{\mathbf{X}}\|_F^2$ of any rank-2 approximation? A linear autoencoder with a 2-dimensional latent space is trained on the (mean-subtracted) data. Can it beat this error? What would it mean if a nonlinear autoencoder with a 2-dimensional latent space reached 1% relative error?
+
+<details>
+<summary>Answer</summary>
+
+By the Eckart–Young theorem the best rank-2 approximation is the truncated SVD, with error $\sum_{i > 2} \sigma_i^2 = 4 + 1 + 0.25 = 5.25$, or $5.25/130.25 \approx 4.0\%$ of the total.
+
+A linear autoencoder can at best learn the span of the first two POD modes, so it cannot go below 4.0%.
+
+A nonlinear autoencoder reaching 1% would show that the data lie close to a curved two-dimensional manifold that no two-dimensional linear subspace can represent. This is the test suggested in step 5 of "Setting Up the Problem".
+
+</details>
+
+**Exercise 3.** Two snapshots in $\mathbb{R}^3$ form $\mathbf{X} = \begin{bmatrix} 2 & 1 \\ 1 & 2 \\ 0 & 0 \end{bmatrix}$. Using the method of snapshots (the eigendecomposition of $\mathbf{X}^T \mathbf{X}$), find the singular values, the leading POD mode, and the energy fraction of mode 1.
+
+<details>
+<summary>Answer</summary>
+
+$\mathbf{X}^T \mathbf{X} = \begin{bmatrix} 5 & 4 \\ 4 & 5 \end{bmatrix}$ has eigenvalues 9 and 1, with eigenvectors $(1, 1)/\sqrt{2}$ and $(1, -1)/\sqrt{2}$.
+
+The singular values are $\sigma_1 = 3$ and $\sigma_2 = 1$.
+
+The leading mode is $\mathbf{u}_1 = \mathbf{X}\mathbf{v}_1 / \sigma_1 = (3, 3, 0)/(3\sqrt{2}) = (1, 1, 0)/\sqrt{2}$.
+
+Mode 1 carries $9/(9 + 1) = 90\%$ of the energy.
+
+The method of snapshots only needs an $m \times m$ eigenproblem ($m$ = number of snapshots) rather than an $n \times n$ one ($n$ = number of grid values), which is what makes POD affordable for large flow fields.
+
+</details>
+
+**Exercise 4.** A flow dataset has $n = 10^6$ values per snapshot and $m = 500$ snapshots, stored as 8-byte floats. Compute the storage of $\mathbf{X}$ and of a rank-20 POD representation ($\mathbf{U}_r$, $\boldsymbol{\Sigma}_r$, $\mathbf{V}_r$). Why is forming $\mathbf{X}\mathbf{X}^T$ out of the question?
+
+<details>
+<summary>Answer</summary>
+
+$\mathbf{X}$: $10^6 \times 500 \times 8 = 4.0 \times 10^9$ bytes, or 4 GB.
+
+Rank 20: $\mathbf{U}_r$ takes $10^6 \times 20 \times 8 = 160$ MB, $\mathbf{V}_r$ takes $500 \times 20 \times 8 = 80$ kB, and $\boldsymbol{\Sigma}_r$ is 20 numbers. The compression ratio is about 25.
+
+$\mathbf{X}\mathbf{X}^T$ would be a $10^6 \times 10^6$ matrix of $8 \times 10^{12}$ bytes (8 TB). The method of snapshots ($500 \times 500$) or a randomized SVD avoids ever forming it.
+
+</details>
+
+**Exercise 5.** k-means on reduced coordinates assigns successive snapshots to clusters as A, A, B, B, C, A, A, B, C, C, A, B. Estimate the transition-probability matrix of the cluster-based Markov model and describe the dominant cycle.
+
+<details>
+<summary>Answer</summary>
+
+The 11 transitions are counted as AA: 2, AB: 3, BB: 1, BC: 2, CA: 2, CC: 1. Normalizing each row gives
+
+$$\mathbf{P} = \begin{bmatrix} 0.4 & 0.6 & 0 \\ 0 & 1/3 & 2/3 \\ 2/3 & 0 & 1/3 \end{bmatrix},$$
+
+with rows and columns ordered A, B, C.
+
+The dominant cycle is A → B → C → A, with each state often repeating once before moving on. This is the kind of discrete representation of a quasi-periodic flow described in the note for cluster-based models. Twelve snapshots are far too few for reliable probabilities; a real model needs many periods of data.
+
+</details>
+
+## References
+
+- Holmes, P., Lumley, J. L., Berkooz, G., & Rowley, C. W., *Turbulence, Coherent Structures, Dynamical Systems and Symmetry*, 2nd ed., Cambridge University Press, 2012.
+- Sirovich, L., "Turbulence and the dynamics of coherent structures. Part I: Coherent structures", *Quarterly of Applied Mathematics* 45(3), 1987.
+- Taira, K., et al., "Modal Analysis of Fluid Flows: An Overview", *AIAA Journal* 55(12), 2017.
+- Kaiser, E., et al., "Cluster-based reduced-order modelling of a mixing layer", *Journal of Fluid Mechanics* 754, 2014.
+- Brunton, S. L., & Kutz, J. N., *Data-Driven Science and Engineering: Machine Learning, Dynamical Systems, and Control*, Cambridge University Press, 2019.
