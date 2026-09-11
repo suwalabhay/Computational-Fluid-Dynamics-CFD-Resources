@@ -16,8 +16,9 @@ Time-averaged volume fields, slices through the domain, and surface data are cen
 
 $$C_{p_0} = \frac{p + \tfrac{1}{2}\rho |\mathbf{u}|^2 - p_{0,\infty}}{\tfrac{1}{2}\rho U_\infty^2}$$
 
-where $p_{0,\infty} = p_\infty + \tfrac{1}{2}\rho U_\infty^2$ is the freestream total pressure. Regions where $C_{p_0}$ drops below unity indicate total pressure losses due to viscous dissipation, separation, or turbulent mixing, helping pinpoint where flow energy is lost around the body.  
+where $p_{0,\infty} = p_\infty + \tfrac{1}{2}\rho U_\infty^2$ is the freestream total pressure. Regions where $C_{p_0}$ drops below zero (its freestream value with this definition) indicate total pressure losses due to viscous dissipation, separation, or turbulent mixing, helping pinpoint where flow energy is lost around the body.  
 – Time-Averaged Surface Data. Surfaces of the vehicle are often exported in VTK format, making it easier to plot and compare things like pressure coefficients $C_p$ or mean skin friction $\tau_w$. The pressure coefficient is derived from  
+
 $$C_p = \frac{p - p_\infty}{\tfrac{1}{2}\rho U_\infty^2}$$  
 
 where $p_\infty$ and $U_\infty$ are reference pressure and freestream velocity. Looking at mean and root-mean-square (RMS) values of surface pressure reveals regions of high turbulence or unsteady flow separation. Skin friction data indicates how strongly the airflow “pulls” on the vehicle surface, influencing drag and local heating.  
@@ -103,7 +104,7 @@ Slices and iso-surfaces use thresholding and contouring algorithms. A typical Q-
 
 $$Q = \frac{1}{2}\Bigl(\|\boldsymbol{\Omega}\|^2 - \|\mathbf{S}\|^2\Bigr)$$
 
-where $\boldsymbol{\Omega}$ is the antisymmetric part of the velocity gradient tensor (representing rotation) and $\mathbf{S}$ is the symmetric part (representing strain). Regions with $Q>0$ often signify vortices.  
+where $\boldsymbol{\Omega}$ is the antisymmetric part of the velocity gradient tensor (representing rotation) and $\mathbf{S}$ is the symmetric part (representing strain). Regions with $Q > 0$ often signify vortices.  
 
 ### Setting Up the Problem  
 
@@ -121,3 +122,71 @@ When interpreting results, pay attention to spatial error distributions—unifor
 - Validation against reference CFD or experimental data using quantitative metrics (MAE, RMSE, $R^2$) is critical before trusting ML predictions for design decisions.
 - Spatial error distributions reveal where models perform well and where they struggle, guiding targeted model improvements.
 - Reproducibility requires documenting all post-processing steps, validation thresholds, and data formats used throughout the workflow.
+
+### Related Scripts
+
+- [Drag Coefficient Prediction](../../../scripts/plots/drag_coefficient_prediction/): compares two synthetic drag-coefficient predictors with reference values in a predicted-vs-reference plot, adding a regression line and $R^2$ for each.
+
+### Exercises
+
+**Exercise 1.** The freestream has $U_\infty = 40$ m/s, $\rho = 1.2$ kg/m³ and gauge pressure $p_\infty = 0$. At a point in the wake the predicted gauge pressure is $p = -300$ Pa and the local speed is $|\mathbf{u}| = 45$ m/s. Compute $C_p$ and $C_{p_0}$ at this point, and state the values at a loss-free stagnation point.
+
+<details>
+<summary>Answer</summary>
+
+The dynamic pressure is $q_\infty = \tfrac{1}{2}\rho U_\infty^2 = 960$ Pa, so $p_{0,\infty} = 960$ Pa.
+
+$C_p = -300 / 960 = -0.3125$.
+
+The local total pressure is $p + \tfrac{1}{2}\rho |\mathbf{u}|^2 = -300 + 1215 = 915$ Pa, so $C_{p_0} = (915 - 960)/960 \approx -0.047$. This is a small total-pressure loss.
+
+At a loss-free stagnation point $\mathbf{u} = 0$ and $p = p_{0,\infty}$, so $C_p = 1$ and $C_{p_0} = 0$. Positive $C_{p_0}$ is not expected without energy input (for example, from a fan), so it is a useful sanity check on ML predictions.
+
+</details>
+
+**Exercise 2.** A drag time series gives 400 independent samples with standard deviation $\sigma = 0.008$. Compute the 95% confidence half-width of $\overline{C_D}$. How many independent samples are needed for a half-width of $\pm 0.0005$? The raw series actually has 4000 time steps, but samples are only independent every 50 steps. What half-width is correct then?
+
+<details>
+<summary>Answer</summary>
+
+$\sigma_{\overline{C_D}} = 0.008/\sqrt{400} = 4 \times 10^{-4}$, so the half-width is $1.96 \times 4 \times 10^{-4} \approx 7.8 \times 10^{-4}$.
+
+For $\pm 5 \times 10^{-4}$: $N = (1.96 \times 0.008 / 0.0005)^2 \approx 983.4$, so at least 984 independent samples.
+
+With correlated samples the effective count is $N_{\text{eff}} = 4000/50 = 80$, so $\sigma_{\overline{C_D}} = 0.008/\sqrt{80} \approx 8.9 \times 10^{-4}$ and the half-width is about $1.75 \times 10^{-3}$. Treating all 4000 steps as independent would make the interval $\sqrt{50} \approx 7.1$ times too narrow.
+
+</details>
+
+**Exercise 3.** Using $(\nabla \mathbf{u})_{ij} = \partial u_i / \partial x_j$ and Frobenius norms, evaluate $Q$ for (a) a simple shear $\mathbf{u} = (\gamma y, 0, 0)$ and (b) solid-body rotation $\mathbf{u} = (-\omega_0 y, \omega_0 x, 0)$. What do the results say about using $Q$ rather than vorticity magnitude to find vortices?
+
+<details>
+<summary>Answer</summary>
+
+(a) The only nonzero gradient is $\partial u / \partial y = \gamma$. Then $S_{12} = S_{21} = \gamma/2$ and $\Omega_{12} = -\Omega_{21} = \gamma/2$, so $\|\mathbf{S}\|^2 = \|\boldsymbol{\Omega}\|^2 = \gamma^2/2$ and $Q = 0$.
+
+(b) $\partial u/\partial y = -\omega_0$ and $\partial v/\partial x = \omega_0$, so $\mathbf{S} = 0$, $\Omega_{12} = -\omega_0$ and $\Omega_{21} = \omega_0$. That gives $\|\boldsymbol{\Omega}\|^2 = 2\omega_0^2$ and $Q = \omega_0^2 > 0$.
+
+A boundary layer or shear layer has large vorticity but $Q \le 0$, so it is not flagged. A vortex core, where rotation dominates strain, has $Q > 0$. That is why $Q$ iso-surfaces isolate vortices that a vorticity-magnitude plot would mix with every wall shear layer.
+
+</details>
+
+**Exercise 4.** For four test designs the reference drag coefficients are $(0.300, 0.315, 0.290, 0.330)$ and the ML predictions are $(0.302, 0.312, 0.291, 0.310)$. Compute MAE and RMSE, then repeat without the fourth design. What does the comparison reveal?
+
+<details>
+<summary>Answer</summary>
+
+The absolute errors are $(0.002, 0.003, 0.001, 0.020)$.
+
+- All four designs: MAE $= 0.0065$ and RMSE $= \sqrt{(4 + 9 + 1 + 400) \times 10^{-6} / 4} \approx 0.0102$.
+- First three designs only: MAE $= 0.0020$ and RMSE $\approx 0.0022$.
+
+With the fourth design, RMSE/MAE is about 1.57; without it, about 1.08. A single large error dominates, and it occurs on the design with the highest drag. As the note says for spatial errors, a localized failure (here, perhaps a design with different separation behaviour) deserves investigation, not averaging away.
+
+</details>
+
+### References
+
+- Pope, S. B., *Turbulent Flows*, Cambridge University Press, 2000.
+- Hunt, J. C. R., Wray, A. A., & Moin, P., "Eddies, streams, and convergence zones in turbulent flows", Center for Turbulence Research Report CTR-S88, 1988.
+- Bendat, J. S., & Piersol, A. G., *Random Data: Analysis and Measurement Procedures*, 4th ed., Wiley, 2010.
+- Schroeder, W., Martin, K., & Lorensen, B., *The Visualization Toolkit: An Object-Oriented Approach to 3D Graphics*, 4th ed., Kitware, 2006.

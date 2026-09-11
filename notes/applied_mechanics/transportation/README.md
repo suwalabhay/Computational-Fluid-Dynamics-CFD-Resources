@@ -172,7 +172,9 @@ Automotive engineering involves complex multi-disciplinary optimization:
 - **Autonomous systems**: Sensors, computing, and control algorithms
 - **Connectivity**: Vehicle-to-vehicle and vehicle-to-infrastructure communication
 
-### [Ships and Marine Vehicles](./ships/)
+### Ships and Marine Vehicles
+Dedicated notes on ships, railways, and spacecraft are not written yet; they are tracked in the [roadmap](../../../ROADMAP.md).
+
 Marine transportation involves unique challenges of water environment:
 
 #### Key Topics:
@@ -181,7 +183,7 @@ Marine transportation involves unique challenges of water environment:
 - **Structural design**: Wave loading and corrosion resistance
 - **Cargo handling**: Loading, securing, and unloading systems
 
-### [Railways](./railways/)
+### Railways
 Rail transportation emphasizes efficiency and capacity:
 
 #### Key Topics:
@@ -190,7 +192,7 @@ Rail transportation emphasizes efficiency and capacity:
 - **Suspension design**: Ride quality and track protection
 - **Signaling and control**: Safety and traffic management
 
-### [Spacecraft](./spacecraft/)
+### Spacecraft
 Space transportation involves extreme environments:
 
 #### Key Topics:

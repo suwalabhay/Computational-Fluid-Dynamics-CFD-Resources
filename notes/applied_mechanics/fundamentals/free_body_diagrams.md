@@ -195,18 +195,18 @@ $$\sum F_x = 0: \quad A_x + F = 0 \implies A_x = -10 \text{ kN}$$
 
 $$\sum F_y = 0: \quad A_y = 0$$
 
-Moment equilibrium about $A$:
+Moment equilibrium about $A$ (counterclockwise positive; $C$ is 3 m above $A$, so the force $F$ acting in the $+x$ direction has a clockwise moment $F \times 3$ about $A$):
 
-$$\sum M_A = 0: \quad M_A + F \times 3 = 0$$
+$$\sum M_A = 0: \quad M_A - F \times 3 = 0$$
 
-$$M_A = -10 \times 3 = -30 \text{ kN·m (clockwise)}$$
+$$M_A = 10 \times 3 = 30 \text{ kN·m (counterclockwise)}$$
 
 ## Example 3: Truss Joint Analysis
 
 **Given**:
 - A truss joint $C$ where two members meet
 - External load at joint $C$: $P = 50$ kN downward
-- Member $CA$ is inclined at $45°$ to the horizontal (upward to the left)
+- Member $CA$ is inclined at $45^\circ$ to the horizontal (upward to the left)
 - Member $CB$ is horizontal (to the right)
 
 **Find**: Forces in members $CA$ and $CB$
@@ -217,15 +217,15 @@ Isolate joint $C$ and draw its FBD showing all member forces as tensions (pullin
 
 Vertical equilibrium:
 
-$$\sum F_y = 0: \quad F_{CA}\sin 45° - P = 0$$
+$$\sum F_y = 0: \quad F_{CA}\sin 45^\circ - P = 0$$
 
-$$F_{CA} = \frac{P}{\sin 45°} = \frac{50}{0.707} = 70.71 \text{ kN (tension)}$$
+$$F_{CA} = \frac{P}{\sin 45^\circ} = \frac{50}{0.707} = 70.71 \text{ kN (tension)}$$
 
 Horizontal equilibrium:
 
-$$\sum F_x = 0: \quad -F_{CA}\cos 45° + F_{CB} = 0$$
+$$\sum F_x = 0: \quad -F_{CA}\cos 45^\circ + F_{CB} = 0$$
 
-$$F_{CB} = F_{CA}\cos 45° = 70.71 \times 0.707 = 50 \text{ kN (tension)}$$
+$$F_{CB} = F_{CA}\cos 45^\circ = 70.71 \times 0.707 = 50 \text{ kN (tension)}$$
 
 Both results are positive, confirming the assumed tension directions are correct. Member $CA$ carries a tension of $70.71$ kN and member $CB$ carries a tension of $50$ kN.
 
@@ -272,3 +272,69 @@ Both results are positive, confirming the assumed tension directions are correct
 - Ergonomic assessment of tool usage
 
 Free body diagrams are indispensable at every level of mechanics, from introductory statics through advanced structural dynamics and finite element analysis. Developing the discipline to draw complete, accurate FBDs is the single most effective way to avoid errors in engineering analysis.
+
+## Exercises
+
+**Exercise 1.** A 6 m ladder weighing 200 N (acting at its midpoint) leans against a smooth vertical wall at $60^\circ$ to the rough floor. Draw the FBD, count the unknowns, and find all reactions and the minimum floor friction coefficient.
+
+<details>
+<summary>Answer</summary>
+
+Unknowns: the floor normal force $N_A$, the floor friction $F_A$, and the wall normal force $N_B$ (a smooth wall gives no friction). That is 3 unknowns for 3 equations, so the problem is determinate.
+
+Moments about the foot $A$:
+
+$$N_B(6\sin 60^\circ) = 200(3\cos 60^\circ) \implies N_B = 57.7 \text{ N}$$
+
+Horizontal: $F_A = N_B = 57.7$ N. Vertical: $N_A = 200$ N. Minimum friction coefficient: $\mu_s = F_A/N_A = 0.289$.
+
+</details>
+
+**Exercise 2.** A 4 m cantilever is fixed at its left end $A$. It carries a uniform load of 3 kN/m over its full length and a 5 kN point load at the free end. Find the reactions at $A$.
+
+<details>
+<summary>Answer</summary>
+
+Replace the distributed load by a 12 kN resultant at 2 m.
+
+- $\sum F_x = 0$: $A_x = 0$.
+- $\sum F_y = 0$: $A_y = 12 + 5 = 17$ kN (upward).
+- $\sum M_A = 0$: $M_A - 12(2) - 5(4) = 0$, so $M_A = 44$ kN·m (counterclockwise).
+
+</details>
+
+**Exercise 3.** For the beam of Example 1, cut the beam at $x = 4$ m and use the FBD of the left segment to find the internal shear force $V$ and bending moment $M$, using the sign conventions in this note.
+
+<details>
+<summary>Answer</summary>
+
+The left segment carries $A_y = 15.31$ kN up at $x = 0$ and $P = 20$ kN down at $x = 3$ m, plus $V$ and $M$ at the cut. Positive $V$ acts downward on the right face of a left segment.
+
+$$\sum F_y = 0: \quad 15.31 - 20 - V = 0 \implies V = -4.69 \text{ kN}$$
+
+$$\sum M_{cut} = 0: \quad M - 15.31(4) + 20(1) = 0 \implies M = 41.25 \text{ kN·m}$$
+
+The negative $V$ means the shear acts opposite to the assumed direction. The positive $M$ means the beam sags at this section.
+
+</details>
+
+**Exercise 4.** A horizontal boom $AB$ of length 3 m is pinned to a wall at $A$ and held by a cable from $B$ to point $C$ on the wall 2 m directly above $A$. A 10 kN load hangs from $B$; neglect the boom weight. Find the cable tension and the pin reactions, and explain the result using the two-force member concept.
+
+<details>
+<summary>Answer</summary>
+
+The cable makes angle $\theta = \arctan(2/3) = 33.7^\circ$ with the boom, so $\sin\theta = 0.555$.
+
+Moments about $A$: $T\sin\theta(3) = 10(3)$, so $T = 18.0$ kN.
+
+Horizontal: $A_x = T\cos\theta = 15.0$ kN (pushing the boom away from the wall). Vertical: $A_y = 10 - T\sin\theta = 0$.
+
+The boom carries loads only at its two pinned ends ($A$ and $B$), so it is a two-force member. The reaction at $A$ must act along the boom, which is why $A_y = 0$. The boom is in 15 kN compression.
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- J. L. Meriam, L. G. Kraige, *Engineering Mechanics: Statics*, Wiley.
+- F. P. Beer, E. R. Johnston, D. F. Mazurek, *Vector Mechanics for Engineers: Statics*, McGraw-Hill.

@@ -1,54 +1,74 @@
 # Flow Separation in a Boundary Layer
 
-This script illustrates the phenomenon of boundary layer separation by plotting two distinct flow regions side by side. An attached boundary layer grows along a surface from $x = -1$ to $x = 0$, following the characteristic $\sqrt{x}$ thickness growth of laminar (Blasius) flow. Beyond the separation point at $x = 0$, the script draws a recirculation zone extending to $x = 1.5$ where the boundary layer has detached from the surface and reversed-flow streamlines indicate a separated, recirculating region. Free-stream arrows at the top of the domain and a label at the separation point complete the annotation.
+This script draws a schematic of boundary-layer separation: an attached layer that thickens downstream, a separation point, and a recirculation region under the separated shear layer. The attached boundary layer grows as $\sqrt{x - x_0}$ from $x = -1$ to the separation point at $x = 0$. A separated shear layer then lifts off the wall and encloses a shaded recirculation region with reversed flow near the wall. The curves are illustrative shapes, not solutions of the boundary-layer equations.
 
 ## Overview
 
-- Plots the attached boundary layer with $\delta \sim \sqrt{x}$ growth from $x = -1$ to $x = 0$
-- Draws the separated recirculation zone with an inverted $\sqrt{}$ shape from $x = 0$ to $x = 1.5$
-- Shows free-stream arrows above the boundary layer indicating undisturbed outer flow
-- Marks the separation point at $x = 0$ with a label and vertical indicator
-- Demonstrates the qualitative transition from attached to separated flow
+- Draws the attached boundary-layer edge $\delta(x) = 0.3\sqrt{x + 1}$ for $-1 \le x \le 0$ and shades the layer
+- Marks the separation point at $x = 0$ with a dot, a dashed vertical line, and a label
+- Draws the separated shear layer $y = 0.5\sqrt{x}$ for $0 \le x \le 1.5$ and shades the recirculation region between it and the wall
+- Adds leftward (upstream) red arrows near the wall and a curved arrow to show the recirculating motion
+- Draws free-stream arrows that shorten downstream to show the outer flow slowing in an adverse pressure gradient, $\partial p / \partial x > 0$
+- Hatches the solid region below the wall
 
 ## Mathematical Background
 
-### Laminar Boundary Layer Growth
+### Laminar Boundary-Layer Growth
 
-For laminar flow over a flat plate the boundary layer thickness grows as (Blasius solution):
+On a flat plate with zero pressure gradient the Blasius solution gives
 
-$$\delta(x) \sim \sqrt{x}$$
+$$\delta(x) \approx \frac{5\,x}{\sqrt{Re_x}} = 5\sqrt{\frac{\nu x}{U_\infty}}, \qquad Re_x = \frac{U_\infty x}{\nu}$$
 
-More precisely, $\delta(x) \approx 5x / \sqrt{Re_x}$ where $Re_x = U_\infty x / \nu$.
-
-### Separation Criterion
-
-Flow separation occurs when an adverse pressure gradient $\partial p / \partial x > 0$ decelerates the near-wall fluid to zero velocity. Prandtl's separation criterion is:
-
-$$\left.\frac{\partial u}{\partial y}\right|_{y=0} = 0$$
-
-### Post-Separation Recirculation
-
-Downstream of the separation point the wall shear stress reverses sign and a recirculation zone forms where:
-
-$$u(x, y) < 0 \quad \text{near the wall}$$
+so $\delta \propto \sqrt{x}$. The schematic uses the same square-root shape, measured from its leading edge at $x_0 = -1$.
 
 ### Adverse Pressure Gradient
 
-The separation is driven by an adverse pressure gradient which decelerates the boundary layer faster than turbulent mixing can re-energise it:
+In the boundary layer the wall-normal pressure variation is negligible, and the outer flow sets $-\frac{1}{\rho}\frac{dp}{dx} = U_e \frac{dU_e}{dx}$. A decelerating outer flow ($dU_e/dx < 0$) therefore means an adverse pressure gradient:
 
-$$\frac{\partial p}{\partial x} > 0 \implies \text{risk of separation}$$
+$$\frac{\partial p}{\partial x} > 0$$
+
+This removes momentum from the slow fluid near the wall.
+
+### Separation Criterion
+
+Separation of a steady 2D boundary layer occurs where the wall shear stress vanishes:
+
+$$\tau_w = \mu \left.\frac{\partial u}{\partial y}\right|_{y=0} = 0$$
+
+### Recirculation
+
+Downstream of separation the wall shear stress changes sign and the flow next to the wall runs upstream:
+
+$$u(x, y) < 0 \quad \text{near the wall}$$
+
+The recirculation region is bounded above by the dividing streamline, drawn here as the separated shear layer.
 
 ## Implementation
 
-1. Define the attached region $x \in [-1, 0]$ and compute $\delta(x) = C\sqrt{x + 1}$ for a scaling constant $C$.
-2. Fill the boundary layer region between the wall and $\delta(x)$ with a shaded area.
-3. Define the separated region $x \in [0, 1.5]$ and draw a recirculation envelope growing downward from the wall.
-4. Add horizontal free-stream arrows above the boundary layer edge.
-5. Mark the separation point at $x = 0$ with a vertical dashed line and text label.
-6. Label the attached layer, recirculation zone, and free-stream regions.
+- `boundary_layer_edge(x)` returns `DELTA_COEFF * sqrt(x - X_START)` with `DELTA_COEFF = 0.3` and `X_START = -1`.
+- `separated_shear_layer(x)` returns `SHEAR_COEFF * sqrt(x - X_SEP)` with `SHEAR_COEFF = 0.5`, `X_SEP = 0`, and `X_END = 1.5`.
+- `make_figure()` draws the wall, both shaded regions, the reversed-flow and free-stream arrows, the separation marker, and the annotations. The legend sits below the axes.
+- `main(argv=None)` handles the flags.
+
+## Usage
+
+```bash
+python main.py                          # open the figure window
+python main.py --no-show --output out   # save flow_separation_boundary_layer.png into out/
+```
+
+| Flag | Meaning |
+|------|---------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save the figure as a PNG |
 
 ## Output
 
-The script produces a schematic diagram with the wall along the bottom edge. The left portion shows the attached boundary layer growing smoothly from the leading edge to the separation point. The right portion shows the recirculation bubble below the separated shear layer. Free-stream arrows at the top remain straight and undisturbed throughout the domain.
+The wall runs along $y = 0$ above a hatched solid. On the left, the blue attached boundary layer thickens towards the purple separation point. From that point the red shear layer rises away from the wall over a pink recirculation region, which contains upstream-pointing arrows near the wall. Across the top, green free-stream arrows shorten from left to right.
 
-![flow_separation_boundary_layer](https://github.com/user-attachments/assets/aac53dde-9acf-4f5f-857d-00ef54ecbf6b)
+![Flow separation in a boundary layer](flow_separation_boundary_layer.png)
+
+## Related Notes
+
+- [Boundary Layers](../../../notes/fluid_mechanics/viscous_flow/boundary_layers.md)
+- [Understanding Drag](../../../notes/fluid_mechanics/viscous_flow/drag.md)

@@ -1,215 +1,242 @@
-import numpy as np
+"""Solve a random maze with Laplace's equation and follow the potential gradient.
+
+A perfect maze is carved with a seeded depth-first backtracker. Laplace's
+equation is solved on the open cells with phi = 0 at the entrance, phi = 1 at
+the exit and insulating (zero-flux) walls, using conjugate-gradient iterations
+that are animated in Pygame. The route is then traced by stepping to the
+neighbour with the largest potential and revealed one cell per frame.
+"""
+
+import argparse
+import os
 import random
-import pygame
+from pathlib import Path
 from typing import List, Tuple
 
+import numpy as np
+
 # Constants
-MAZE_SIZE: int = 100
-CELL_SIZE: int = 8
-DT: float = 0.1
-MAX_ITERATIONS: int = 5000
-TOLERANCE: float = 1e-6
+MAZE_SIZE: int = 100  # grid cells per side (walls and passages)
+CELL_SIZE: int = 8  # pixels per grid cell
+SEED: int = 0
+CG_ITERATIONS_PER_FRAME: int = 25  # solver iterations drawn per frame
+MAX_ITERATIONS: int = 50_000  # cap on conjugate-gradient iterations
+TOLERANCE: float = 1e-10  # stop when ||residual|| / ||b|| < TOLERANCE
+FPS: int = 30
 SCREEN_COLOR: Tuple[int, int, int] = (255, 255, 255)
 WALL_COLOR: Tuple[int, int, int] = (0, 0, 0)
 PATH_COLOR: Tuple[int, int, int] = (255, 215, 0)
 START_COLOR: Tuple[int, int, int] = (255, 0, 0)
 END_COLOR: Tuple[int, int, int] = (0, 255, 0)
 
+NEIGHBOURS = ((0, 1), (1, 0), (0, -1), (-1, 0))
 
-def generate_maze(size: int) -> np.ndarray:
-    print("Generating maze...")
+
+def generate_maze(size: int, rng: random.Random) -> np.ndarray:
+    """Depth-first backtracker on the even-indexed cells; 1 = wall, 0 = open."""
     maze = np.ones((size, size), dtype=int)
-    stack: List[Tuple[int, int]] = []
-    start: Tuple[int, int] = (0, 0)
+    start = (0, 0)
     maze[start] = 0
-    stack.append(start)
-    directions: List[Tuple[int, int]] = [(-2, 0), (2, 0), (0, -2), (0, 2)]
+    stack: List[Tuple[int, int]] = [start]
+    directions = [(-2, 0), (2, 0), (0, -2), (0, 2)]
 
     while stack:
-        current = stack[-1]
-        x, y = current
+        x, y = stack[-1]
         neighbors = [
             (x + dx, y + dy)
             for dx, dy in directions
             if 0 <= x + dx < size and 0 <= y + dy < size and maze[x + dx, y + dy] == 1
         ]
         if neighbors:
-            next_cell = random.choice(neighbors)
-            nx, ny = next_cell
+            nx, ny = rng.choice(neighbors)
             maze[(x + nx) // 2, (y + ny) // 2] = 0
             maze[nx, ny] = 0
-            stack.append(next_cell)
+            stack.append((nx, ny))
         else:
             stack.pop()
-    print("Maze generated.")
     return maze
 
 
-def set_boundary_conditions(
-    maze: np.ndarray, start: Tuple[int, int], end: Tuple[int, int]
-) -> np.ndarray:
-    print(f"Setting boundary conditions. Start: {start}, End: {end}")
-    phi = np.full_like(maze, 0, dtype=float)
-    phi[maze == 1] = -1  # Walls have -1 potential
-    phi[start] = 0  # Start has potential 0
-    phi[end] = 1  # End has potential 1
-    print("Boundary conditions set.")
-    return phi
+def apply_laplacian(phi: np.ndarray, open_mask: np.ndarray) -> np.ndarray:
+    """Graph Laplacian on open cells: sum over open neighbours of (phi - phi_nb).
+
+    Walls and the domain edge contribute nothing, i.e. d(phi)/dn = 0 there.
+    """
+    result = np.zeros_like(phi)
+    for di, dj in NEIGHBOURS:
+        nb = np.zeros_like(phi)
+        nb_open = np.zeros_like(open_mask)
+        src = (
+            slice(max(di, 0), phi.shape[0] + min(di, 0)),
+            slice(max(dj, 0), phi.shape[1] + min(dj, 0)),
+        )
+        dst = (
+            slice(max(-di, 0), phi.shape[0] + min(-di, 0)),
+            slice(max(-dj, 0), phi.shape[1] + min(-dj, 0)),
+        )
+        nb[dst] = phi[src]
+        nb_open[dst] = open_mask[src]
+        link = open_mask & nb_open
+        result[link] += phi[link] - nb[link]
+    return result
 
 
-def solve_laplace_step(
-    phi: np.ndarray, maze: np.ndarray, dt: float = DT
-) -> Tuple[np.ndarray, float]:
-    laplace_update = (
-        np.roll(a=phi, shift=1, axis=0)
-        + np.roll(a=phi, shift=-1, axis=0)
-        + np.roll(a=phi, shift=1, axis=1)
-        + np.roll(a=phi, shift=-1, axis=1)
-    ) / 4
-    mask = maze == 0
-    phi_new = np.where(mask, phi + dt * (laplace_update - phi), phi)
-    phi_new = np.clip(phi_new, -1, 1)  # Enforce bounds to prevent overflow or underflow
-    max_change = np.abs(phi_new - phi).max()
-    phi[:] = phi_new
-    return phi, max_change
+class LaplaceSolver:
+    """Conjugate gradients for the potential on the free open cells.
+
+    Dirichlet values phi(start) = 0 and phi(end) = 1 are held fixed; every
+    other open cell satisfies the discrete Laplace equation.
+    """
+
+    def __init__(self, maze, start, end):
+        self.open = maze == 0
+        self.free = self.open.copy()
+        self.free[start] = self.free[end] = False
+        self.phi = np.zeros(maze.shape)
+        self.phi[end] = 1.0
+        boundary = np.zeros(maze.shape)
+        boundary[end] = 1.0
+        # Move the known Dirichlet values to the right-hand side: A x = b.
+        self.b = -apply_laplacian(boundary, self.open) * self.free
+        self.residual = self.b - self._operator(self.phi * self.free)
+        self.direction = self.residual.copy()
+        self.rr = np.sum(self.residual**2)
+        self.b_norm = np.sqrt(np.sum(self.b**2))
+        self.iterations = 0
+
+    def _operator(self, x):
+        return apply_laplacian(x, self.open) * self.free
+
+    @property
+    def converged(self) -> bool:
+        return np.sqrt(self.rr) <= TOLERANCE * self.b_norm
+
+    def iterate(self, n: int) -> None:
+        for _ in range(n):
+            if self.converged or self.iterations >= MAX_ITERATIONS:
+                return
+            ad = self._operator(self.direction)
+            alpha = self.rr / np.sum(self.direction * ad)
+            self.phi += alpha * self.direction
+            self.residual -= alpha * ad
+            rr_new = np.sum(self.residual**2)
+            self.direction = self.residual + (rr_new / self.rr) * self.direction
+            self.rr = rr_new
+            self.iterations += 1
 
 
 def follow_gradient(
-    phi: np.ndarray, start: Tuple[int, int], end: Tuple[int, int]
+    phi: np.ndarray, open_mask: np.ndarray, start: Tuple[int, int], end: Tuple[int, int]
 ) -> List[Tuple[int, int]]:
-    print("Following gradient to find path...")
+    """Greedy ascent to the open 4-neighbour with the largest phi, with backtracking."""
     path: List[Tuple[int, int]] = [start]
-    stack: List[Tuple[int, int]] = [start]
-    visited: set = set()
-    current = start
-
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
-
-    while current != end:
-        x, y = current
-        visited.add(current)
-
+    visited = {start}
+    while path and path[-1] != end:
+        x, y = path[-1]
         neighbors = [
             (x + dx, y + dy)
-            for dx, dy in directions
+            for dx, dy in NEIGHBOURS
             if 0 <= x + dx < phi.shape[0]
             and 0 <= y + dy < phi.shape[1]
+            and open_mask[x + dx, y + dy]
             and (x + dx, y + dy) not in visited
         ]
-
-        neighbors = [(nx, ny) for nx, ny in neighbors if phi[nx, ny] > -1]
-
-        if not neighbors:
-            if stack:
-                current = stack.pop()
-                path.pop()
-            else:
-                print("No path found, backtracked fully.")
-                return path
-        else:
+        if neighbors:
             current = max(neighbors, key=lambda n: phi[n])
+            visited.add(current)
             path.append(current)
-            stack.append(current)
-
+        else:
+            path.pop()  # dead end: step back
     return path
 
 
 def draw_maze(
-    screen: pygame.Surface,
-    maze: np.ndarray,
-    phi: np.ndarray,
-    path: List[Tuple[int, int]],
-    cell_size: int,
-    start: Tuple[int, int],
-    end: Tuple[int, int],
-    visible_path_length: int,
-) -> None:
-    for i in range(maze.shape[0]):
-        for j in range(maze.shape[1]):
-            if maze[i, j] == 1:
-                color = WALL_COLOR
-            else:
-                potential = (phi[i, j] + 1) / 2  # Normalize phi to [0, 1]
-                b = int(255 * (1 - potential))  # Blue for low potential
-                g = int(255 * potential)  # Green for high potential
-                color = (0, g, b)  # Smooth transition from blue to green
-            pygame.draw.rect(
-                screen,
-                color,
-                pygame.Rect(j * cell_size, i * cell_size, cell_size, cell_size),
-            )
-
-    # Draw only the visible portion of the path
-    visible_path = path[:visible_path_length]
-    for point in visible_path:
-        pygame.draw.rect(
-            screen,
-            PATH_COLOR,
-            pygame.Rect(
-                point[1] * cell_size, point[0] * cell_size, cell_size, cell_size
-            ),
-        )
-
-    pygame.draw.rect(
-        screen,
-        START_COLOR,
-        pygame.Rect(start[1] * cell_size, start[0] * cell_size, cell_size, cell_size),
-    )
-    pygame.draw.rect(
-        screen,
-        END_COLOR,
-        pygame.Rect(end[1] * cell_size, end[0] * cell_size, cell_size, cell_size),
+    screen, pygame, maze, phi, path, cell_size, start, end, visible_path_length
+):
+    """Walls black, open cells from blue (phi = 0) to green (phi = 1), path in gold."""
+    potential = np.clip(phi, 0.0, 1.0)
+    rgb = np.zeros((*maze.shape, 3), dtype=np.uint8)
+    rgb[..., 1] = (255 * potential).astype(np.uint8)
+    rgb[..., 2] = (255 * (1 - potential)).astype(np.uint8)
+    rgb[maze == 1] = WALL_COLOR
+    for point in path[:visible_path_length]:
+        rgb[point] = PATH_COLOR
+    rgb[start] = START_COLOR
+    rgb[end] = END_COLOR
+    surface = pygame.surfarray.make_surface(np.transpose(rgb, (1, 0, 2)))
+    screen.blit(
+        pygame.transform.scale(
+            surface, (maze.shape[1] * cell_size, maze.shape[0] * cell_size)
+        ),
+        (0, 0),
     )
 
 
-def main() -> None:
-    print("Starting maze solver...")
-    maze = generate_maze(size=MAZE_SIZE)
-    start, end = (1, 1), (MAZE_SIZE - 2, MAZE_SIZE - 2)
-    phi = set_boundary_conditions(maze=maze, start=start, end=end)
+def main(argv=None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--no-show", action="store_true", help="do not open a window")
+    parser.add_argument("--output", type=Path, help="directory to save a screenshot")
+    parser.add_argument(
+        "--steps",
+        type=int,
+        default=None,
+        help=f"frames to run; each frame does {CG_ITERATIONS_PER_FRAME} solver "
+        "iterations, or reveals one path cell once solved (default: until closed)",
+    )
+    args = parser.parse_args(argv)
+
+    if args.no_show:
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+    os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+    import pygame
+
+    maze = generate_maze(MAZE_SIZE, random.Random(SEED))
+    last = (MAZE_SIZE - 1) // 2 * 2  # largest even index: always a passage cell
+    start, end = (0, 0), (last, last)
+    solver = LaplaceSolver(maze, start, end)
 
     pygame.init()
-    screen = pygame.display.set_mode((MAZE_SIZE * CELL_SIZE, MAZE_SIZE * CELL_SIZE))
-    pygame.display.set_caption("Interactive Maze Solver")
-    clock = pygame.time.Clock()
+    try:
+        screen = pygame.display.set_mode((MAZE_SIZE * CELL_SIZE, MAZE_SIZE * CELL_SIZE))
+        pygame.display.set_caption("Interactive Maze Solver")
+        clock = pygame.time.Clock()
+        path: List[Tuple[int, int]] = []
+        visible_path_length = 0
+        frame = 0
 
-    running = True
-    iterations = 0
-    max_change = TOLERANCE + 1
-    visible_path_length = 1  # Start by revealing just the first step
-    path = []
+        while args.steps is None or frame < args.steps:
+            if any(event.type == pygame.QUIT for event in pygame.event.get()):
+                break
 
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+            if not solver.converged and solver.iterations < MAX_ITERATIONS:
+                solver.iterate(CG_ITERATIONS_PER_FRAME)
+            elif not path:
+                print(
+                    f"Potential solved after {solver.iterations} conjugate-gradient "
+                    "iterations."
+                )
+                path = follow_gradient(solver.phi, solver.open, start, end)
+                print(f"Path from {start} to {end}: {len(path)} cells.")
+            else:
+                visible_path_length = min(visible_path_length + 1, len(path))
 
-        if max_change > TOLERANCE and iterations < MAX_ITERATIONS:
-            phi, max_change = solve_laplace_step(phi=phi, maze=maze)
-            iterations += 1
+            screen.fill(SCREEN_COLOR)
+            draw_maze(
+                screen, pygame, maze, solver.phi, path, CELL_SIZE, start, end,
+                visible_path_length,
+            )  # fmt: skip
+            pygame.display.flip()
+            if not args.no_show:
+                clock.tick(FPS)
+            frame += 1
 
-        if iterations % 5 == 0:  # Update path after a few iterations
-            path = follow_gradient(phi=phi, start=start, end=end)
-
-        # Increase the visible portion of the path gradually
-        visible_path_length = min(visible_path_length + 1, len(path))
-
-        screen.fill(SCREEN_COLOR)
-        draw_maze(
-            screen=screen,
-            maze=maze,
-            phi=phi,
-            path=path,
-            cell_size=CELL_SIZE,
-            start=start,
-            end=end,
-            visible_path_length=visible_path_length,
-        )
-        pygame.display.flip()
-        clock.tick(30)
-
-    pygame.quit()
-    print("Maze solver finished.")
+        if args.output:
+            args.output.mkdir(parents=True, exist_ok=True)
+            pygame.image.save(
+                screen, str(args.output / "laplace_equation_maze_solver.png")
+            )
+    finally:
+        pygame.quit()
 
 
 if __name__ == "__main__":

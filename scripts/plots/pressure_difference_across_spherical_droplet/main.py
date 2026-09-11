@@ -1,48 +1,125 @@
-import numpy as np
+"""Schematic of the Young-Laplace pressure jump across a spherical droplet.
+
+Draws a droplet cross-section, labels the inside and outside pressures, marks
+the radius, and evaluates Delta p = 2 sigma / R for a water droplet of a chosen
+radius (and half that radius) to show that smaller droplets carry a larger
+pressure jump.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Set parameters
-R = 1  # radius of droplet
-sigma = 0.0728  # surface tension of water at room temp (N/m)
-p_out = 1  # atmospheric pressure (arbitrary units)
-p_in = p_out + (2 * sigma / R)
+SURFACE_TENSION = 0.0728  # N/m, water at about 20 degC
+DROPLET_RADIUS = 1.0e-3  # m
+ATMOSPHERIC_PRESSURE = 101325.0  # Pa
 
-# Create figure
-fig, ax = plt.subplots(figsize=(8, 8))
 
-# Create droplet interface
-circle = plt.Circle(
-    (0, 0), R, color="skyblue", alpha=0.4, edgecolor="navy", linewidth=2
-)
-ax.add_artist(circle)
+def laplace_pressure_jump(sigma, radius):
+    """Return p_in - p_out (Pa) for a spherical interface of radius (m)."""
+    return 2.0 * sigma / radius
 
-# Mark radius
-ax.annotate(
-    "Radius R",
-    xy=(0, 0.2),
-    xytext=(0.5, 0.8),
-    arrowprops=dict(arrowstyle="<->", color="black"),
-    fontsize=12,
-)
 
-# Annotations for pressures
-ax.text(
-    0,
-    0,
-    f"$p_{{in}} = p_{{out}} + \\frac{{2 \, \sigma}}{{R}}$",
-    fontsize=14,
-    ha="center",
-)
-ax.text(-1.5, 1.2, "Inside droplet\n$\\Delta p$ higher", fontsize=12, color="navy")
-ax.text(
-    -1.5, -1.4, "Outside droplet\n$p_{out}$ (atmosphere)", fontsize=12, color="navy"
-)
+def draw_droplet(
+    sigma=SURFACE_TENSION, radius=DROPLET_RADIUS, p_out=ATMOSPHERIC_PRESSURE
+):
+    """Draw the annotated droplet schematic and return the figure.
 
-# Axes adjustments
-ax.set_xlim(-2, 2)
-ax.set_ylim(-2, 2)
-ax.set_aspect("equal")
-ax.axis("off")
-ax.set_title("Pressure Difference Across a Spherical Droplet", fontsize=14)
+    The circle is drawn with unit radius; ``radius`` (m) is only used to
+    evaluate the pressure jump shown in the text box.
+    """
+    delta_p = laplace_pressure_jump(sigma, radius)
+    delta_p_half = laplace_pressure_jump(sigma, radius / 2)
+    p_in = p_out + delta_p
 
-plt.show()
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    # Droplet interface (schematic, unit radius)
+    circle = plt.Circle(
+        (0, 0), 1.0, facecolor="skyblue", edgecolor="navy", alpha=0.4, linewidth=2
+    )
+    ax.add_patch(circle)
+
+    # Radius from the centre to the interface
+    angle = np.deg2rad(-45)
+    tip = (np.cos(angle), np.sin(angle))
+    ax.plot(0, 0, "ko", markersize=4)
+    ax.annotate(
+        "", xy=tip, xytext=(0, 0), arrowprops=dict(arrowstyle="->", color="black")
+    )
+    ax.text(tip[0] / 2 + 0.05, tip[1] / 2 + 0.05, "$R$", fontsize=14)
+
+    # Pressure annotations
+    ax.text(
+        0,
+        0.2,
+        r"$p_{in} = p_{out} + \frac{2 \, \sigma}{R}$",
+        fontsize=14,
+        ha="center",
+    )
+    ax.text(
+        0,
+        0.55,
+        "Inside droplet: $p_{in}$ (higher)",
+        fontsize=12,
+        color="navy",
+        ha="center",
+    )
+    ax.text(
+        -1.9, 1.3, "Outside droplet\n$p_{out}$ (atmosphere)", fontsize=12, color="navy"
+    )
+
+    # Numerical example for water
+    ax.text(
+        0,
+        -1.85,
+        (
+            f"Water, $\\sigma$ = {sigma:.4f} N/m, $p_{{out}}$ = {p_out:.0f} Pa\n"
+            f"$R$ = {radius * 1e3:.2f} mm: $\\Delta p$ = {delta_p:.1f} Pa, "
+            f"$p_{{in}}$ = {p_in:.1f} Pa\n"
+            f"$R$ = {radius * 0.5e3:.2f} mm: $\\Delta p$ = {delta_p_half:.1f} Pa"
+        ),
+        fontsize=11,
+        ha="center",
+        va="bottom",
+        bbox=dict(boxstyle="round", facecolor="white", edgecolor="gray"),
+    )
+
+    ax.set_xlim(-2, 2)
+    ax.set_ylim(-2, 2)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_title("Pressure Difference Across a Spherical Droplet", fontsize=14)
+    return fig
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open a plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = draw_droplet()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "pressure_difference_across_spherical_droplet.png",
+            dpi=100,
+            bbox_inches="tight",
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

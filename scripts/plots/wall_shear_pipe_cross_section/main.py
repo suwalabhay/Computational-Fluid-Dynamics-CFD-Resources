@@ -1,99 +1,131 @@
+"""Sketch of laminar pipe flow: parabolic velocity arrows, no-slip wall and wall shear.
+
+Velocity arrows are drawn across a pipe section with lengths proportional to
+the Hagen-Poiseuille profile u(r) = u_max (1 - (r/R)^2). The axial velocity is
+drawn in the plane of the figure for illustration.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
+ARROW_SCALE = 0.5  # plot length per unit velocity
 
-def plot_wall_shear(pipe_radius=1, max_velocity=2):
+
+def poiseuille_velocity(r, pipe_radius, max_velocity):
+    """Axial velocity of fully developed laminar pipe flow at radius r."""
+    return max_velocity * (1 - (r / pipe_radius) ** 2)
+
+
+def plot_wall_shear(pipe_radius=1, max_velocity=2, n_radii=5):
+    """Draw the annotated pipe sketch and return the figure."""
     fig, ax = plt.subplots(figsize=(8, 8))
 
-    # Draw the pipe cross-section
-    circle = plt.Circle((0, 0), pipe_radius, color="gray", alpha=0.2)
-    ax.add_artist(circle)
+    # Pipe section
+    ax.add_patch(plt.Circle((0, 0), pipe_radius, color="gray", alpha=0.2))
 
-    # Draw velocity vectors
-    radii = np.linspace(0, pipe_radius, 5)
-    for r in radii:
-        velocity = max_velocity * (1 - (r / pipe_radius) ** 2)  # Parabolic profile
-        ax.arrow(
-            0,
-            r,
-            velocity / 2,
-            0,
-            head_width=0.05,
-            head_length=0.1,
-            fc="blue",
-            ec="blue",
-        )
-        ax.arrow(
-            0,
-            -r,
-            velocity / 2,
-            0,
-            head_width=0.05,
-            head_length=0.1,
-            fc="blue",
-            ec="blue",
-        )
+    # Velocity arrows at +r and -r, length proportional to u(r)
+    for r in np.linspace(0, pipe_radius, n_radii):
+        length = ARROW_SCALE * poiseuille_velocity(r, pipe_radius, max_velocity)
+        for y in {r, -r}:
+            if length > 0:
+                ax.arrow(
+                    0,
+                    y,
+                    length,
+                    0,
+                    head_width=0.05,
+                    head_length=0.1,
+                    length_includes_head=True,
+                    fc="blue",
+                    ec="blue",
+                )
+            else:
+                ax.plot(0, y, "o", color="blue", markersize=5)
 
-    # Annotate maximum velocity
+    # Envelope of the arrow tips: the parabolic profile
+    y_profile = np.linspace(-pipe_radius, pipe_radius, 100)
+    ax.plot(
+        ARROW_SCALE * poiseuille_velocity(y_profile, pipe_radius, max_velocity),
+        y_profile,
+        "b--",
+        linewidth=1,
+    )
+
     ax.text(
-        max_velocity / 2 + 0.2,
+        ARROW_SCALE * max_velocity + 0.2,
         0,
-        "Maximum Velocity\n(r=0)",
+        "Maximum Velocity\n(r = 0)",
         ha="left",
         va="center",
         fontsize=10,
     )
-
-    # Annotate velocity gradient
     ax.text(
-        0,
+        -pipe_radius / 2,
         pipe_radius / 2,
-        "~~~~ Velocity Gradient ~~~~",
+        "Velocity gradient\n$du/dr$",
         ha="center",
         va="center",
         fontsize=10,
-        color="black",
     )
-
-    # Annotate no-slip condition
     ax.annotate(
-        "No-slip Condition\n(v = 0)",
+        "No-slip Condition\n(u = 0)",
         xy=(0, pipe_radius),
         xytext=(-1.5, pipe_radius + 0.2),
         arrowprops=dict(arrowstyle="->"),
         ha="center",
         fontsize=10,
     )
-
-    # Annotate high shear region
+    # Shear is largest at the wall, where the profile is steepest
     ax.annotate(
-        "High Shear Region",
-        xy=(pipe_radius, 0),
-        xytext=(1.2, -0.5),
+        "High Shear Region\n(wall)",
+        xy=(0.05, -pipe_radius),
+        xytext=(1.2, -1.2),
         arrowprops=dict(arrowstyle="->"),
         ha="center",
         fontsize=10,
     )
-
-    # Add descriptive text
     ax.text(
         0,
-        -1.5,
+        -1.6,
         "Wall shear ~ friction force that fluid exerts on the pipe walls",
         ha="center",
         fontsize=11,
-        wrap=True,
     )
 
-    # Settings
     ax.set_xlim(-2, 2)
     ax.set_ylim(-2, 2)
     ax.set_aspect("equal")
     ax.axis("off")
+    ax.set_title("Wall Shear in Pipe Cross-Section", fontsize=14)
+    return fig
 
-    plt.title("Wall Shear in Pipe Cross-Section", fontsize=14)
-    plt.show()
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open a plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = plot_wall_shear()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "wall_shear_pipe_cross_section.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
 
 
-# Example usage
-plot_wall_shear()
+if __name__ == "__main__":
+    main()

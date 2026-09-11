@@ -73,7 +73,7 @@ where:
 - $\{\xi_i\}$ is called the **reduced basis (RB)**, and  
 - $\mathcal{V}_{N_h} = \text{span}\{\xi_1,\ldots,\xi_N\} \subset V_h$ is the corresponding **reduced space**.
 
-Once we have $\mathcal{V}_{N_h}$, we **project** the PDE onto this small subspace, flexible an $N \times N$ system for the coefficients $\{a_i(\mu)\}$. The computational cost then **scales with** $N$, not the large $N_h$.
+Once we have $\mathcal{V}_{N_h}$, we **project** the PDE onto this small subspace, yielding an $N \times N$ system for the coefficients $\{a_i(\mu)\}$. The computational cost then **scales with** $N$, not the large $N_h$.
 
 ### The Offline-Online Decomposition
 
@@ -194,10 +194,68 @@ This note explains how the solution manifold $\mathcal{M} = \{u_h(\mu) : \mu \in
 | **Inputs** | High-fidelity snapshots $\{u_h(\mu_i)\}$, desired basis size $N$, error tolerance |
 | **Outputs** | Reduced basis $\{\zeta_1, \dots, \zeta_N\}$, reduced system matrices, approximate solution $u_N(\mu) = \sum c_j \zeta_j$, error estimates |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/pod/main.py` | Extracts the POD basis from snapshots, implementing the offline phase of reduced-basis approximation. |
-| `scripts/algorithms/snapshot_pod/main.py` | Efficient snapshot-based basis extraction for high-dimensional CFD data. |
+- [Proper Orthogonal Decomposition (POD)](../../../scripts/algorithms/pod/): performs Proper Orthogonal Decomposition on a synthetic spatio-temporal field by taking the singular value decomposition of the mean-subtracted snapshot matrix.
+- [Snapshot Proper Orthogonal Decomposition (Snapshot POD)](../../../scripts/algorithms/snapshot_pod/): computes POD modes of a synthetic spatio-temporal field with the snapshot method, which solves an eigenvalue problem for the $M \times M$ temporal correlation matrix instead of the much larger $N \times N$ spatial one.
 
+## Exercises
+
+**Exercise 1.** A snapshot matrix has singular values $\sigma = (10, 4, 1.5, 0.5, 0.2)$. Choose $N$ so that $\sum_{i=1}^N\sigma_i^2$ is at least 99% and at least 99.9% of $\sum_i\sigma_i^2$.
+
+<details>
+<summary>Answer</summary>
+
+The squares are $100, 16, 2.25, 0.25, 0.04$, with total $118.54$. Cumulative fractions: $0.8436, 0.9786, 0.9976, 0.9997, 1$. So $N = 3$ for 99% and $N = 4$ for 99.9%.
+
+</details>
+
+**Exercise 2.** Consider the affine truth problem $\mathbf{A}(\mu)\mathbf{u} = \mathbf{F}$ with $\mathbf{A}(\mu) = \mathbf{A}_1 + \mu\mathbf{I}$, where
+
+$$
+\mathbf{A}_1 = \begin{pmatrix} 2 & -1 & 0 \\ -1 & 2 & -1 \\ 0 & -1 & 2 \end{pmatrix}, \qquad \mathbf{F} = (1, 1, 1)^\top,
+$$
+
+and the one-vector basis $\mathbf{Z} = (1, 1, 1)^\top/\sqrt{3}$. Precompute $\mathbf{Z}^\top\mathbf{A}_1\mathbf{Z}$, $\mathbf{Z}^\top\mathbf{Z}$ and $\mathbf{F}_r = \mathbf{Z}^\top\mathbf{F}$. Find the reduced solution at $\mu = 1$ and compare it with the truth.
+
+<details>
+<summary>Answer</summary>
+
+$\mathbf{A}_1\mathbf{Z} = (1, 0, 1)^\top/\sqrt{3}$, so $\mathbf{Z}^\top\mathbf{A}_1\mathbf{Z} = 2/3$. Also $\mathbf{Z}^\top\mathbf{Z} = 1$ and $\mathbf{F}_r = \sqrt{3}$. Online, $\mathbf{A}_r(\mu) = 2/3 + \mu$, so $a(1) = \sqrt{3}/(5/3) \approx 1.0392$ and $u_{N_h}(1) = a\mathbf{Z} = (0.6, 0.6, 0.6)$.
+
+The truth is $(\mathbf{A}_1 + \mathbf{I})^{-1}\mathbf{F} = (4/7, 5/7, 4/7) \approx (0.5714, 0.7143, 0.5714)$. The error norm is $0.1212$, about 11% relative. A constant vector cannot represent the peak in the middle.
+
+</details>
+
+**Exercise 3.** Build a two-vector basis from the snapshots at $\mu = 0$ and $\mu = 10$, orthonormalize it, and solve the reduced problem at $\mu = 1$. Explain why the error is zero to machine precision.
+
+<details>
+<summary>Answer</summary>
+
+The snapshots are $u_h(0) = \mathbf{A}_1^{-1}\mathbf{F} = (1.5, 2, 1.5)$ and $u_h(10) = (13/142, 7/71, 13/142) \approx (0.0915, 0.0986, 0.0915)$. After Gram–Schmidt the Galerkin system gives $u_{N_h}(1) = (4/7, 5/7, 4/7)$, equal to the truth.
+
+$\mathbf{A}(\mu)$ and $\mathbf{F}$ are unchanged by reversing the node order, so every truth solution is symmetric, $u = (p, q, p)$. These vectors form a two-dimensional subspace, and the two independent snapshots span it. The discrete solution manifold therefore lies entirely in $\mathcal{V}_{N_h}$. By quasi-optimality the Galerkin error is bounded by the best-approximation error, which is zero.
+
+</details>
+
+**Exercise 4.** Let $\mathbf{A}(\mu)$ be symmetric positive definite and let $a$ solve the Galerkin system $\mathbf{Z}^\top\mathbf{A}\mathbf{Z}a = \mathbf{Z}^\top\mathbf{F}$. Prove that $\mathbf{Z}a$ minimizes the energy-norm error, $\|u_h - \mathbf{Z}a\|_{\mathbf{A}} \le \|u_h - \mathbf{Z}b\|_{\mathbf{A}}$ for all $b$, where $\|v\|_{\mathbf{A}}^2 = v^\top\mathbf{A}v$.
+
+<details>
+<summary>Answer</summary>
+
+Galerkin orthogonality: $\mathbf{Z}^\top\mathbf{A}(u_h - \mathbf{Z}a) = \mathbf{Z}^\top\mathbf{F} - \mathbf{Z}^\top\mathbf{A}\mathbf{Z}a = 0$. For any $b$, write $u_h - \mathbf{Z}b = (u_h - \mathbf{Z}a) + \mathbf{Z}(a - b)$. Then
+
+$$
+\|u_h - \mathbf{Z}b\|_{\mathbf{A}}^2 = \|u_h - \mathbf{Z}a\|_{\mathbf{A}}^2 + 2(a - b)^\top\mathbf{Z}^\top\mathbf{A}(u_h - \mathbf{Z}a) + \|\mathbf{Z}(a - b)\|_{\mathbf{A}}^2 = \|u_h - \mathbf{Z}a\|_{\mathbf{A}}^2 + \|\mathbf{Z}(a - b)\|_{\mathbf{A}}^2.
+$$
+
+The last term is non-negative, which proves the claim. This is Céa's lemma with constant 1 in the energy norm, and it explains why the RB solution in Exercise 3 is exact.
+
+</details>
+
+## References
+
+- J. S. Hesthaven, G. Rozza and B. Stamm, *Certified Reduced Basis Methods for Parametrized Partial Differential Equations*, Springer, 2016.
+- A. Quarteroni, A. Manzoni and F. Negri, *Reduced Basis Methods for Partial Differential Equations: An Introduction*, Springer, 2016.
+- G. Rozza, D. B. P. Huynh and A. T. Patera, "Reduced basis approximation and a posteriori error estimation for affinely parametrized elliptic coercive partial differential equations", *Archives of Computational Methods in Engineering* 15(3), 2008.
+- P. Benner, S. Gugercin and K. Willcox, "A survey of projection-based model reduction methods for parametric dynamical systems", *SIAM Review* 57(4), 2015.

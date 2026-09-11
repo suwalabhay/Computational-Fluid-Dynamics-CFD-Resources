@@ -1,38 +1,97 @@
+"""Compare mock experimental and CFD mean pressure coefficients along a centreline.
+
+The data are synthetic. A smooth base curve C_P(x) is given a flat separation
+plateau between x_sep and x_reat for the "experiment"; the "CFD SRS" curve has
+a weaker plateau and small seeded noise. The plot mimics a validation figure in
+which the simulation under-predicts the separation plateau.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Generate mock data for the plot
-x = np.linspace(-1, 4, 50)
-exp = -0.2 * np.sin(x) - 0.1 * np.cos(2 * x)
-cfd = exp + 0.05 * np.random.normal(size=x.size)
+SEED = 0
+N_POINTS = 50
+X_MIN, X_MAX = -1.0, 4.0  # streamwise extent (m)
+X_SEP, X_REAT = 2.7, 3.5  # plateau start and end (m)
+BLEND_WIDTH = 0.08  # smoothing length of the plateau edges (m)
+CFD_PLATEAU_STRENGTH = 0.4  # fraction of the experimental plateau seen in CFD
+CFD_NOISE = 0.01  # standard deviation of the CFD scatter
 
-# Create the plot
-fig, ax = plt.subplots(figsize=(10, 6))
 
-# Plot the experimental data
-ax.plot(x, exp, "o-", label="Exp", color="black")
+def base_cp(x):
+    """Smooth mock pressure distribution without separation."""
+    return -0.2 * np.sin(x) - 0.1 * np.cos(2 * x)
 
-# Plot the CFD simulation data
-ax.plot(x, cfd, "o-", label="CFD SRS", color="cyan")
 
-# Add labels and title
-ax.set_xlabel("x [m]")
-ax.set_ylabel("$C_P$ [-]")
-ax.set_title(
-    "Mean pressure coefficient, upper-body centreline\nUpperbody Centerline (y = 0m)"
-)
-ax.legend()
+def plateau_weight(x):
+    """Smooth indicator equal to ~1 on [X_SEP, X_REAT] and ~0 elsewhere."""
+    rise = 1.0 / (1.0 + np.exp(-(x - X_SEP) / BLEND_WIDTH))
+    fall = 1.0 / (1.0 + np.exp(-(X_REAT - x) / BLEND_WIDTH))
+    return rise * fall
 
-# Highlight specific area
-ax.annotate(
-    "Separation plateau less\npronounced in simulation",
-    xy=(3, 0.3),
-    xytext=(2.5, 0.6),
-    arrowprops=dict(facecolor="blue", shrink=0.05),
-    fontsize=10,
-    color="blue",
-)
 
-# Show the plot
-plt.tight_layout()
-plt.show()
+def mock_cp(x, plateau_strength, noise, rng):
+    """Base curve blended towards the constant C_P(X_SEP) inside the plateau."""
+    w = plateau_strength * plateau_weight(x)
+    cp = (1.0 - w) * base_cp(x) + w * base_cp(X_SEP)
+    return cp + noise * rng.normal(size=x.size)
+
+
+def make_figure(seed=SEED):
+    rng = np.random.default_rng(seed)
+    x = np.linspace(X_MIN, X_MAX, N_POINTS)
+    exp = mock_cp(x, 1.0, 0.0, rng)
+    cfd = mock_cp(x, CFD_PLATEAU_STRENGTH, CFD_NOISE, rng)
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(x, exp, "o-", label="Exp", color="black")
+    ax.plot(x, cfd, "o-", label="CFD SRS", color="cyan")
+    ax.axvspan(X_SEP, X_REAT, color="gray", alpha=0.1)
+
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("$C_P$ [-]")
+    ax.set_title("Mean pressure coefficient\nUpper-body centreline (y = 0 m)")
+    ax.legend()
+
+    x_note = 0.5 * (X_SEP + X_REAT)
+    ax.annotate(
+        "Separation plateau less\npronounced in simulation",
+        xy=(x_note, base_cp(X_SEP)),
+        xytext=(1.2, 0.15),
+        arrowprops=dict(facecolor="blue", shrink=0.05),
+        fontsize=10,
+        color="blue",
+    )
+    fig.tight_layout()
+    return fig
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = make_figure()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "mean_pressure_coefficient.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

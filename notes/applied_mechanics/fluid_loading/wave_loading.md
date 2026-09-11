@@ -165,29 +165,31 @@ where $f_0$ is the mean zero-crossing frequency of the force process.
 
 **Solution:**
 
-Wave number from dispersion relation (iterative): $k \approx 0.042$ m⁻¹, $\lambda \approx 150$ m.
+Wave number from dispersion relation (iterative): $k \approx 0.0518$ m⁻¹, $\lambda \approx 121$ m ($kd \approx 1.04$, intermediate depth).
 
-Check slenderness: $D/\lambda = 2/150 = 0.013 < 0.2$ — Morison equation applies.
+Check slenderness: $D/\lambda = 2/121 = 0.017 < 0.2$ — Morison equation applies.
 
 Maximum velocity at $z = 0$:
 
-$$u_{max} = \frac{\pi H}{T} \frac{1}{\tanh kd} = \frac{\pi \times 6}{10} \times \frac{1}{\tanh(0.84)} = 1.885 \times 1.34 = 2.53 \text{ m/s}$$
+$$u_{max} = \frac{\pi H}{T} \frac{1}{\tanh kd} = \frac{\pi \times 6}{10} \times \frac{1}{\tanh(1.04)} = 1.885 \times 1.288 = 2.43 \text{ m/s}$$
 
 Maximum acceleration at $z = 0$:
 
-$$\dot{u}_{max} = \frac{2\pi^2 H}{T^2} \frac{1}{\tanh kd} = \frac{2\pi^2 \times 6}{100} \times 1.34 = 1.59 \text{ m/s}^2$$
+$$\dot{u}_{max} = \frac{2\pi^2 H}{T^2} \frac{1}{\tanh kd} = \frac{2\pi^2 \times 6}{100} \times 1.288 = 1.53 \text{ m/s}^2$$
 
-Inertia force (integrated over depth, assuming linear variation):
+Inertia force (integrated over depth; the $\cosh k(z+d)$ profile integrates to a factor $\tanh(kd)/(kd)$):
 
-$$F_I = \rho \frac{\pi D^2}{4} C_M \dot{u}_{max} \frac{\tanh kd}{kd} d \approx 1025 \times 3.14 \times 2.0 \times 1.59 \times 0.655 \times 20 \approx 134 \text{ kN}$$
+$$F_I = \rho \frac{\pi D^2}{4} C_M \dot{u}_{max} \frac{\tanh kd}{kd} d \approx 1025 \times 3.14 \times 2.0 \times 1.53 \times 0.749 \times 20 \approx 147 \text{ kN}$$
 
 Drag force (integrated, simplified):
 
-$$F_D \approx \frac{1}{2}\rho D C_D u_{max}^2 \frac{d}{2} \approx 0.5 \times 1025 \times 2 \times 1.0 \times 6.40 \times 10 \approx 65.6 \text{ kN}$$
+$$F_D \approx \frac{1}{2}\rho D C_D u_{max}^2 \frac{d}{2} \approx 0.5 \times 1025 \times 2 \times 1.0 \times 5.89 \times 10 \approx 60 \text{ kN}$$
 
-Maximum inertia and maximum drag do not occur simultaneously (90° phase difference). The peak combined force is found by maximising over the wave phase. For this case (inertia-dominated, $KC \approx 12.7$) the maximum total force is approximately:
+(Integrating the $\cosh^2 k(z+d)$ profile exactly gives $F_D \approx 69$ kN.)
 
-$$F_{max} \approx 140 \text{ kN}$$
+Maximum inertia and maximum drag do not occur simultaneously (90° phase difference). Writing $F(\phi) = F_I \sin\phi + F_D |\cos\phi| \cos\phi$, the peak equals $F_I$ whenever $F_D \leq F_I/2$, which holds here (inertia-dominated, $KC \approx 12.1$):
+
+$$F_{max} \approx 147 \text{ kN}$$
 
 ## Worked Example 2: Diffraction Check
 
@@ -221,7 +223,7 @@ Numerical integration of $S_F(\omega) = |H_F(\omega)|^2 S(\omega)$ over frequenc
 
 Mean zero-crossing frequency: $f_0 \approx 0.11$ Hz (close to the spectral peak).
 
-$$F_{max} \approx 55 \sqrt{2\ln(0.11 \times 10800)} = 55 \times 3.81 \approx 210 \text{ kN}$$
+$$F_{max} \approx 55 \sqrt{2\ln(0.11 \times 10800)} = 55 \times 3.76 \approx 207 \text{ kN}$$
 
 ## Applications in Offshore Engineering
 
@@ -261,3 +263,80 @@ $$F_{max} \approx 55 \sqrt{2\ln(0.11 \times 10800)} = 55 \times 3.81 \approx 210
 - Current stretching methods (e.g., Hedges, Wheeler) extend kinematics to the instantaneous surface
 
 Wave loading analysis is the cornerstone of offshore structural design, connecting oceanographic data to engineering forces that drive member sizing, foundation design, and fatigue life prediction.
+
+## Related Scripts
+
+- [Froude Number vs. Flow Velocity](../../../scripts/plots/froude_number/): plots the length-based Froude number $Fr = U/\sqrt{gL}$ against speed for hulls of 5, 10, 15, and 20 m, with reference lines at hull speed and at the approximate start of planing.
+- [Ship Hull in Water](../../../scripts/plots/ship_hull_in_water/): draws a side-view sketch of a ship hull sitting in a sinusoidal free-surface wave and annotates it with the Froude number $Fr = U/\sqrt{gL}$.
+
+## Exercises
+
+**Exercise 1.** For a wave of period $T = 8$ s, find the deep-water wavelength and phase speed, and check whether a water depth of 60 m counts as deep water.
+
+<details>
+<summary>Answer</summary>
+
+$$\lambda_0 = \frac{gT^2}{2\pi} = \frac{9.81 \times 64}{2\pi} = 99.9 \text{ m}, \quad c = \frac{\lambda_0}{T} = 12.5 \text{ m/s}$$
+
+$d/\lambda_0 = 60/99.9 = 0.60 > 0.5$, so the deep-water approximation is valid.
+
+</details>
+
+**Exercise 2.** The same 8 s wave travels into water 15 m deep. Solve the dispersion relation for $k$ and $\lambda$, classify the depth, and compare with the deep-water and shallow-water estimates.
+
+<details>
+<summary>Answer</summary>
+
+Solving $\omega^2 = gk\tanh(kd)$ with $\omega = 0.785$ rad/s and $d = 15$ m numerically (Newton or fixed-point iteration) gives $k = 0.0768$ m⁻¹ and $\lambda = 81.8$ m.
+
+$d/\lambda = 0.18$ lies between 0.05 and 0.5, so this is intermediate depth. The deep-water value (99.9 m) and the shallow-water value $T\sqrt{gd} = 97.0$ m both overestimate the wavelength by about 20%, so the full relation is needed.
+
+</details>
+
+**Exercise 3.** A deep-water wave has $H = 4$ m and $T = 8$ s. Find the surface particle velocity amplitude and the Keulegan-Carpenter number for a 1 m diameter leg and a 0.3 m diameter brace. Which force component dominates on each?
+
+<details>
+<summary>Answer</summary>
+
+In deep water the factor $\cosh k(z+d)/\sinh kd \to 1$ at the surface, so $u_{max} = \pi H/T = 1.57$ m/s.
+
+- Leg: $KC = u_{max}T/D = 1.57 \times 8/1 = 12.6$. This lies between the regimes, so both inertia and drag matter.
+- Brace: $KC = 12.57/0.3 = 41.9 > 25$, so the brace is drag-dominated.
+
+</details>
+
+**Exercise 4.** For the 1 m leg of Exercise 3 at the still-water level ($C_M = 2$, $C_D = 1$, $\rho = 1025$ kg/m³), find the inertia and drag force amplitudes per unit length. Show that when $F_D \geq F_I/2$ the peak of $F_I\sin\phi + F_D|\cos\phi|\cos\phi$ is $F_D + F_I^2/(4F_D)$, and evaluate it.
+
+<details>
+<summary>Answer</summary>
+
+$\dot{u}_{max} = 2\pi^2H/T^2 = 1.234$ m/s², so
+
+$$F_I = 1025 \times \frac{\pi}{4} \times 2 \times 1.234 = 1986 \text{ N/m}, \quad F_D = 0.5 \times 1025 \times 1 \times 1.571^2 = 1265 \text{ N/m}$$
+
+For $\cos\phi > 0$, $dF/d\phi = \cos\phi\,(F_I - 2F_D\sin\phi) = 0$ gives $\sin\phi = F_I/(2F_D)$, which is only possible if $F_D \geq F_I/2$. Substituting back:
+
+$$F_{max} = \frac{F_I^2}{2F_D} + F_D\left(1 - \frac{F_I^2}{4F_D^2}\right) = F_D + \frac{F_I^2}{4F_D} = 1265 + 780 = 2045 \text{ N/m}$$
+
+This occurs at $\phi = 51.8^\circ$. If $F_D < F_I/2$, the peak is simply $F_I$.
+
+</details>
+
+**Exercise 5.** A spectral analysis gives a force standard deviation $\sigma_F = 40$ kN with mean zero-crossing frequency $f_0 = 0.15$ Hz. Estimate the most probable maximum force in a 3-hour storm. For comparison, what individual design wave height corresponds to $H_s = 6$ m?
+
+<details>
+<summary>Answer</summary>
+
+$$F_{max} \approx 40\sqrt{2\ln(0.15 \times 10\,800)} = 40\sqrt{2 \times 7.39} = 40 \times 3.84 = 154 \text{ kN}$$
+
+The deterministic design wave is $H_{max} \approx 1.86H_s = 11.2$ m.
+
+</details>
+
+## References
+
+- T. Sarpkaya, M. Isaacson, *Mechanics of Wave Forces on Offshore Structures*, Van Nostrand Reinhold, 1981.
+- R. G. Dean, R. A. Dalrymple, *Water Wave Mechanics for Engineers and Scientists*, World Scientific, 1991.
+- O. M. Faltinsen, *Sea Loads on Ships and Offshore Structures*, Cambridge University Press, 1990.
+- S. K. Chakrabarti, *Hydrodynamics of Offshore Structures*, Computational Mechanics Publications, 1987.
+- J. R. Morison, M. P. O'Brien, J. W. Johnson, S. A. Schaaf, "The force exerted by surface waves on piles", *Petroleum Transactions, AIME* 189, 1950.

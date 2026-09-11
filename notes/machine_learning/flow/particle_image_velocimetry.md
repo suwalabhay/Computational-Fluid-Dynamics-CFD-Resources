@@ -179,3 +179,76 @@ ASCII Diagram: Pattern Recognition
 - **Real-time analysis** becomes feasible when lightweight models run on GPUs, enabling adaptive experiments with on-the-fly parameter adjustments.
 - **Multi-modal data fusion** enriches flow understanding by combining PIV with temperature, pressure, or concentration measurements through learned correlations.
 - **Physical consistency** must be enforced during training to ensure that ML predictions respect conservation laws and produce physically meaningful results.
+
+### Exercises
+
+**Exercise 1.** The correlation peak in an interrogation window is at $\mathbf{s}^* = (6.4, -1.2)$ pixels. The magnification is 25 µm per pixel and the frames are 500 µs apart. Compute the velocity components.
+
+<details>
+<summary>Answer</summary>
+
+Convert pixels to metres, then divide by $\Delta t = 5 \times 10^{-4}$ s:
+
+$$u = \frac{6.4 \times 25 \times 10^{-6}}{5 \times 10^{-4}} = 0.32 \text{ m/s}, \qquad v = \frac{-1.2 \times 25 \times 10^{-6}}{5 \times 10^{-4}} = -0.06 \text{ m/s}.$$
+
+</details>
+
+**Exercise 2.** A common PIV guideline (the "one-quarter rule") keeps the particle displacement below one quarter of the interrogation window. For 32-pixel windows, 25 µm per pixel and a maximum flow speed of 2 m/s, what is the largest allowed $\Delta t$? With that $\Delta t$, a slow region moves at 0.2 m/s. If the correlation peak can be located to about 0.1 px, what is the relative velocity error there?
+
+<details>
+<summary>Answer</summary>
+
+The maximum displacement is $32/4 = 8$ px, or $2 \times 10^{-4}$ m, so $\Delta t_{\max} = 2 \times 10^{-4} / 2 = 1.0 \times 10^{-4}$ s (100 µs).
+
+In the slow region the displacement is only 0.8 px, so a 0.1 px uncertainty is a 12.5% velocity error.
+
+This dynamic-range trade-off is one of the parameter choices the note suggests ML could help optimize, for example by using adaptive windows or different time separations in different regions.
+
+</details>
+
+**Exercise 3.** A 1D version of the correlation integral uses intensity profiles $I_1 = (0, 1, 3, 1, 0, 0, 0, 0, 0)$ and $I_2 = (0, 0, 0, 1, 2.5, 2, 0.5, 0, 0)$. Compute $R(s) = \sum_i I_1(i)\, I_2(i + s)$ for $s = 0, \dots, 4$, find the integer peak, and refine it with the three-point Gaussian estimator $\varepsilon = \frac{\ln R_{-} - \ln R_{+}}{2(\ln R_{-} - 2\ln R_0 + \ln R_{+})}$.
+
+<details>
+<summary>Answer</summary>
+
+$R(0) = 1.0$, $R(1) = 5.5$, $R(2) = 10.5$, $R(3) = 9.0$, $R(4) = 3.5$. The integer peak is at $s = 2$.
+
+With $R_- = 5.5$, $R_0 = 10.5$ and $R_+ = 9.0$:
+
+$$\varepsilon = \frac{\ln 5.5 - \ln 9.0}{2(\ln 5.5 - 2\ln 10.5 + \ln 9.0)} \approx 0.31,$$
+
+so $s^* \approx 2.31$ px.
+
+The sub-pixel shift towards $s = 3$ reflects the skewed particle image in $I_2$. An ML model trained end-to-end has to learn this kind of sub-pixel accuracy from data.
+
+</details>
+
+**Exercise 4.** A CNN predicts a planar PIV field on a 1 mm grid. Around one node the neighbouring values are $u_{i+1,j} = 0.52$, $u_{i-1,j} = 0.48$, $v_{i,j+1} = 0.11$ and $v_{i,j-1} = 0.13$ m/s. Compute the in-plane divergence with central differences. Should a divergence-free penalty force it to zero?
+
+<details>
+<summary>Answer</summary>
+
+$\partial u/\partial x \approx (0.52 - 0.48)/0.002 = 20$ s$^{-1}$ and $\partial v/\partial y \approx (0.11 - 0.13)/0.002 = -10$ s$^{-1}$, so the in-plane divergence is $10$ s$^{-1}$, about a third of the gradient magnitudes.
+
+For planar (2D2C) PIV of a three-dimensional flow, incompressibility only requires $\partial u/\partial x + \partial v/\partial y = -\partial w/\partial z$, and the out-of-plane gradient is not measured. A hard 2D divergence-free constraint is only appropriate for genuinely two-dimensional flows. Otherwise it should be a weak penalty, or the constraint should be applied to stereo or volumetric data where all three components are available.
+
+</details>
+
+**Exercise 5.** An ensemble of five networks predicts $u = 0.31, 0.33, 0.30, 0.34, 0.32$ m/s at one vector location. Report the ensemble estimate and its spread, and state which sources of uncertainty the spread does not capture.
+
+<details>
+<summary>Answer</summary>
+
+The mean is $0.32$ m/s. The sample standard deviation is $\sqrt{\sum (u_i - 0.32)^2 / 4} = \sqrt{0.001/4} \approx 0.016$ m/s, about 4.9% of the mean.
+
+The spread measures model (epistemic) disagreement only. It misses bias shared by all members (for example, from synthetic training images that differ from the real optics), random measurement noise in the images, and errors from out-of-distribution seeding densities that all members handle equally badly. It should be calibrated against cases with known ground truth.
+
+</details>
+
+### References
+
+- Raffel, M., Willert, C. E., Wereley, S. T., & Kompenhans, J., *Particle Image Velocimetry: A Practical Guide*, 2nd ed., Springer, 2007.
+- Adrian, R. J., & Westerweel, J., *Particle Image Velocimetry*, Cambridge University Press, 2011.
+- Willert, C. E., & Gharib, M., "Digital particle image velocimetry", *Experiments in Fluids* 10(4), 1991.
+- Keane, R. D., & Adrian, R. J., "Theory of cross-correlation analysis of PIV images", *Applied Scientific Research* 49(3), 1992.
+- Brunton, S. L., Noack, B. R., & Koumoutsakos, P., "Machine Learning for Fluid Mechanics", *Annual Review of Fluid Mechanics* 52, 2020.

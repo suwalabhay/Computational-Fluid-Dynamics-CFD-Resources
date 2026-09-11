@@ -1,42 +1,97 @@
-import numpy as np
+"""Compare model numerical solutions u_N(x) with the exact solution exp(-x).
+
+Plots u_N(x) = exp(-x (1 + x / N)) for N = 4, 8 and 16 against u(x) = exp(-x)
+on [0, 1] and prints the maximum error for each N, which halves as N doubles.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+N_VALUES = [4, 8, 16]  # grid resolution parameters
+N_FINE = 100  # points used to draw the curves
+X_DISCRETE = np.array([0, 0.25, 0.5, 0.75, 1])  # marker locations
+LINE_STYLES = {4: "r-", 8: "b--", 16: "m:"}
+MARKER_COLORS = {4: "red", 8: "blue", 16: "magenta"}
+
+
+def exact_solution(x):
+    """Exact solution u(x) = exp(-x)."""
+    return np.exp(-x)
 
 
 def numerical_solution(N, x):
-    """Compute a numerical approximation for the given x values and parameter N."""
+    """Model numerical solution u_N(x) = exp(-x (1 + x / N))."""
     return np.exp(-x * (1 + x / N))
 
 
-# Generate fine grid points for smoother curves
-x_fine = np.linspace(0, 1, 100)
+def max_errors(n_values, x):
+    """Maximum of |u(x) - u_N(x)| over x for each N."""
+    return {
+        N: np.max(np.abs(exact_solution(x) - numerical_solution(N, x)))
+        for N in n_values
+    }
 
-# Calculate exact solution
-u_exact_fine = np.exp(-x_fine)
 
-# Calculate numerical solutions for different N values
-N_values = [4, 8, 16]
-u_n_fine = {N: numerical_solution(N, x_fine) for N in N_values}
+def plot_comparison(x_fine, n_values):
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(x_fine, exact_solution(x_fine), label="Exact solution", color="black")
 
-# Create the plot with corrected numerical solutions
-plt.figure(figsize=(8, 6))
-plt.plot(x_fine, u_exact_fine, label="Exact solution", color="black")
+    for N in n_values:
+        ax.plot(x_fine, numerical_solution(N, x_fine), LINE_STYLES[N], label=f"N={N}")
+        ax.scatter(
+            X_DISCRETE, numerical_solution(N, X_DISCRETE), color=MARKER_COLORS[N]
+        )
 
-colors = {4: "r-", 8: "b--", 16: "m:"}
-for N, color in colors.items():
-    plt.plot(x_fine, u_n_fine[N], color, label=f"N={N}")
+    ax.set_xlabel("x")
+    ax.set_ylabel("u")
+    ax.legend()
+    ax.set_title("Comparison of Numerical and Exact Solutions")
+    ax.grid(True)
+    return fig
 
-# Calculate scatter points for discrete solutions
-x_discrete = np.array([0, 0.25, 0.5, 0.75, 1])
-u_n_discrete = {N: numerical_solution(N, x_discrete) for N in N_values}
 
-# Plot scatter points
-scatter_colors = {4: "red", 8: "blue", 16: "magenta"}
-for N, color in scatter_colors.items():
-    plt.scatter(x_discrete, u_n_discrete[N], color=color)
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    return parser.parse_args(argv)
 
-plt.xlabel("x")
-plt.ylabel("u")
-plt.legend()
-plt.title("Comparison of Numerical and Exact Solutions")
-plt.grid(True)
-plt.show()
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    x_fine = np.linspace(0, 1, N_FINE)
+    errors = max_errors(N_VALUES, x_fine)
+    previous = None
+    for N, error in errors.items():
+        ratio = (
+            ""
+            if previous is None
+            else f"  (ratio to previous N: {previous / error:.2f})"
+        )
+        print(f"N = {N:2d}: max |u - u_N| = {error:.5f}{ratio}")
+        previous = error
+
+    fig = plot_comparison(x_fine, N_VALUES)
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(
+            out_dir / "comparing_grid_convergence.png", dpi=100, bbox_inches="tight"
+        )
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

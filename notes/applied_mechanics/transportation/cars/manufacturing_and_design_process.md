@@ -252,3 +252,78 @@ Lightweight, sustainable materials reduce vehicle weight and can enhance aerodyn
 
 - **Carbon Fiber Composites**: Offer high strength-to-weight ratios but can be expensive.
 - **Recycled Materials**: Using recycled plastics and metals supports sustainability efforts.
+
+## Exercises
+
+**Exercise 1.** A car has drag coefficient $C_D = 0.30$ and frontal area $A = 2.2$ m². Find the aerodynamic drag force and the power needed to overcome it at 120 km/h in still sea-level air ($\rho = 1.225$ kg/m³). How does the power change at 140 km/h?
+
+<details>
+<summary>Answer</summary>
+
+$V = 33.3$ m/s.
+
+$$D = \tfrac{1}{2}\rho V^2 C_D A = 0.5 \times 1.225 \times 33.3^2 \times 0.30 \times 2.2 = 449 \text{ N}, \quad P = DV = 15.0 \text{ kW}$$
+
+Power scales with $V^3$, so at 140 km/h it is $15.0 \times (140/120)^3 = 23.8$ kW, 59% more for a 17% higher speed.
+
+</details>
+
+**Exercise 2.** An electric version of the car in Exercise 1 is restyled to reduce $C_D$ from 0.30 to 0.25. Estimate the aerodynamic energy consumed per 100 km at a steady 120 km/h before and after, in kWh. Why does aerodynamics matter more for EV range than it once did for combustion cars?
+
+<details>
+<summary>Answer</summary>
+
+Energy equals drag force times distance, with $10^5$ m per 100 km.
+
+- $C_D = 0.30$: $449 \times 10^5$ J $= 44.9$ MJ $= 12.5$ kWh
+- $C_D = 0.25$: $374 \times 10^5$ J $= 10.4$ kWh
+
+The restyle saves about 2.1 kWh per 100 km, before drivetrain losses. An EV's drivetrain is very efficient, so aerodynamic drag is a larger share of its total highway consumption, and every kWh saved extends range from an expensive, heavy battery.
+
+</details>
+
+**Exercise 3.** A 1:4 scale model of a 4.5 m car is to be tested in a wind tunnel at the Reynolds number of the full-size car at 100 km/h. What tunnel speed is needed, and what problems does this create? Why do manufacturers use full-scale tunnels with moving ground belts?
+
+<details>
+<summary>Answer</summary>
+
+Matching $Re$ with a length one quarter as large requires 4 times the speed: $4 \times 27.8 = 111$ m/s ($M \approx 0.33$), where compressibility starts to affect the results. Loads and power on the tunnel fan also rise steeply.
+
+Full-scale tunnels match $Re$ at the real speed and can include details such as cooling flow and wheel rotation. A moving belt reproduces the relative motion between the car and the road, which strongly affects underbody flow and lift.
+
+</details>
+
+**Exercise 4.** A rear wing on a sports car produces a lift coefficient of $-0.30$ (downforce) and adds $\Delta C_D = 0.03$, both based on a reference area of 2.0 m². At 200 km/h, find the downforce, the added drag and the added power. Discuss the trade-off.
+
+<details>
+<summary>Answer</summary>
+
+$q = \tfrac{1}{2}(1.225)(55.6)^2 = 1890$ Pa.
+
+- Downforce: $1890 \times 0.30 \times 2.0 = 1134$ N
+- Added drag: $1890 \times 0.03 \times 2.0 = 113$ N
+- Added power: $113 \times 55.6 = 6.3$ kW
+
+The downforce adds grip without adding mass (about 116 kg of equivalent load), which improves cornering and braking stability. It costs top speed and fuel or energy, which is why active spoilers deploy only when needed.
+
+</details>
+
+**Exercise 5.** At road speeds up to 250 km/h, justify simplifying the continuity equation in these notes to $\nabla \cdot \mathbf{v} = 0$. Estimate the Reynolds number of a 4.5 m car at 40 m/s and explain what it implies for the CFD modelling approach.
+
+<details>
+<summary>Answer</summary>
+
+At 250 km/h (69.4 m/s), $M = 69.4/340 = 0.20 < 0.3$. Density changes are below about 2%, so $\rho$ can be taken as constant and continuity reduces to $\nabla \cdot \mathbf{v} = 0$.
+
+$$Re = \frac{1.225 \times 40 \times 4.5}{1.79 \times 10^{-5}} = 1.2 \times 10^7$$
+
+The flow is turbulent with thin boundary layers and large separated wakes. Resolving every eddy (DNS) is out of reach, so vehicle CFD uses RANS turbulence models or, for more accurate wakes, hybrid RANS–LES methods. These need fine near-wall meshes and validation against wind tunnel data.
+
+</details>
+
+## References
+
+- Hucho, W.-H. (ed.), *Aerodynamics of Road Vehicles*, 4th ed., SAE International, 1998.
+- Katz, J., *Race Car Aerodynamics: Designing for Speed*, Bentley Publishers, 1995.
+- Barnard, R. H., *Road Vehicle Aerodynamic Design*, 3rd ed., MechAero Publishing, 2009.
+- Ferziger, J. H., and Perić, M., *Computational Methods for Fluid Dynamics*, 3rd ed., Springer, 2002.

@@ -201,11 +201,7 @@ u_2 \\
 u_3 \\
 u_4
 \end{bmatrix}
-$$
-
 =
-
-$$
 \begin{bmatrix}
 1 \\
 0 \\
@@ -268,7 +264,7 @@ $$
 
 The figure below compares the discrete solution obtained on the four-point grid with the exact solution, showing that the error is largest at the right boundary (approximately 14.7%).
 
-![Graph comparing numerical and exact solutions](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/988eca8b-2ce4-4bdc-a58f-9588016d50d4)
+![Graph comparing numerical and exact solutions](../../../scripts/plots/numerical_vs_exact_solution/numerical_vs_exact_solution.png)
 
 ##### Practical Considerations
 
@@ -325,11 +321,89 @@ This note details the four-step CFD workflow: pre-processing (data structures, i
 | **Inputs** | Domain geometry, grid spacing $\Delta x$, boundary conditions (Dirichlet, Neumann), fluid properties, initial field values (velocity $U$, $V$, pressure $P$) |
 | **Outputs** | Discrete solution arrays ($u_1, u_2, \dots, u_N$), residual history, converged velocity and pressure fields, contour and vector plots |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/lid_driven_cavity/main.py` | End-to-end CFD solver demonstrating all four steps of the CFD process for the lid-driven cavity problem. |
-| `scripts/simulations/backward_facing_step_simple/main.py` | SIMPLE-based solver showing pre-processing setup, iterative solving, residual monitoring, and post-processing visualization. |
-| `scripts/plots/numerical_vs_exact_solution/main.py` | Compares numerical and exact solutions, illustrating the accuracy discussion in Step 3. |
-| `scripts/plots/comparing_grid_convergence/main.py` | Demonstrates grid convergence by plotting solutions at different grid resolutions. |
+- [Backward-Facing Step Flow (SIMPLE Algorithm)](../../../scripts/simulations/backward_facing_step_simple/): solves steady 2D laminar incompressible flow over a backward-facing step with the finite volume method and the SIMPLE pressure–velocity coupling algorithm.
+- [Grid Convergence Comparison](../../../scripts/plots/comparing_grid_convergence/): illustrates grid convergence by plotting the model numerical solutions $u_N(x) = e^{-x(1 + x/N)}$ for $N = 4, 8, 16$ against the exact solution $u(x) = e^{-x}$ on $[0, 1]$.
+- [Lid-Driven Cavity Flow Simulation](../../../scripts/simulations/lid_driven_cavity/): solves the 2D incompressible Navier-Stokes equations for flow in a square cavity driven by a moving lid at a Reynolds number of 100 and animates the velocity field.
+- [Mean Velocity Magnitude: Experiment vs CFD Comparison](../../../scripts/plots/mean_velocity_magnitude/): plots a mock experimental profile and a mock CFD scale-resolving simulation (SRS) profile of the normalised mean velocity magnitude $|U|/U_0$ along an under-body centreline.
+- [Numerical vs. Exact Solution Comparison](../../../scripts/plots/numerical_vs_exact_solution/): solves $du/dx + u = 0$ with $u(0) = 1$ by a first-order finite-difference scheme and compares the result with the exact solution $u(x) = e^{-x}$, plotting the pointwise error.
+
+## Exercises
+
+**Exercise 1.** Repeat the example $\frac{\partial u}{\partial x} + u = 0$, $u_1 = 1$, with the same backward difference on a 5-point grid ($\Delta x = 1/4$). Give all nodal values and the percentage error at $x = 1$.
+
+<details>
+<summary>Answer</summary>
+
+Each equation $-u_{i-1} + (1 + \Delta x)u_i = 0$ gives $u_i = u_{i-1}/1.25$.
+
+$u = (1, 0.8, 0.64, 0.512, 0.4096)$.
+
+The exact value is $e^{-1} \approx 0.3679$, so the error at $x = 1$ is $(0.4096 - 0.3679)/0.3679 \approx 11.3\%$, down from 14.7% on the 4-point grid.
+
+</details>
+
+**Exercise 2.** The discrete solution at $x = 1$ is $u_N = (1 + \Delta x)^{-(N-1)}$. Compute the error at $x = 1$ for $N = 4$, 8 and 16 ($\Delta x = 1/3$, $1/7$, $1/15$) and the observed order of accuracy $p = \ln(e_1/e_2)/\ln(\Delta x_1/\Delta x_2)$ between successive grids.
+
+<details>
+<summary>Answer</summary>
+
+$u_4 = 0.421875$, $u_8 \approx 0.392696$ and $u_{16} \approx 0.379812$.
+
+The errors are $0.05400$, $0.02482$ and $0.01193$.
+
+$p \approx \ln(0.05400/0.02482)/\ln(7/3) \approx 0.92$, then $p \approx \ln(0.02482/0.01193)/\ln(15/7) \approx 0.96$.
+
+$p$ approaches 1, the formal order of the backward difference. This is what a grid-convergence study should show before the solution is called grid converged.
+
+</details>
+
+**Exercise 3.** Use the solutions at $x = 1$ on grids with $\Delta x = 1/4$, $1/8$ and $1/16$ ($N = 5$, 9, 17) for Richardson extrapolation with refinement ratio $r = 2$. Compute the observed order and the extrapolated value, and compare with the extrapolation that assumes $p = 1$.
+
+<details>
+<summary>Answer</summary>
+
+$f_3 = 0.409600$ (coarse), $f_2 \approx 0.389744$ and $f_1 \approx 0.379085$ (fine).
+
+$$p = \frac{\ln\left((f_3 - f_2)/(f_2 - f_1)\right)}{\ln 2} \approx 0.90, \qquad f_{\text{ext}} = f_1 + \frac{f_1 - f_2}{2^p - 1} \approx 0.36673.$$
+
+This is within $-0.0011$ of $e^{-1} = 0.367879$, whereas the finest grid alone is off by $+0.0112$.
+
+With $p = 1$: $f_{\text{ext}} = 2f_1 - f_2 \approx 0.36843$, an error of $+0.00055$. Extrapolation cuts the error by a factor of 10 to 20 at no extra cost.
+
+</details>
+
+**Exercise 4.** Apply the five-point Laplacian with $\Delta x = \Delta y = h = 0.1$ to (a) $f = x^2 + y^2$ and (b) $f = x^4$ at the point $(1, 0)$. Compare with the exact values and explain the error in (b).
+
+<details>
+<summary>Answer</summary>
+
+(a) Each second difference of a quadratic is exact: $(f_{i+1,j} - 2f_{i,j} + f_{i-1,j})/h^2 = 2$ in each direction. The stencil gives $\nabla^2 f = 4$, which is exact.
+
+(b) Only the $x$ direction contributes: $((1.1)^4 + (0.9)^4 - 2)/0.01 = (1.4641 + 0.6561 - 2)/0.01 = 12.02$. The exact value is $12x^2 = 12$.
+
+The difference of 0.02 matches the leading truncation term $\frac{h^2}{12} f'''' = \frac{0.01}{12} \times 24 = 0.02$, which confirms second-order accuracy.
+
+</details>
+
+**Exercise 5.** A 2D problem with $N = 10^6$ unknowns uses the five-point stencil. Compare the memory to store $A$ as a dense matrix of doubles with a compressed sparse row (CSR) format using 8-byte values and 4-byte column indices and row pointers. What does this imply for the choice of solver?
+
+<details>
+<summary>Answer</summary>
+
+Dense: $10^{12}$ entries $\times$ 8 bytes $= 8$ TB.
+
+CSR: about $5 \times 10^6$ nonzeros, so $5 \times 10^6 \times (8 + 4)$ bytes for values and column indices plus $(10^6 + 1) \times 4$ bytes for row pointers, about 64 MB in total.
+
+Only sparse storage is feasible. Direct factorization creates fill-in that destroys sparsity, so large CFD systems are solved with iterative methods (CG, GMRES, multigrid) that only need matrix–vector products, as described in Step 3.
+
+</details>
+
+## References
+
+- Anderson, J. D., *Computational Fluid Dynamics: The Basics with Applications*, McGraw-Hill, 1995.
+- Versteeg, H. K., & Malalasekera, W., *An Introduction to Computational Fluid Dynamics: The Finite Volume Method*, 2nd ed., Pearson Education, 2007.
+- Ferziger, J. H., Perić, M., & Street, R. L., *Computational Methods for Fluid Dynamics*, 4th ed., Springer, 2020.
+- Roache, P. J., *Verification and Validation in Computational Science and Engineering*, Hermosa Publishers, 1998.
+- Saad, Y., *Iterative Methods for Sparse Linear Systems*, 2nd ed., SIAM, 2003.

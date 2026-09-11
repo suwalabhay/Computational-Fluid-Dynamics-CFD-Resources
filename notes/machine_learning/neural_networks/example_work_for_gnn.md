@@ -220,3 +220,78 @@ Deploying GNN-based surrogates in real-time sensitivity analyses or shape optimi
 - Diverse training datasets covering a wide range of geometries and flow conditions are essential for robust generalization.
 - Hybrid GNN–CFD workflows, where coarse simulations are selectively refined using GNN guidance, balance computational cost with prediction fidelity.
 - Careful architecture design—including message-passing scheme selection, residual connections, and pooling strategy—directly impacts both accuracy and scalability.
+
+### Exercises
+
+**Exercise 1.** In the message-passing update from the note, the hidden size is 64, the edge features $\mathbf{e}_{vu}$ have 3 components, and $\psi$ and $\phi$ are each a single linear layer with bias. $\psi$ takes $(\mathbf{h}_v, \mathbf{h}_u, \mathbf{e}_{vu})$; $\phi$ takes $\mathbf{h}_v$ and the 64-dimensional aggregated message. Count the parameters per layer and for $L = 10$ layers with unshared weights.
+
+<details>
+<summary>Answer</summary>
+
+$\psi$: input $64 + 64 + 3 = 131$, output 64, so $131 \times 64 + 64 = 8{,}448$ parameters.
+
+$\phi$: input $64 + 64 = 128$, output 64, so $128 \times 64 + 64 = 8{,}256$ parameters.
+
+That is 16,704 per layer and 167,040 for 10 layers. Real models use small MLPs for $\psi$ and $\phi$, which multiplies these numbers, but the count still does not depend on the mesh size.
+
+</details>
+
+**Exercise 2.** A volume mesh has a typical edge length of 5 mm near the car, and wake effects extend about 2 m downstream. How many message-passing layers would information need to cross 2 m? A multi-scale graph coarsens the edge length by a factor of 4 per level. What edge length does the fourth level have?
+
+<details>
+<summary>Answer</summary>
+
+$2/0.005 = 400$ hops, so 400 layers. A 10-layer GNN only reaches about 5 cm.
+
+After four coarsening levels the edge length is $0.005 \times 4^4 = 1.28$ m, so a few layers at that level span the whole wake. This is the motivation for the multi-scale graphs mentioned in the note.
+
+</details>
+
+**Exercise 3.** A node receives the messages 1, 4 and 2 from its neighbours. Compute the sum, mean and max aggregations. After mesh refinement every neighbour's message appears twice. Which aggregations change, and what does that imply for training on meshes of varying resolution?
+
+<details>
+<summary>Answer</summary>
+
+Before refinement: sum 7, mean 2.33, max 4.
+
+After duplication: sum 14, mean 2.33, max 4.
+
+Sum aggregation depends on node degree, and so on local mesh density, so a model trained on one resolution can fail on another. Mean and max do not change. Sum keeps information about how many neighbours there are, which can be useful, but mean or max (or normalized sums) are more robust to changes in resolution.
+
+</details>
+
+**Exercise 4.** A closed, triangulated car surface has $V = 500{,}000$ vertices. Use Euler's formula to estimate the number of undirected edges, then compute the memory for directed edges with 3 float32 features each and an int64 edge index.
+
+<details>
+<summary>Answer</summary>
+
+For a closed genus-0 triangulation, $V - E + F = 2$ and $3F = 2E$, so $E = 3V - 6 \approx 1.5 \times 10^6$ undirected edges.
+
+Message passing uses both directions, about $3 \times 10^6$ directed edges.
+
+Edge features: $3 \times 10^6 \times 3 \times 4$ bytes $= 36$ MB. Edge index: $3 \times 10^6 \times 2 \times 8$ bytes $= 48$ MB.
+
+Volume meshes with tens of millions of cells multiply this, which is why the note recommends region sampling or decimation.
+
+</details>
+
+**Exercise 5.** The pressure drag coefficient is $C_{D,p} = -\frac{1}{A_{\text{ref}}}\oint C_p\, n_x \, dA$, with outward normal $\mathbf{n}$ and flow in the $+x$ direction. A GNN predicts nodal $C_p$ with (a) a uniform bias of $+0.02$ over the whole surface, or (b) a bias of $+0.02$ only on the front-facing surfaces, whose projected frontal area equals $A_{\text{ref}}$. What error in $C_{D,p}$ does each case cause? Express (b) relative to $C_D = 0.31$.
+
+<details>
+<summary>Answer</summary>
+
+(a) $\Delta C_{D,p} = -\frac{0.02}{A_{\text{ref}}}\oint n_x\, dA = 0$, because $\oint \mathbf{n}\, dA = 0$ for any closed surface. A uniform bias cancels exactly.
+
+(b) On the front-facing surfaces $\int n_x\, dA = -A_{\text{ref}}$, so $\Delta C_{D,p} = -\frac{0.02}{A_{\text{ref}}}(-A_{\text{ref}}) = +0.02$. That is about 6.5% of $C_D = 0.31$.
+
+Local error maps matter more than average nodal error. Errors that are correlated with the direction of the surface normal cause the errors in integrated forces.
+
+</details>
+
+### References
+
+- Gilmer, J., Schütt, K. T., Riley, P. F., Vinyals, O., & Dahl, G. E., "Neural Message Passing for Quantum Chemistry", International Conference on Machine Learning (ICML), 2017.
+- Battaglia, P. W., et al., "Relational inductive biases, deep learning, and graph networks", arXiv:1806.01261, 2018.
+- Kipf, T. N., & Welling, M., "Semi-Supervised Classification with Graph Convolutional Networks", International Conference on Learning Representations (ICLR), 2017.
+- Hamilton, W. L., Ying, R., & Leskovec, J., "Inductive Representation Learning on Large Graphs", *Advances in Neural Information Processing Systems* 30, 2017.
+- Pfaff, T., Fortunato, M., Sanchez-Gonzalez, A., & Battaglia, P. W., "Learning Mesh-Based Simulation with Graph Networks", International Conference on Learning Representations (ICLR), 2021.

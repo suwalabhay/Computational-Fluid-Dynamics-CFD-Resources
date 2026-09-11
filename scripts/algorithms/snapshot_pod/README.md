@@ -1,49 +1,68 @@
 # Snapshot Proper Orthogonal Decomposition (Snapshot POD)
 
-This script implements the Snapshot POD method on synthetic spatio-temporal flow data. Unlike the direct SVD-based POD, the Snapshot POD computes modes by solving an eigenvalue problem in the smaller time domain, making it computationally efficient when the number of snapshots is much smaller than the number of spatial points.
+This script computes POD modes of a synthetic spatio-temporal field with the snapshot method, which solves an eigenvalue problem for the $M \times M$ temporal correlation matrix instead of the much larger $N \times N$ spatial one. It plots the three leading spatial modes next to their temporal eigenvectors and prints the share of fluctuation energy in each.
 
 ## Overview
 
-- Generates synthetic 3D spatio-temporal flow data using trigonometric functions.
-- Constructs a snapshot matrix and applies mean-subtraction to center the data.
-- Assembles and solves the temporal covariance eigenvalue problem to obtain time coefficients.
-- Recovers spatial modes by projecting the data onto the temporal eigenvectors and normalizes them.
-- Visualizes the leading modes and their time evolution side by side.
+- Generates the same synthetic field as the [POD script](../pod/README.md): three separable structures on a $50 \times 30$ grid with 100 time samples.
+- Builds the $1500 \times 100$ snapshot matrix and subtracts the temporal mean at every point.
+- Forms the $100 \times 100$ temporal correlation matrix $C_s$ and solves its symmetric eigenvalue problem with `numpy.linalg.eigh`.
+- Recovers the spatial modes by projecting the data onto the eigenvectors and normalises them to unit length.
+- Prints the energy fraction $\lambda_i / \sum_j \lambda_j$ of the first three modes.
+- Plots the first three spatial modes next to their temporal eigenvectors.
 
 ## Mathematical Background
 
-Given a centered snapshot matrix $\tilde{U} \in \mathbb{R}^{N \times M}$ (where $N$ is the number of spatial points and $M$ is the number of snapshots), the Snapshot POD forms the temporal covariance matrix:
+### Temporal Correlation Matrix
 
-$$C_s = \frac{1}{M-1} \tilde{U}^T \tilde{U} \in \mathbb{R}^{M \times M}$$
+For the mean-subtracted snapshot matrix $\tilde{U} \in \mathbb{R}^{N \times M}$, with $N$ spatial points and $M$ snapshots:
 
-The eigenvalue problem is then solved:
+$$
+C_s = \frac{1}{M-1} \tilde{U}^T \tilde{U} \in \mathbb{R}^{M \times M}.
+$$
 
-$$C_s \mathbf{a}_i = \lambda_i \mathbf{a}_i$$
+### Eigenvalue Problem
 
-where $\lambda_i$ are the eigenvalues (proportional to the energy of each mode) and $\mathbf{a}_i$ are the temporal eigenvectors, ordered by decreasing eigenvalue.
+$$
+C_s \mathbf{a}_i = \lambda_i \mathbf{a}_i, \qquad \lambda_1 \geq \lambda_2 \geq \cdots \geq 0,
+$$
 
-### Spatial Mode Recovery
+where the $\mathbf{a}_i$ are unit-norm temporal eigenvectors and $\lambda_i$ is proportional to the energy of mode $i$.
 
-The spatial modes are recovered by projecting the data onto the temporal eigenvectors:
+### Spatial Modes
 
-$$\boldsymbol{\phi}_i = \tilde{U} \mathbf{a}_i$$
+$$
+\boldsymbol{\phi}_i = \frac{\tilde{U} \mathbf{a}_i}{\|\tilde{U} \mathbf{a}_i\|}
+$$
 
-The modes are then normalized so that $\|\boldsymbol{\phi}_i\| = 1$.
+### Link to the SVD
 
-### Advantages over Direct POD
-
-When $M \ll N$ (many spatial points, few snapshots), forming $C_s \in \mathbb{R}^{M \times M}$ is far cheaper than the direct POD covariance matrix $C \in \mathbb{R}^{N \times N}$. Both approaches yield identical spatial modes.
+If $\tilde{U} = \Phi \Sigma \Psi^T$, then $\lambda_i = \sigma_i^2/(M-1)$, $\mathbf{a}_i = \boldsymbol{\psi}_i$ and $\boldsymbol{\phi}_i$ is the $i$-th column of $\Phi$, each up to sign. The snapshot method and the direct SVD therefore give the same modes and energy fractions. The snapshot method is cheaper when $M \ll N$.
 
 ## Implementation
 
-1. **Synthetic Data Generation**: A 3D spatio-temporal field is generated using trigonometric functions over a grid in $x$, $y$, and $t$.
-2. **Snapshot Matrix**: The 3D data array is reshaped into a 2D snapshot matrix of shape $(N_x \cdot N_y) \times N_t$.
-3. **Snapshot POD**: The temporal covariance matrix $C_s$ is assembled and its eigenvalue problem solved. Spatial modes are computed by projection.
-4. **Mode Normalization**: Spatial modes are normalized to unit norm.
-5. **Visualization**: The first three spatial modes and temporal coefficients are plotted side by side.
+- `generate_synthetic_data`, `create_snapshot_matrix` and `preprocess_data` build the mean-subtracted snapshot matrix, exactly as in the POD script.
+- `SnapshotPOD.run()` forms $C_s$, calls `numpy.linalg.eigh` and sorts the eigenpairs by decreasing eigenvalue. It stores `eigenvalues`, `time_coeffs` (the eigenvectors as columns) and `spatial_modes` $= \tilde{U}\mathbf{a}_i$.
+- `SnapshotPOD.normalize_modes()` scales each spatial mode to unit norm, leaving any exactly zero mode unchanged.
+- `SnapshotPOD.energy_fractions()` returns $\lambda_i / \sum_j \lambda_j$, with tiny negative round-off eigenvalues clipped to zero.
+- `plot_snapshot_modes_and_time_coeffs(pod, x, y, t, num_modes)` draws the contour plots and time series.
+- `N_SAMPLES`, `N_X`, `N_Y` and `NUM_MODES` set the data size and the number of modes plotted.
+
+## Usage
+
+```bash
+python main.py                          # show the figure
+python main.py --no-show --output .     # save the figure as a PNG in the current directory
+```
 
 ## Output
 
-The script produces a figure with two columns:
-- **Left column**: Filled contour plots of the first three Snapshot POD spatial modes over the $(x, y)$ domain.
-- **Right column**: Time series of the corresponding temporal eigenvectors $a_i(t)$.
+![First three snapshot POD modes and temporal eigenvectors](snapshot_pod_modes.png)
+
+The printed energy fractions are 49.14 %, 39.16 % and 11.70 %, identical to the SVD-based POD script. The modes and temporal eigenvectors match that script's figure up to the sign of each mode, which is arbitrary in both methods. Mode 1 is the $\cos(2t)$ structure, mode 2 the slowly varying $\sin(0.5t)$ structure, and mode 3 the $\sin(4t)$ structure.
+
+## Related Notes
+
+- [Snapshot POD](../../../notes/numerical/pod/snapshot_pod.md)
+- [SVD and POD](../../../notes/numerical/pod/pod_vs_svd.md)
+- [POD Introduction](../../../notes/numerical/pod/pod_intro.md)

@@ -147,3 +147,86 @@ Combining these steps creates a pipeline that balances physical fidelity with co
 - Physics-informed approaches (PINNs, symmetry-preserving architectures) embed conservation laws into data-driven models, improving accuracy and trustworthiness in extrapolative regimes.
 - Sparse and randomized methods keep high-dimensional analyses tractable, enabling real-time model construction and prediction from limited or noisy measurements.
 - The most effective strategies combine multiple approaches—blending linear decompositions, nonlinear embeddings, neural surrogates, and physics constraints—to achieve models that are efficient, interpretable, and generalizable.
+
+## Exercises
+
+**Exercise 1.** A DMD analysis of snapshots taken every $\Delta t = 0.01$ s gives the eigenvalue $\lambda = 0.95 + 0.30i$. Convert it to a continuous-time growth rate and frequency. Is the mode growing or decaying, and how long does its amplitude take to halve?
+
+<details>
+<summary>Answer</summary>
+
+The continuous-time eigenvalue is $\omega = \ln(\lambda)/\Delta t$.
+
+$|\lambda| = \sqrt{0.95^2 + 0.30^2} \approx 0.9962$, so the growth rate is $\ln|\lambda|/\Delta t \approx -0.376$ s$^{-1}$ and the mode decays.
+
+$\arg\lambda = \operatorname{atan2}(0.30, 0.95) \approx 0.306$ rad, so the frequency is $f = \arg\lambda / (2\pi\Delta t) \approx 4.87$ Hz.
+
+The half-life is $\ln 2 / 0.376 \approx 1.84$ s.
+
+</details>
+
+**Exercise 2.** A linear system evolves as $\mathbf{x}_{k+1} = \mathbf{A}\mathbf{x}_k$ with $\mathbf{A} = \begin{bmatrix} 0.9 & -0.2 \\ 0.2 & 0.9 \end{bmatrix}$ and $\mathbf{x}_0 = (1, 0)$. Generate $\mathbf{x}_1$ and $\mathbf{x}_2$, form $\mathbf{X}$ and $\mathbf{X}'$, and show that $\mathbf{X}'\mathbf{X}^{-1}$ recovers $\mathbf{A}$. Give its eigenvalues and interpret them.
+
+<details>
+<summary>Answer</summary>
+
+$\mathbf{x}_1 = (0.9, 0.2)$ and $\mathbf{x}_2 = (0.77, 0.36)$.
+
+$\mathbf{X} = \begin{bmatrix} 1 & 0.9 \\ 0 & 0.2 \end{bmatrix}$ and $\mathbf{X}' = \begin{bmatrix} 0.9 & 0.77 \\ 0.2 & 0.36 \end{bmatrix}$, with $\mathbf{X}^{-1} = \begin{bmatrix} 1 & -4.5 \\ 0 & 5 \end{bmatrix}$.
+
+$\mathbf{X}'\mathbf{X}^{-1} = \begin{bmatrix} 0.9 & -4.05 + 3.85 \\ 0.2 & -0.9 + 1.8 \end{bmatrix} = \begin{bmatrix} 0.9 & -0.2 \\ 0.2 & 0.9 \end{bmatrix} = \mathbf{A}$.
+
+The eigenvalues are $0.9 \pm 0.2i$, with $|\lambda| \approx 0.922$ and phase $\approx 0.219$ rad per step: a decaying rotation. With noise-free data from a linear system, DMD is exact. With noisy or nonlinear data it gives only a least-squares fit, which is why the rank truncation in the note matters.
+
+</details>
+
+**Exercise 3.** Consider the nonlinear map $x_{k+1} = \lambda x_k$, $y_{k+1} = \mu y_k + c\, x_k^2$. Find a set of observables in which the dynamics are exactly linear, write the Koopman matrix, and give its eigenvalues.
+
+<details>
+<summary>Answer</summary>
+
+Take $\mathbf{z} = (x, y, x^2)$. Then $x^2_{k+1} = \lambda^2 x_k^2$, so
+
+$$\mathbf{z}_{k+1} = \begin{bmatrix} \lambda & 0 & 0 \\ 0 & \mu & c \\ 0 & 0 & \lambda^2 \end{bmatrix} \mathbf{z}_k.$$
+
+The matrix is upper triangular, so its eigenvalues are $\lambda$, $\mu$ and $\lambda^2$.
+
+Adding the single nonlinear observable $x^2$ closes the system, which is the idea behind Koopman embeddings. For most flows no finite closed set of observables exists, so the embedding must be learned or truncated.
+
+</details>
+
+**Exercise 4.** An LSTM predicts the next 10 POD coefficients from the current 10 using a hidden state of size 64, followed by a dense layer mapping the hidden state to the 10 outputs. Count the trainable parameters, using a single bias vector per gate, and note how the count changes in frameworks that use two bias vectors per gate.
+
+<details>
+<summary>Answer</summary>
+
+Each of the 4 gates has weights on the input ($64 \times 10$), weights on the hidden state ($64 \times 64$), and a bias (64): $4(640 + 4096 + 64) = 19{,}200$.
+
+The dense layer adds $64 \times 10 + 10 = 650$, for 19,850 in total.
+
+With two bias vectors per gate (as in PyTorch) the LSTM part becomes $4(640 + 4096 + 128) = 19{,}456$, giving 20,106 in total.
+
+</details>
+
+**Exercise 5.** A network for 2D incompressible flow outputs a stream function $\psi(x, y)$, and velocities are computed as $u = \partial \psi / \partial y$, $v = -\partial \psi / \partial x$. Show that continuity is satisfied exactly, and explain what this implies for the PINN loss and for the choice of activation function.
+
+<details>
+<summary>Answer</summary>
+
+$$\frac{\partial u}{\partial x} + \frac{\partial v}{\partial y} = \frac{\partial^2 \psi}{\partial x \partial y} - \frac{\partial^2 \psi}{\partial y \partial x} = 0,$$
+
+because mixed partial derivatives commute for a smooth $\psi$.
+
+The $\|\nabla \cdot \mathbf{u}\|^2$ term can be dropped from the loss, so the optimizer only has to balance the momentum and boundary terms. This is an example of building a conservation law into the architecture.
+
+The momentum residual contains second derivatives of $u$, which are third derivatives of $\psi$. Smooth activations such as tanh are needed; ReLU has zero second derivative almost everywhere.
+
+</details>
+
+## References
+
+- Schmid, P. J., "Dynamic mode decomposition of numerical and experimental data", *Journal of Fluid Mechanics* 656, 2010.
+- Kutz, J. N., Brunton, S. L., Brunton, B. W., & Proctor, J. L., *Dynamic Mode Decomposition: Data-Driven Modeling of Complex Systems*, SIAM, 2016.
+- Williams, M. O., Kevrekidis, I. G., & Rowley, C. W., "A Data-Driven Approximation of the Koopman Operator: Extending Dynamic Mode Decomposition", *Journal of Nonlinear Science* 25, 2015.
+- Lusch, B., Kutz, J. N., & Brunton, S. L., "Deep learning for universal linear embeddings of nonlinear dynamics", *Nature Communications* 9, 2018.
+- Raissi, M., Perdikaris, P., & Karniadakis, G. E., "Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations", *Journal of Computational Physics* 378, 2019.

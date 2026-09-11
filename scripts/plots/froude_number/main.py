@@ -1,5 +1,22 @@
-import numpy as np
+"""Plot the length-based Froude number against speed for several hull lengths.
+
+Fr = U / sqrt(g L) is evaluated for hull lengths of 5, 10, 15, and 20 m over
+speeds of 0 to 10 m/s. Dashed reference lines mark the hull speed,
+Fr = 1/sqrt(2 pi) (about 0.40), where the bow wave length equals the hull
+length, and Fr = 1, a rough threshold for the planing regime.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
+
+G = 9.81  # gravitational acceleration, m/s^2
+HULL_LENGTHS = [5, 10, 15, 20]  # m
+V_MAX = 10.0  # m/s
+FR_HULL_SPEED = 1.0 / np.sqrt(2.0 * np.pi)  # wave length 2 pi U^2 / g equals L
+FR_PLANING = 1.0  # approximate onset of planing (length-based Froude number)
 
 
 def froude_number(velocity, g, length):
@@ -24,31 +41,69 @@ def froude_number(velocity, g, length):
     return velocity / np.sqrt(g * length)
 
 
-def plot_froude_number_vs_velocity():
+def plot_froude_number_vs_velocity(lengths=HULL_LENGTHS, g=G, v_max=V_MAX):
     """
-    Plots the Froude number vs. velocity for a list of characteristic hull lengths.
+    Plot the Froude number vs. velocity for a list of characteristic hull lengths.
     """
+    velocities = np.linspace(0, v_max, 200)  # m/s
 
-    # Define parameters
-    g = 9.81  # m/s^2
-    lengths = [5, 10, 15, 20]  # example hull lengths in meters
-    velocities = np.linspace(0, 10, 200)  # range of velocities: 0 to 10 m/s
+    fig, ax = plt.subplots(figsize=(7, 5))
 
-    # Create a new figure
-    plt.figure(figsize=(7, 5))
-
-    # Plot Froude curves for each length
     for L in lengths:
         fr_values = froude_number(velocities, g, L)
-        plt.plot(velocities, fr_values, label=f"L = {L} m")
+        line = ax.plot(velocities, fr_values, label=f"L = {L} m")[0]
+        # Speed at which this hull reaches hull speed
+        v_hull = FR_HULL_SPEED * np.sqrt(g * L)
+        ax.plot(v_hull, FR_HULL_SPEED, "o", color=line.get_color(), markersize=5)
 
-    plt.title("Froude Number vs. Velocity for Various Hull Lengths")
-    plt.xlabel("Velocity (m/s)")
-    plt.ylabel("Froude Number (Fr)")
-    plt.grid(True)
-    plt.legend()
-    plt.show()
+    ax.axhline(FR_HULL_SPEED, color="gray", linestyle="--", linewidth=1)
+    ax.text(
+        0.2,
+        FR_HULL_SPEED + 0.02,
+        rf"Hull speed, $Fr = 1/\sqrt{{2\pi}} \approx {FR_HULL_SPEED:.2f}$",
+        fontsize=9,
+        color="gray",
+    )
+    ax.axhline(FR_PLANING, color="gray", linestyle=":", linewidth=1)
+    ax.text(
+        0.2,
+        FR_PLANING + 0.02,
+        r"Planing regime, $Fr \gtrsim 1$",
+        fontsize=9,
+        color="gray",
+    )
+
+    ax.set_title("Froude Number vs. Velocity for Various Hull Lengths")
+    ax.set_xlabel("Velocity (m/s)")
+    ax.set_ylabel("Froude Number (Fr)")
+    ax.set_xlim(0, v_max)
+    ax.set_ylim(bottom=0)
+    ax.grid(True)
+    ax.legend(loc="lower right")
+    return fig
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG file in DIR"
+    )
+    args = parser.parse_args(argv)
+
+    fig = plot_froude_number_vs_velocity()
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "froude_number.png", dpi=100, bbox_inches="tight")
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":
-    plot_froude_number_vs_velocity()
+    main()

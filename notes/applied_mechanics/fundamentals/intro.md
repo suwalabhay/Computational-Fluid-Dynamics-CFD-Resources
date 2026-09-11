@@ -40,12 +40,15 @@ The study of bodies in motion, considering the relationship between forces and m
 Analysis of stress, strain, and deformation in structural elements:
 
 **Stress**: Force per unit area
+
 $$\sigma = \frac{F}{A}$$
 
 **Strain**: Relative deformation
+
 $$\epsilon = \frac{\Delta L}{L_0}$$
 
 **Hooke's Law**: Linear relationship for elastic materials
+
 $$\sigma = E\epsilon$$
 
 where $E$ is the elastic modulus.
@@ -63,20 +66,25 @@ Study of fluid behavior and its interaction with solid boundaries:
 1. **First Law (Inertia)**: A body remains at rest or in uniform motion unless acted upon by an external force.
 
 2. **Second Law**: The acceleration of a body is proportional to the net force and inversely proportional to its mass:
+
    $$\mathbf{F} = m\mathbf{a}$$
 
 3. **Third Law**: For every action, there is an equal and opposite reaction:
+
    $$\mathbf{F}_{AB} = -\mathbf{F}_{BA}$$
 
 ### Conservation Laws
 
 **Conservation of Mass**: 
+
 $$\frac{dm}{dt} = 0 \quad \text{(for closed systems)}$$
 
 **Conservation of Energy**:
+
 $$E_{kinetic} + E_{potential} + E_{internal} = \text{constant}$$
 
 **Conservation of Momentum**:
+
 $$\mathbf{p} = m\mathbf{v} = \text{constant} \quad \text{(in absence of external forces)}$$
 
 ## Mathematical Tools
@@ -94,6 +102,7 @@ Forces, velocities, and accelerations are vector quantities requiring vector mat
 Many mechanics problems involve differential equations:
 
 **Simple Harmonic Motion**:
+
 $$m\frac{d^2x}{dt^2} + kx = 0$$
 
 Solution: $x(t) = A\cos(\omega t + \phi)$ where $\omega = \sqrt{k/m}$
@@ -177,7 +186,7 @@ Consider a simply supported beam with uniform load:
 
 2. **Maximum moment**: $M_{max} = \frac{wL^2}{8} = 45$ kN⋅m
 
-3. **Maximum deflection**: $\delta_{max} = \frac{5wL^4}{384EI} = 8.1$ mm
+3. **Maximum deflection**: $\delta_{max} = \frac{5wL^4}{384EI} = \frac{5 \times 10^4 \times 6^4}{384 \times 200 \times 10^9 \times 8.33 \times 10^{-6}} \approx 101$ mm (about $L/59$, so this section is far too flexible for most serviceability limits)
 
 This example demonstrates the systematic approach: from load analysis to deflection calculation using beam theory.
 
@@ -213,3 +222,66 @@ To master applied mechanics:
 Applied mechanics provides the foundation for all engineering disciplines. Whether designing aircraft, analyzing building structures, or developing robotic systems, the principles covered in this introduction form the cornerstone of engineering analysis and design.
 
 The subsequent chapters will delve deeper into each area, providing the detailed knowledge needed to tackle complex engineering challenges across various industries and applications.
+
+## Exercises
+
+**Exercise 1.** Classify each question by the branch of applied mechanics it belongs to: (a) the tensions in the cables holding a stationary sign; (b) the stopping distance of a car with a known constant deceleration; (c) the braking force needed to stop a 1500 kg car in 40 m; (d) the elongation of a steel cable under load; (e) the pressure on the wall of a water tank.
+
+<details>
+<summary>Answer</summary>
+
+(a) Statics (equilibrium). (b) Kinematics (motion without forces). (c) Kinetics (force and motion through Newton's second law or work-energy). (d) Strength of materials (stress, strain, Hooke's law). (e) Fluid statics.
+
+</details>
+
+**Exercise 2.** A steel rod of diameter 20 mm and length 2 m carries an axial tensile load of 50 kN, with $E = 200$ GPa. Find the stress, strain and elongation.
+
+<details>
+<summary>Answer</summary>
+
+$$A = \frac{\pi(0.02)^2}{4} = 3.14 \times 10^{-4} \text{ m}^2, \quad \sigma = \frac{50\,000}{3.14 \times 10^{-4}} = 159 \text{ MPa}$$
+
+$$\epsilon = \frac{\sigma}{E} = 7.96 \times 10^{-4}, \quad \Delta L = \epsilon L_0 = 1.59 \text{ mm}$$
+
+</details>
+
+**Exercise 3.** Check that $\delta_{max} = \frac{5wL^4}{384EI}$ is dimensionally consistent, and use it to explain why doubling the span of a beam is far more damaging than doubling its load.
+
+<details>
+<summary>Answer</summary>
+
+Units: $\frac{(\text{N/m})(\text{m}^4)}{(\text{N/m}^2)(\text{m}^4)} = \frac{\text{N m}^3}{\text{N m}^2} = \text{m}$, a length as required.
+
+Deflection is linear in $w$ but proportional to $L^4$. Doubling the load doubles the deflection, while doubling the span multiplies it by 16.
+
+</details>
+
+**Exercise 4.** For the beam in the example ($L = 6$ m, $w = 10$ kN/m, $E = 200$ GPa), find the second moment of area needed to limit the maximum deflection to $L/360$.
+
+<details>
+<summary>Answer</summary>
+
+$\delta_{allow} = 6000/360 = 16.7$ mm. Rearranging the deflection formula:
+
+$$I_{req} = \frac{5wL^4}{384E\delta_{allow}} = \frac{5 \times 10^4 \times 6^4}{384 \times 200 \times 10^9 \times 0.01667} = 5.06 \times 10^{-5} \text{ m}^4$$
+
+This is about 6.1 times the $I$ of the section in the example, consistent with its computed deflection of about $L/59$.
+
+</details>
+
+**Exercise 5.** A 60 kg person jumps horizontally off a 40 kg boat that is initially at rest, reaching 2 m/s relative to the ground. Neglecting water resistance, find the boat's recoil velocity and the total kinetic energy produced. Which conservation law applies to each quantity?
+
+<details>
+<summary>Answer</summary>
+
+There is no external horizontal force, so horizontal momentum is conserved: $0 = 60(2) + 40v_b$, giving $v_b = -3$ m/s (opposite to the person).
+
+Kinetic energy: $\frac{1}{2}(60)(2^2) + \frac{1}{2}(40)(3^2) = 120 + 180 = 300$ J. Mechanical energy is not conserved; this energy comes from chemical energy in the person's muscles. Total energy is conserved.
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- R. C. Hibbeler, *Engineering Mechanics: Dynamics*, 14th ed., Pearson, 2016.
+- J. M. Gere, B. J. Goodno, *Mechanics of Materials*, Cengage Learning.

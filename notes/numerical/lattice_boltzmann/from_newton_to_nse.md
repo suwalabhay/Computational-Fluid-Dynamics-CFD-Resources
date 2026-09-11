@@ -109,21 +109,27 @@ The power of the LBM lies in its ability to recover macroscopic fluid properties
 ### 5.1. Important Properties
 
 1. **Normalization (Total Mass):**
+
    $$
    \int d^3\xi \int d^3x \, f(\xi, x, t) = M(t),
    $$
+
    where $ M(t) $ is the total mass.
 
 2. **Fluid Density:**
+
    $$
    \int d^3\xi \, f(\xi, x, t) = \rho(x, t),
    $$
+
    which defines the density at point $ x $ and time $ t $.
 
 3. **Momentum Density:**
+
    $$
    \int d^3\xi \, \xi\, f(\xi, x, t) = \rho(x, t)\, u(x, t),
    $$
+
    where $ u(x, t) $ is the macroscopic fluid velocity.
 
 4. **Pressure and Stress Tensor:**
@@ -138,7 +144,7 @@ The function $ f(\xi, x, t) $ holds all local information about the fluid:
 
 Thus, macroscopic properties are obtained as **moments** of the mesoscopic distribution, effectively bridging the scales.
 
-![Probability Distribution Function](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/9821d7ff-d499-45a9-8fdd-3e4d73e6efb9)
+![Probability Distribution Function](../../../scripts/plots/probability_distribution_function_of_nitrogen_molecules/probability_distribution_function.png)
 *Figure: The probability distribution function $ f(\xi, x, t) $ encapsulates the complete mesoscopic description of the fluid, from which macroscopic properties emerge.*
 
 
@@ -158,8 +164,70 @@ This note traces the path from microscopic Newton's laws through the mesoscopic 
 | **Inputs** | Probability distribution function $f(\xi, x, t)$, averaging volume $\ell_{\text{av}}$, mean free path $\ell_{\text{mfp}}$ |
 | **Outputs** | Zeroth moment → density $\rho$, first moment → momentum $\rho\mathbf{u}$, second moment → pressure/stress tensor |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/lattice_boltzmann_cylinder_flow/main.py` | Demonstrates the mesoscopic-to-macroscopic link by computing density and velocity from discrete distribution functions. |
+- [Lattice Boltzmann Cylinder Flow Simulation](../../../scripts/simulations/lattice_boltzmann_cylinder_flow/): simulates 2D flow past a circular cylinder with the lattice Boltzmann method (D2Q9 lattice, BGK collision operator) and animates the velocity magnitude with Matplotlib.
+
+## Exercises
+
+**Exercise 1.** Air at $T = 293.15$ K and $p = 101325$ Pa behaves as an ideal gas with number density $n = p/(k_B T)$, where $k_B = 1.380649 \times 10^{-23}$ J/K. Compute $n$, the mean spacing between molecules $n^{-1/3}$, and the number of molecules in a cube of side 10 µm. Is this cube a reasonable averaging volume $\ell_{\text{av}}$?
+
+<details>
+<summary>Answer</summary>
+
+- $n = 101325 / (1.380649 \times 10^{-23} \times 293.15) \approx 2.50 \times 10^{25}$ m⁻³.
+- Mean spacing $n^{-1/3} \approx 3.4 \times 10^{-9}$ m = 3.4 nm.
+- A cube of side $10^{-5}$ m has volume $10^{-15}$ m³ and holds about $2.5 \times 10^{10}$ molecules.
+
+Relative statistical fluctuations scale like $N^{-1/2} \approx 6 \times 10^{-6}$, which is negligible. The cube is also much larger than the mean free path (tens of nanometres; see Exercise 3). For a flow scale of about 1 mm or more it satisfies $\ell_{\text{mfp}} \ll \ell_{\text{av}} \ll \ell$.
+
+</details>
+
+**Exercise 2.** A one-dimensional "two-beam" gas has $f(\xi) = \rho_1 \delta(\xi - \xi_1) + \rho_2 \delta(\xi - \xi_2)$ with $\rho_1 = 0.6$ kg/m³ at $\xi_1 = 300$ m/s and $\rho_2 = 0.4$ kg/m³ at $\xi_2 = -200$ m/s. Compute $\rho$, $u$ and the momentum flux of the relative motion $P_{xx} = \int (\xi - u)^2 f \, d\xi$.
+
+<details>
+<summary>Answer</summary>
+
+- $\rho = 0.6 + 0.4 = 1.0$ kg/m³.
+- $\rho u = 0.6 \times 300 + 0.4 \times (-200) = 100$ kg/(m² s), so $u = 100$ m/s.
+- The relative velocities are $+200$ and $-300$ m/s, so $P_{xx} = 0.6 \times 200^2 + 0.4 \times 300^2 = 24000 + 36000 = 60000$ Pa.
+
+This $f$ is far from a Maxwellian, but its moments still define a density, a velocity and a pressure-like stress.
+
+</details>
+
+**Exercise 3.** The hard-sphere mean free path is $\ell_{\text{mfp}} = k_B T / (\sqrt{2}\,\pi d^2 p)$. For nitrogen take $d = 0.37$ nm, with $T = 293.15$ K and $p = 101325$ Pa. Compute $\ell_{\text{mfp}}$ and the ratio $\ell_{\text{mfp}}/\ell$ for $\ell = 1$ µm and $\ell = 1$ mm. For which scale is there room for an averaging volume with $\ell_{\text{mfp}} \ll \ell_{\text{av}} \ll \ell$?
+
+<details>
+<summary>Answer</summary>
+
+$\ell_{\text{mfp}} = 1.380649 \times 10^{-23} \times 293.15 / (\sqrt{2}\,\pi \, (0.37 \times 10^{-9})^2 \times 101325) \approx 6.6 \times 10^{-8}$ m (66 nm).
+
+- $\ell = 1$ µm: ratio $\approx 0.066$. The scales are separated by only a factor of about 15, leaving no room for an averaging volume, and the flow is in the slip regime.
+- $\ell = 1$ mm: ratio $\approx 6.6 \times 10^{-5}$. An averaging volume of about 10 µm is two orders of magnitude above $\ell_{\text{mfp}}$ and two orders below $\ell$, so the mesoscopic description is well founded.
+
+</details>
+
+**Exercise 4.** Show that the first moment of $f$ with respect to the relative velocity $v = \xi - u$ vanishes, $\int (\xi - u) f \, d^3\xi = 0$. Use this to split the second moment as $\int \xi \otimes \xi \, f \, d^3\xi = \rho \, u \otimes u + P$, where $P = \int v \otimes v \, f \, d^3\xi$. Which part becomes the convective term of the NSE, and which becomes pressure and viscous stress?
+
+<details>
+<summary>Answer</summary>
+
+$\int (\xi - u) f \, d^3\xi = \rho u - u\rho = 0$, using the definitions of density and momentum density.
+
+Expand $\xi \otimes \xi = (u + v) \otimes (u + v) = u \otimes u + u \otimes v + v \otimes u + v \otimes v$. Integrating against $f$, the two cross terms vanish by the first result, leaving
+
+$$
+\int \xi \otimes \xi \, f \, d^3\xi = \rho \, u \otimes u + P.
+$$
+
+In the momentum balance $\partial_t(\rho u) + \nabla \cdot \int \xi \otimes \xi \, f \, d^3\xi = \ldots$, the term $\rho \, u \otimes u$ gives the convective flux $\nabla \cdot (\rho u \otimes u)$. The tensor $P$ carries the molecular (thermal) momentum flux. Its isotropic part is the pressure, $p = \operatorname{tr}(P)/3$, and its deviatoric part is minus the viscous stress, which the Chapman–Enskog expansion relates to velocity gradients.
+
+</details>
+
+## References
+
+- S. Chapman and T. G. Cowling, *The Mathematical Theory of Non-Uniform Gases*, 3rd ed., Cambridge University Press, 1970.
+- U. Frisch, B. Hasslacher and Y. Pomeau, "Lattice-gas automata for the Navier-Stokes equation", *Physical Review Letters* 56(14), 1986.
+- T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva and E. M. Viggen, *The Lattice Boltzmann Method: Principles and Practice*, Springer, 2017.
+- S. Succi, *The Lattice Boltzmann Equation for Fluid Dynamics and Beyond*, Oxford University Press, 2001.

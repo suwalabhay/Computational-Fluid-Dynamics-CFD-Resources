@@ -91,14 +91,14 @@ Choosing the right materials is critical. The goal is to find materials that off
 
 Engineers consider factors like the material's tensile strength, fatigue life, and resistance to corrosion. They might use the S-N curve (stress vs. number of cycles) to predict fatigue life:
 
-$$S = \sigma_\text{max} \left( \frac{N}{N_f} \right)^b$$
+$$S = \sigma_f' \left( 2N_f \right)^b$$
 
 where:
 
 - $S$ is the stress amplitude,
-- $N$ is the number of cycles,
-- $N_f$ is the number of cycles to failure,
-- $b$ is the material's fatigue exponent.
+- $\sigma_f'$ is the fatigue strength coefficient,
+- $N_f$ is the number of cycles to failure ($2N_f$ reversals),
+- $b$ is the fatigue strength (Basquin) exponent, typically between about $-0.05$ and $-0.12$ for metals.
 
 By selecting appropriate materials, the aircraft can be both safe and efficient.
 
@@ -270,7 +270,7 @@ Advancements in technology are driving significant changes in the design, effici
 - Electric and hybrid propulsion systems are being explored to reduce greenhouse gas emissions and noise pollution, with potential applications in urban air mobility (UAM) and regional transport.
 - Battery technology remains a major challenge, as current energy densities are insufficient for long-haul flights. Research into solid-state batteries and high-capacity lithium-air systems aims to overcome these limitations.
 - Power management systems, including thermal control and efficient energy distribution, are critical for ensuring the safety and performance of electric propulsion systems.
-- Companies like Airbus, Boeing, and emerging startups are developing prototypes of hybrid-electric aircraft, such as the Airbus E-Fan X, which combine traditional jet engines with electric motors to balance efficiency and range.
+- Companies like Airbus, Boeing, and emerging startups are developing prototypes of hybrid-electric aircraft, such as the Airbus E-Fan X demonstrator (cancelled in 2020 before it flew), which combine traditional jet engines with electric motors to balance efficiency and range.
 
 #### Advanced Materials
 
@@ -284,4 +284,73 @@ Advancements in technology are driving significant changes in the design, effici
 - Enhanced computational power allows for the simulation of entire aircraft systems, including aerodynamics, structural integrity, and propulsion, at unprecedented levels of detail.
 - Machine learning algorithms analyze data from wind tunnel tests, flight sensors, and historical performance records to predict outcomes and identify optimal design features.
 - Digital twins, virtual replicas of aircraft, are used to monitor and predict performance in real time, aiding in maintenance and operational planning.
-- High-performance computing (HPC) is accelerating the development of innovative configurations, such as blended-wing bodies and distributed propulsion systems, which require extensive computational modeling to validate their feasibility. 
+- High-performance computing (HPC) is accelerating the development of innovative configurations, such as blended-wing bodies and distributed propulsion systems, which require extensive computational modeling to validate their feasibility.
+
+### Exercises
+
+**Exercise 1.** In preliminary design, a 75 000 kg airliner is to cruise at 230 m/s at an altitude where $\rho = 0.38$ kg/m³, with a cruise lift coefficient of 0.5. Use the lift equation to size the wing area. What else would push the wing area up or down?
+
+<details>
+<summary>Answer</summary>
+
+$$S = \frac{2mg}{\rho V^2 C_L} = \frac{2 \times 75\,000 \times 9.81}{0.38 \times 230^2 \times 0.5} = 146 \text{ m}^2$$
+
+Low-speed requirements usually decide the final size: the stall and approach speed for a given $C_{L_{max}}$ with flaps, and the takeoff field length. Initial cruise altitude capability and fuel volume in the wing also play a part. A larger wing lowers these speeds but adds weight and friction drag in cruise.
+
+</details>
+
+**Exercise 2.** At $C_L = 0.5$ with $e = 0.8$, compare the induced drag coefficient for aspect ratios 9 and 11. Why do designers not simply choose a very high aspect ratio?
+
+<details>
+<summary>Answer</summary>
+
+$$C_{D_i}(AR = 9) = \frac{0.25}{\pi \times 0.8 \times 9} = 0.0111, \quad C_{D_i}(AR = 11) = 0.0090$$
+
+That is an 18% reduction. A longer, slenderer wing has a larger root bending moment and a thinner structural box, which means more structural weight, more flexibility (aeroelastic and flutter concerns) and less fuel volume. Airport gate span limits also apply, which is one reason for folding wingtips on some recent designs.
+
+</details>
+
+**Exercise 3.** A turbofan swallows 300 kg/s of air at a flight speed of 230 m/s and exhausts it at 330 m/s. Find the thrust from $T = \dot{m}(V_e - V_0)$ and the propulsive efficiency $\eta_p = 2/(1 + V_e/V_0)$. Explain why high-bypass engines are fuel efficient.
+
+<details>
+<summary>Answer</summary>
+
+$$T = 300 \times (330 - 230) = 30 \text{ kN}, \quad \eta_p = \frac{2}{1 + 330/230} = 0.82$$
+
+For a given thrust, accelerating a large mass flow by a small velocity increment wastes less kinetic energy in the jet than accelerating a small mass flow by a large one. High bypass ratios exploit this, at the cost of larger fan diameter, nacelle drag and weight.
+
+</details>
+
+**Exercise 4.** A structural alloy follows Basquin's relation $S = \sigma_f'(2N_f)^b$ with $\sigma_f' = 1000$ MPa and $b = -0.1$. Find the cycles to failure at a stress amplitude of 250 MPa, and the factor by which life increases if a design change lowers the amplitude by 10%.
+
+<details>
+<summary>Answer</summary>
+
+$$2N_f = \left(\frac{250}{1000}\right)^{1/b} = 0.25^{-10} = 1.05 \times 10^6 \implies N_f = 5.2 \times 10^5 \text{ cycles}$$
+
+At 225 MPa: $2N_f = 0.225^{-10} = 3.0 \times 10^6$, so $N_f = 1.5 \times 10^6$ cycles.
+
+Life increases by $(250/225)^{10} = 2.87$. Because the exponent is small in magnitude, small stress reductions give large life gains, which is why fatigue-critical details such as fastener holes get so much attention.
+
+</details>
+
+**Exercise 5.** The neutral point of an airliner is 2.2 m behind the leading edge of its 4 m mean aerodynamic chord. The loading envelope puts the CG between 0.9 m and 1.8 m. Find the static margin range, and discuss the design consequences of a CG at each end of the range.
+
+<details>
+<summary>Answer</summary>
+
+$$SM_{fwd} = \frac{2.2 - 0.9}{4} = 0.325, \quad SM_{aft} = \frac{2.2 - 1.8}{4} = 0.10$$
+
+- Forward CG: very stable, but a large nose-down moment must be trimmed by tail down-load. This adds trim drag and requires enough elevator authority to rotate at takeoff and flare at landing; it usually sizes the horizontal tail.
+- Aft CG: lower trim drag and lighter control forces, but reduced stability and damping. It sets the minimum acceptable static margin.
+
+Certification requires acceptable handling across the whole envelope, so the tail and landing gear positions are chosen together with the CG range.
+
+</details>
+
+### References
+
+- Raymer, D. P., *Aircraft Design: A Conceptual Approach*, 6th ed., American Institute of Aeronautics and Astronautics, 2018.
+- Anderson, J. D., Jr., *Aircraft Performance and Design*, McGraw-Hill, 1999.
+- Megson, T. H. G., *Aircraft Structures for Engineering Students*, Butterworth-Heinemann.
+- Dowling, N. E., *Mechanical Behavior of Materials*, 4th ed., Pearson, 2013.

@@ -105,6 +105,7 @@ The **poles** (roots of the denominator) determine stability and transient behav
 State-space models use first-order matrix differential equations:
 
 $$\dot{\mathbf{x}} = \mathbf{A}\mathbf{x} + \mathbf{B}\mathbf{u}$$
+
 $$\mathbf{y} = \mathbf{C}\mathbf{x} + \mathbf{D}\mathbf{u}$$
 
 ### Converting Transfer Function to State-Space
@@ -129,7 +130,7 @@ Complex systems are built from interconnected subsystems. Standard block diagram
 ### Moving Blocks
 
 - Moving a summing junction ahead of a block $G$: multiply the other input by $1/G$
-- Moving a pickoff point ahead of a block $G$: multiply the branch by $1/G$
+- Moving a pickoff point ahead of a block $G$: multiply the branch by $G$
 
 ## Signal Flow Graphs and Mason's Gain Formula
 
@@ -199,3 +200,75 @@ The eigenvalues of $\mathbf{A}$ include a positive real value, confirming that t
 - Use **experimental identification** (step tests, frequency sweeps) to validate or supplement analytical models
 - For MIMO systems, state-space is generally more convenient than transfer function matrices
 - Mason's gain formula is powerful for complex signal flow graphs but error-prone by hand — double-check loop identification
+
+## Exercises
+
+**Exercise 1.** A rotational system has $J = 0.02$ kg·m², $b = 0.1$ N·m·s/rad and $k_t = 2$ N·m/rad. Find its transfer function $\Theta(s)/T(s)$, natural frequency, damping ratio and DC gain.
+
+<details>
+<summary>Answer</summary>
+
+$$G(s) = \frac{1}{0.02s^2 + 0.1s + 2} = \frac{50}{s^2 + 5s + 100}$$
+
+$\omega_n = \sqrt{k_t/J} = 10$ rad/s, $\zeta = \frac{b}{2\sqrt{Jk_t}} = \frac{0.1}{2 \times 0.2} = 0.25$, and the DC gain is $1/k_t = 0.5$ rad/(N·m).
+
+</details>
+
+**Exercise 2.** Write the controllable canonical form of $G(s) = \frac{3s + 2}{s^2 + 4s + 5}$ and verify it using $G(s) = \mathbf{C}(s\mathbf{I} - \mathbf{A})^{-1}\mathbf{B}$.
+
+<details>
+<summary>Answer</summary>
+
+With $a_1 = 4$, $a_0 = 5$, $b_1 = 3$, $b_0 = 2$:
+
+$$\mathbf{A} = \begin{bmatrix} 0 & 1 \\ -5 & -4 \end{bmatrix}, \quad \mathbf{B} = \begin{bmatrix} 0 \\ 1 \end{bmatrix}, \quad \mathbf{C} = \begin{bmatrix} 2 & 3 \end{bmatrix}$$
+
+$$(s\mathbf{I} - \mathbf{A})^{-1}\mathbf{B} = \frac{1}{s^2 + 4s + 5}\begin{bmatrix} s + 4 & 1 \\ -5 & s \end{bmatrix}\begin{bmatrix} 0 \\ 1 \end{bmatrix} = \frac{1}{s^2 + 4s + 5}\begin{bmatrix} 1 \\ s \end{bmatrix}$$
+
+so $\mathbf{C}(s\mathbf{I} - \mathbf{A})^{-1}\mathbf{B} = \frac{2 + 3s}{s^2 + 4s + 5}$, as required.
+
+</details>
+
+**Exercise 3.** A pendulum of mass $m$ on a massless rod of length $l = 0.5$ m obeys $ml^2\ddot{\theta} + mgl\sin\theta = \tau$. Linearize about $\theta = 0$ (hanging) and $\theta = \pi$ (inverted), and find the eigenvalues of each linear model.
+
+<details>
+<summary>Answer</summary>
+
+About $\theta = 0$: $\sin\theta \approx \theta$, so $\ddot{\theta} = -\frac{g}{l}\theta + \frac{\tau}{ml^2}$. The eigenvalues are $\pm j\sqrt{g/l} = \pm 4.43j$ rad/s: an undamped oscillation (marginally stable).
+
+About $\theta = \pi$: with $\theta = \pi + \delta$, $\sin(\pi + \delta) \approx -\delta$, so $\ddot{\delta} = +\frac{g}{l}\delta + \frac{\tau}{ml^2}$. The eigenvalues are $\pm\sqrt{g/l} = \pm 4.43\;\text{s}^{-1}$; the positive one makes the inverted position unstable.
+
+</details>
+
+**Exercise 4.** Using the motor data of Example 1, derive the simplified transfer function with $L_a \approx 0$ and compare its non-zero pole with the poles of the full model. Is the approximation justified for this motor?
+
+<details>
+<summary>Answer</summary>
+
+$$G(s) \approx \frac{K_t/R_a}{s(Js + b + K_tK_b/R_a)} = \frac{0.05}{s(0.01s + 0.105)} = \frac{5}{s(s + 10.5)}$$
+
+The simplified model has a pole at $s = -10.5$. The full model $\frac{20}{s(s^2 + 14s + 42)}$ has poles at $s = -4.35$ and $s = -9.65$.
+
+The approximation is poor here because the electrical time constant $L_a/R_a = 0.25$ s is longer than the mechanical time constant $J/b = 0.1$ s. Neglecting $L_a$ is justified only when $L_a/R_a$ is much smaller than the mechanical time constant.
+
+</details>
+
+**Exercise 5.** A position servo has forward blocks $G_1 = K$ and $G_2 = \frac{1}{s(s+1)}$, a tachometer feedback $H_2 = s$ around $G_2$, and an outer unity feedback loop. Use Mason's gain formula to find $Y(s)/R(s)$, then choose $K$ for $\zeta = 0.5$.
+
+<details>
+<summary>Answer</summary>
+
+There is one forward path, $P_1 = G_1G_2$, and two loops, $L_1 = -G_2H_2$ and $L_2 = -G_1G_2$. Both loops touch each other and the forward path, so $\Delta = 1 + G_2H_2 + G_1G_2$ and $\Delta_1 = 1$:
+
+$$T(s) = \frac{G_1G_2}{1 + G_2H_2 + G_1G_2} = \frac{K}{s(s+1) + s + K} = \frac{K}{s^2 + 2s + K}$$
+
+Comparing with $s^2 + 2\zeta\omega_n s + \omega_n^2$: $\zeta\omega_n = 1$, so $\zeta = 0.5$ requires $\omega_n = 2$ rad/s and $K = \omega_n^2 = 4$.
+
+</details>
+
+## References
+
+- K. Ogata, *System Dynamics*, 4th ed., Pearson Prentice Hall, 2004.
+- K. Ogata, *Modern Control Engineering*, 5th ed., Prentice Hall, 2010.
+- N. S. Nise, *Control Systems Engineering*, 7th ed., Wiley, 2015.
+- G. F. Franklin, J. D. Powell, A. Emami-Naeini, *Feedback Control of Dynamic Systems*, Pearson.

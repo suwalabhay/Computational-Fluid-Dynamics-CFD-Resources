@@ -52,9 +52,11 @@ $$m\ddot{x} + c\dot{x} + kx = 0$$
 ### Critical Damping and Damping Ratio
 
 **Critical damping coefficient:**
+
 $$c_c = 2m\omega_n = 2\sqrt{km}$$
 
 **Damping ratio:**
+
 $$\zeta = \frac{c}{c_c} = \frac{c}{2m\omega_n}$$
 
 The character roots of the characteristic equation are:
@@ -74,6 +76,7 @@ $$\omega_d = \omega_n\sqrt{1 - \zeta^2}$$
 The amplitude decays exponentially with time constant $\tau = \frac{1}{\zeta\omega_n}$.
 
 **Logarithmic decrement** (ratio of successive peaks):
+
 $$\delta = \ln\frac{x_n}{x_{n+1}} = \frac{2\pi\zeta}{\sqrt{1 - \zeta^2}}$$
 
 For small damping ($\zeta \ll 1$): $\delta \approx 2\pi\zeta$
@@ -220,6 +223,7 @@ A 200 kg machine operates at 1200 RPM and produces a force amplitude of 500 N. D
 **Solution:**
 
 For $\zeta = 0$ and $r > \sqrt{2}$:
+
 $$T_f = \frac{1}{r^2 - 1}$$
 
 $$0.15 = \frac{1}{r^2 - 1} \implies r^2 - 1 = \frac{1}{0.15} = 6.667 \implies r^2 = 7.667$$
@@ -229,6 +233,7 @@ $$r = \frac{\omega}{\omega_n} = 2.769 \implies \omega_n = \frac{125.7}{2.769} = 
 $$k = m\omega_n^2 = 200(45.4)^2 = 412\,232 \text{ N/m} \approx 412 \text{ kN/m}$$
 
 **Transmitted force:**
+
 $$F_{trans} = T_f \cdot F_0 = 0.15(500) = 75 \text{ N}$$
 
 ## Applications
@@ -269,3 +274,77 @@ $$F_{trans} = T_f \cdot F_0 = 0.15(500) = 75 \text{ N}$$
 - For complex systems, use Rayleigh's energy method to estimate natural frequency
 
 Vibration analysis is a cornerstone of dynamic system design, ensuring that structures and machines operate safely, efficiently, and comfortably throughout their service life.
+
+## Exercises
+
+**Exercise 1.** A machine resting on springs compresses them by 5 mm under its own weight. Find the natural frequency of vertical vibration in rad/s and Hz.
+
+<details>
+<summary>Answer</summary>
+
+At static equilibrium $k\delta_{st} = mg$, so $\omega_n = \sqrt{k/m} = \sqrt{g/\delta_{st}}$:
+
+$$\omega_n = \sqrt{\frac{9.81}{0.005}} = 44.3 \text{ rad/s}, \quad f_n = \frac{44.3}{2\pi} = 7.05 \text{ Hz}$$
+
+</details>
+
+**Exercise 2.** In a free-vibration test the displacement peaks fall from 12 mm to 3 mm over 4 cycles. Estimate the logarithmic decrement and the damping ratio.
+
+<details>
+<summary>Answer</summary>
+
+Over $n$ cycles, $\delta = \frac{1}{n}\ln\frac{x_0}{x_n} = \frac{1}{4}\ln 4 = 0.347$. Inverting $\delta = 2\pi\zeta/\sqrt{1 - \zeta^2}$:
+
+$$\zeta = \frac{\delta}{\sqrt{4\pi^2 + \delta^2}} = 0.0551$$
+
+The small-damping approximation $\delta/(2\pi) = 0.0552$ is almost identical.
+
+</details>
+
+**Exercise 3.** A system with $m = 10$ kg, $k = 4000$ N/m and $c = 40$ N·s/m is driven by $F_0\sin\omega t$ with $F_0 = 100$ N and $\omega = 18$ rad/s. Find the steady-state amplitude and phase lag.
+
+<details>
+<summary>Answer</summary>
+
+$\omega_n = 20$ rad/s, $\zeta = \frac{40}{2 \times 10 \times 20} = 0.1$ and $r = 0.9$.
+
+$$M = \frac{1}{\sqrt{(1 - 0.81)^2 + (0.18)^2}} = 3.82, \quad X = \frac{F_0}{k}M = 0.025 \times 3.82 = 95.5 \text{ mm}$$
+
+$$\phi = \arctan\frac{0.18}{0.19} = 43.5^\circ$$
+
+</details>
+
+**Exercise 4.** A uniform rod of length $L = 1$ m swings about a pivot at one end. Find its natural frequency and period for small oscillations, and the length of the equivalent simple pendulum.
+
+<details>
+<summary>Answer</summary>
+
+With $d = L/2$ and $I_O = mL^2/3$:
+
+$$\omega_n = \sqrt{\frac{mgL/2}{mL^2/3}} = \sqrt{\frac{3g}{2L}} = 3.84 \text{ rad/s}, \quad \tau_n = \frac{2\pi}{3.84} = 1.64 \text{ s}$$
+
+A simple pendulum with $\sqrt{g/L_{eq}} = \sqrt{3g/(2L)}$ has $L_{eq} = 2L/3 = 0.667$ m.
+
+</details>
+
+**Exercise 5.** The isolator of Example 4 is built with rubber mounts giving $\zeta = 0.1$ at the same stiffness. Recompute the transmissibility at the operating speed and the transmitted force. Also find $T_f$ at resonance during run-up. What does this show about damping in isolators?
+
+<details>
+<summary>Answer</summary>
+
+With $r = 2.769$ ($r^2 = 7.667$):
+
+$$T_f = \frac{\sqrt{1 + (2 \times 0.1 \times 2.769)^2}}{\sqrt{(1 - 7.667)^2 + (0.554)^2}} = \frac{1.143}{6.690} = 0.171$$
+
+The transmitted force is $0.171 \times 500 = 85$ N, compared with 75 N without damping. At resonance ($r = 1$), $T_f = \sqrt{1 + 0.04}/0.2 = 5.1$, where an undamped mount would be unbounded.
+
+Above $r = \sqrt{2}$ damping slightly worsens isolation, but it is needed to limit the response while the machine passes through resonance on start-up and shut-down.
+
+</details>
+
+## References
+
+- S. S. Rao, *Mechanical Vibrations*, 6th ed., Pearson, 2017.
+- W. T. Thomson, M. D. Dahleh, *Theory of Vibration with Applications*, 5th ed., Prentice Hall, 1998.
+- J. P. Den Hartog, *Mechanical Vibrations*, 4th ed., McGraw-Hill, 1956.
+- D. J. Inman, *Engineering Vibration*, Pearson.

@@ -1,70 +1,82 @@
 # Ising Model Simulation
 
-This script simulates a two-dimensional Ising model using the Metropolis algorithm to study phase transitions between ferromagnetic and paramagnetic states on a 2D spin lattice. Watch it on YouTube: [![YouTube](https://img.youtube.com/vi/aIUKwLx_Kj8/maxresdefault.jpg)](https://youtube.com/shorts/aIUKwLx_Kj8?feature=share)
+This script simulates the two-dimensional Ising model with the Metropolis Monte Carlo algorithm and animates the spin lattice together with its magnetization and energy. With the default inverse temperature $\beta = 0.6$, which is below the critical temperature, a random start coarsens into large ordered domains of up and down spins.
 
 ## Overview
 
-- **2D spin lattice**: each site $s_i \in \{+1,-1\}$, initialized randomly.
-- **Metropolis Monte Carlo**: samples spin configurations from the Boltzmann distribution.
-- **Phase transition** at critical temperature $T_c$: spontaneous magnetization appears below $T_c$.
-- **Numba-accelerated** (`@njit`) energy and magnetization calculations for fast Monte Carlo sweeps.
-- **Live animation**: spin lattice coloring plus real-time plots of magnetization and energy.
+- Uses a 300×300 lattice (`N_ROWS`, `N_COLS`) of spins $s_i = \pm 1$ with periodic boundaries, $J = 1$ and $k_B = 1$.
+- Starts from a random configuration drawn with a seeded generator (`SEED = 0`), then runs `WARMUP_STEPS = 1` sweep before the animation.
+- Performs `TOTAL_STEPS = 3000` Metropolis sweeps at `BETA = 0.6`. Each sweep makes $N = 90{,}000$ single-spin-flip attempts at random sites.
+- Numba-compiles (`@njit`) the Metropolis sweep and the energy and magnetization sums.
+- Records $M$ and $E$ and redraws the lattice every `UPDATE_INTERVAL = 5` sweeps, plus the final sweep.
+- Optionally writes the animation to `SAVE_PATH` (GIF via Pillow, or MP4 via ffmpeg) when `SAVE_ANIMATION = True`.
 
 ## Mathematical Background
 
 ### Hamiltonian
 
-The energy of a spin configuration is described by:
-
 $$H = -J \sum_{\langle i,j \rangle} s_i s_j$$
 
-where $J$ is the coupling constant ($J > 0$ ferromagnetic, $J < 0$ antiferromagnetic) and $\langle i,j\rangle$ denotes nearest-neighbor pairs.
+The sum runs over nearest-neighbour pairs, each counted once. The code uses $J = 1$ (ferromagnetic) and counts each bond once by summing only the right and lower neighbours of every site. Energies therefore lie between $-2N$ (all spins aligned) and $+2N$.
 
 ### Magnetization
 
-$$M = \sum_i s_i$$
+$$M = \sum_i s_i, \qquad -N \le M \le N$$
 
-$M > 0$ indicates a ferromagnetic phase; $M \approx 0$ a disordered (paramagnetic) phase.
-
-### Boltzmann Factor
-
-Thermal fluctuations enter via the acceptance probability:
-
-$$P(\Delta E) = \exp\!\left(-\frac{\Delta E}{k_B T}\right)$$
-
-where $\Delta E = 2s_i\sum_{\text{neighbors}} s_j$ is the energy change from flipping spin $s_i$.
+$|M| \approx N$ in a fully ordered state. $M \approx 0$ in the disordered (paramagnetic) phase, and also in an ordered state split into equal up and down domains.
 
 ### Metropolis Criterion
 
-A proposed spin flip is accepted with probability:
+Flipping spin $s_i$ changes the energy by
 
-$$A = \begin{cases} 1 & \Delta E \le 0 \\ e^{-\beta\Delta E} & \Delta E > 0 \end{cases}, \quad \beta = \frac{1}{k_B T}$$
+$$\Delta E = 2 J s_i \sum_{j \in \text{nn}(i)} s_j$$
 
-At low $T$ the system orders (ferromagnetic phase); at high $T$ thermal noise destroys order (paramagnetic phase).
+The flip is accepted with probability
+
+$$A = \begin{cases} 1 & \Delta E \le 0 \\ e^{-\beta\Delta E} & \Delta E > 0 \end{cases}, \qquad \beta = \frac{1}{k_B T}$$
+
+### Phase Transition
+
+In the thermodynamic limit, the 2D Ising model on a square lattice has its critical point at $\beta_c = \tfrac{1}{2}\ln(1 + \sqrt{2}) \approx 0.4407$ ($T_c \approx 2.269$). For $\beta > \beta_c$ (low temperature) the equilibrium state is ordered with spontaneous magnetization; for $\beta < \beta_c$ it is disordered. At $\beta = 0.6$ the single-flip dynamics coarsen domains slowly, so after 3000 sweeps a 300×300 lattice usually still contains several large domains separated by domain walls.
 
 ## Implementation
 
-1. Initialize an $N\times N$ lattice with random $\pm1$ spins via `initialize_lattice(N_ROWS, N_COLS)`.
-2. For each Monte Carlo step, loop over all lattice sites: compute $\Delta E = 2s_i\sum_{\text{neighbors}}s_j$ using `metropolis_step_numba` (Numba JIT-compiled).
-3. Accept or reject each spin flip using the Metropolis criterion with $\beta = 1/(k_B T)$.
-4. Periodically compute total energy via `calculate_energy_numba` and magnetization via `calculate_magnetization_numba`.
-5. Feed the lattice state and thermodynamic observables into `animate_simulation` for live plotting.
-6. Repeat for `TOTAL_STEPS` Monte Carlo sweeps.
+- `initialize_lattice(n_rows, n_cols, rng)` returns a random `int8` lattice of $\pm 1$.
+- `seed_numba(seed)` seeds Numba's random generator, which is separate from NumPy's.
+- `metropolis_step_numba(lattice, beta)` performs one sweep in place.
+- `calculate_energy_numba` and `calculate_magnetization_numba` compute $E$ and $M$.
+- `run_simulation_numba(lattice, beta, steps, update_interval)` is a generator that yields `(sweep, lattice copy, M, E)` at each recorded sweep.
+- `setup_figure` builds the lattice panel (orange for $+1$, blue for $-1$) and the magnetization and energy panels.
+- `animate_simulation` feeds the generator to `FuncAnimation`. With `--no-show` it consumes the generator directly and returns the figure showing the final state.
+
+## Usage
+
+```bash
+python main.py                                   # animate 3000 sweeps
+python main.py --steps 500                       # animate 500 sweeps
+python main.py --no-show --output .              # run 3000 sweeps and save the final frame
+```
+
+- `--steps N` runs exactly `N` Monte Carlo sweeps.
+- `--no-show` skips the window.
+- `--output DIR` saves `ising_model.png` in `DIR`.
+
+Lattice size, `BETA`, `UPDATE_INTERVAL` and the animation options are constants at the top of `main.py`. Try `BETA = 0.44` to watch critical fluctuations, or `BETA = 0.3` for a disordered lattice.
 
 ## Output
 
-The animation produces three synchronized panels:
+The frame below is from a short video of an earlier version of the script:
 
-- **Lattice**: spin-up ($+1$) sites colored orange, spin-down ($-1$) blue; domain walls are visible near $T_c$.
-- **Magnetization plot**: tracks $M(t)$; shows spontaneous symmetry breaking below $T_c$.
-- **Energy plot**: tracks $H(t)$; drops sharply as the system orders at low temperature.
+[![Ising model animation on YouTube](https://img.youtube.com/vi/aIUKwLx_Kj8/maxresdefault.jpg)](https://youtube.com/shorts/aIUKwLx_Kj8?feature=share)
 
-## Running the Script
+The figure below shows the final frame of the default run (3000 sweeps):
 
-Adjust `N_ROWS`, `N_COLS`, `BETA`, and `TOTAL_STEPS` at the top of the script:
+![Ising lattice, magnetization and energy after 3000 sweeps](ising_model.png)
 
-```python
-N_ROWS, N_COLS = 100, 100   # lattice size
-BETA           = 0.44       # ≈ 1/T_c for the 2D Ising model
-TOTAL_STEPS    = 500        # Monte Carlo sweeps
-```
+- **Lattice**: spin-up ($+1$) sites are orange and spin-down ($-1$) sites blue. Large domains have formed, with isolated flipped spins from thermal fluctuations inside them.
+- **Magnetization**: $M$ stays well below $\pm N$ because up and down domains coexist.
+- **Energy**: $E$ drops quickly from near 0 (random start) during the first few hundred sweeps as domains form, then decreases slowly as domain walls shorten.
+
+## Related Notes
+
+The Ising model is a statistical-mechanics topic, and no note in this repository covers Monte Carlo methods for it.

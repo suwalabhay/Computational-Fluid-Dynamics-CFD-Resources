@@ -1,4 +1,3 @@
-
 # Applied Mechanics
 
 Applied mechanics is the branch of engineering that applies the principles of mechanics (statics, dynamics, and kinematics) to solve practical engineering problems. This field bridges the gap between theoretical physics and real-world engineering applications, encompassing the analysis and design of structures, machines, and systems across various industries.
@@ -49,6 +48,7 @@ Applied mechanics integrates fundamental principles of physics with engineering 
 - [Buckling and Stability](./strength_materials/buckling.md)
 
 ### 5. [Fluid Loading on Structures](./fluid_loading/)
+- [Introduction to Fluid Loading](./fluid_loading/intro.md)
 - [Pressure Forces on Structures](./fluid_loading/pressure_forces.md)
 - [Wind Loading on Buildings](./fluid_loading/wind_loading.md)
 - [Wave Loading on Offshore Structures](./fluid_loading/wave_loading.md)
@@ -63,11 +63,8 @@ Applied mechanics integrates fundamental principles of physics with engineering 
 - [PID Controllers](./control_systems/pid_controllers.md)
 
 ### 7. [Transportation Systems](./transportation/)
-- **[Airplanes](./transportation/airplanes/)** - Aircraft design, aerodynamics, and flight mechanics
-- **[Cars](./transportation/cars/)** - Automotive engineering, vehicle dynamics, and design
-- [Ships and Marine Vehicles](./transportation/ships/)
-- [Railways](./transportation/railways/)
-- [Spacecraft](./transportation/spacecraft/)
+- **[Airplanes](./transportation/airplanes/)**: Aircraft design, aerodynamics, and flight mechanics
+- **[Cars](./transportation/cars/)**: Automotive engineering, vehicle dynamics, and design
 
 ### 8. [Mechanical Systems](./mechanical_systems/)
 - [Mechanisms and Linkages](./mechanical_systems/mechanisms.md)
@@ -76,36 +73,7 @@ Applied mechanics integrates fundamental principles of physics with engineering 
 - [Rotating Machinery](./mechanical_systems/rotating_machinery.md)
 - [Hydraulic and Pneumatic Systems](./mechanical_systems/hydraulic_pneumatic.md)
 
-### 9. [Structural Engineering](./structural/)
-- [Building Structures](./structural/buildings.md)
-- [Bridges](./structural/bridges.md)
-- [Towers and Masts](./structural/towers.md)
-- [Earthquake Engineering](./structural/earthquake.md)
-- [Wind Engineering](./structural/wind_engineering.md)
-
-### 10. [Energy Systems](./energy/)
-- [Wind Turbines](./energy/wind_turbines.md)
-- [Hydroelectric Systems](./energy/hydroelectric.md)
-- [Solar Tracking Systems](./energy/solar_tracking.md)
-- [Energy Storage Systems](./energy/energy_storage.md)
-
-### 11. [Robotics and Automation](./robotics/)
-- [Robot Kinematics](./robotics/kinematics.md)
-- [Robot Dynamics](./robotics/dynamics.md)
-- [Control of Robotic Systems](./robotics/control.md)
-- [Mobile Robotics](./robotics/mobile_robotics.md)
-
-### 12. [Biomedical Applications](./biomedical/)
-- [Biomechanics](./biomedical/biomechanics.md)
-- [Prosthetics and Orthotics](./biomedical/prosthetics.md)
-- [Cardiovascular Mechanics](./biomedical/cardiovascular.md)
-- [Sports Biomechanics](./biomedical/sports_biomechanics.md)
-
-### 13. [Advanced Topics](./advanced/)
-- [Nonlinear Mechanics](./advanced/nonlinear_mechanics.md)
-- [Computational Mechanics](./advanced/computational_mechanics.md)
-- [Multibody Dynamics](./advanced/multibody_dynamics.md)
-- [Continuum Mechanics](./advanced/continuum_mechanics.md)
+Topics that are planned but not written yet (ships, railways, spacecraft, structural engineering, energy systems, robotics, biomedical applications, and advanced mechanics) are listed in the [roadmap](../../ROADMAP.md).
 
 ## Learning Path
 
@@ -122,9 +90,9 @@ Applied mechanics integrates fundamental principles of physics with engineering 
 4. Learn basic **Control Systems** concepts
 
 ### Advanced Level
-1. Study **Fluid-Structure Interaction**
-2. Explore specialized applications (**Transportation**, **Energy**, **Robotics**)
-3. Learn **Advanced Topics** like nonlinear mechanics
+1. Study **Fluid Loading** and **Flow-Induced Vibrations**
+2. Explore the **Transportation** notes on airplanes and cars
+3. Connect structural response to CFD results (see below)
 4. Apply knowledge to real-world engineering projects
 
 ## Mathematical Prerequisites

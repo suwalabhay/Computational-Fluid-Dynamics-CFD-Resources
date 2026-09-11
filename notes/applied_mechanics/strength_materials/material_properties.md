@@ -9,12 +9,15 @@ Understanding the mechanical properties of materials is essential for selecting 
 The uniaxial tensile test is the most common method for characterizing material behavior. A standardized specimen is pulled in tension at a controlled rate while measuring force and elongation.
 
 **Engineering stress and strain:**
+
 $$\sigma_{eng} = \frac{P}{A_0}, \quad \epsilon_{eng} = \frac{\Delta L}{L_0}$$
 
 **True stress and strain:**
+
 $$\sigma_{true} = \frac{P}{A_{inst}}, \quad \epsilon_{true} = \ln\left(\frac{L}{L_0}\right)$$
 
 Relationship between engineering and true quantities (before necking):
+
 $$\sigma_{true} = \sigma_{eng}(1 + \epsilon_{eng}), \quad \epsilon_{true} = \ln(1 + \epsilon_{eng})$$
 
 ### Key Points on the Stress-Strain Curve
@@ -30,11 +33,13 @@ $$\sigma_{true} = \sigma_{eng}(1 + \epsilon_{eng}), \quad \epsilon_{true} = \ln(
 ### Elastic Region
 
 In the elastic region, deformation is fully recoverable upon unloading:
+
 $$\sigma = E\epsilon$$
 
 where $E$ is the elastic modulus (Young's modulus). The elastic modulus represents the stiffness of the material and is a measure of atomic bond strength.
 
 **Elastic strain energy density (resilience per unit volume):**
+
 $$u = \frac{1}{2}\sigma\epsilon = \frac{\sigma^2}{2E}$$
 
 ### Plastic Region
@@ -46,6 +51,7 @@ Beyond the yield point, permanent (plastic) deformation occurs. Key characterist
 - **Permanent set**: residual strain after unloading
 
 **Strain hardening exponent** (power-law model):
+
 $$\sigma_{true} = K \epsilon_{true}^n$$
 
 where $K$ is the strength coefficient and $n$ is the strain hardening exponent. Typical values of $n$ range from 0.1 to 0.5.
@@ -63,9 +69,11 @@ For materials without a clear yield point, the **0.2% offset method** is used:
 Ductile materials undergo significant plastic deformation before fracture. Examples include mild steel, aluminum alloys, and copper.
 
 **Percent elongation:**
+
 $$\% EL = \frac{L_f - L_0}{L_0} \times 100$$
 
 **Percent reduction in area:**
+
 $$\% RA = \frac{A_0 - A_f}{A_0} \times 100$$
 
 A material with $\% EL > 5\%$ is generally considered ductile.
@@ -91,6 +99,7 @@ Hardness measures resistance to localized plastic deformation (indentation):
 | Vickers (HV) | Diamond pyramid | Thin sections, coatings |
 
 **Approximate relationship with tensile strength (for steels):**
+
 $$\sigma_u \approx 3.45 \times HB \text{ (MPa)}$$
 
 ### Toughness
@@ -100,6 +109,7 @@ Toughness is the total energy absorbed per unit volume up to fracture, represent
 $$u_T = \int_0^{\epsilon_f} \sigma \, d\epsilon$$
 
 **Approximate toughness for a ductile material:**
+
 $$u_T \approx \frac{\sigma_y + \sigma_u}{2} \times \epsilon_f$$
 
 **Impact toughness** is measured using the Charpy or Izod test and quantifies resistance to sudden loading.
@@ -107,6 +117,7 @@ $$u_T \approx \frac{\sigma_y + \sigma_u}{2} \times \epsilon_f$$
 ### Resilience
 
 Resilience is the energy absorbed per unit volume within the elastic region:
+
 $$u_r = \frac{\sigma_y^2}{2E}$$
 
 Materials with high resilience can absorb significant elastic energy — useful for springs and shock absorbers.
@@ -118,6 +129,7 @@ Materials with high resilience can absorb significant elastic energy — useful 
 Fatigue failure occurs under cyclic loading at stresses well below the ultimate strength. It accounts for approximately 90% of all mechanical failures in service.
 
 **Stress amplitude and mean stress:**
+
 $$\sigma_a = \frac{\sigma_{max} - \sigma_{min}}{2}, \quad \sigma_m = \frac{\sigma_{max} + \sigma_{min}}{2}$$
 
 ### S-N Curve
@@ -125,11 +137,13 @@ $$\sigma_a = \frac{\sigma_{max} - \sigma_{min}}{2}, \quad \sigma_m = \frac{\sigm
 The S-N (stress–number of cycles) curve characterizes fatigue behavior. For ferrous metals, an **endurance limit** $\sigma_e$ exists below which the material can sustain an infinite number of cycles.
 
 **Approximate endurance limit (steels):**
+
 $$\sigma_e \approx 0.5\,\sigma_u \quad \text{for } \sigma_u \leq 1400 \text{ MPa}$$
 
 ### Modified Goodman Criterion
 
 For combined alternating and mean stress:
+
 $$\frac{\sigma_a}{\sigma_e} + \frac{\sigma_m}{\sigma_u} = 1$$
 
 ## Creep and Stress Relaxation
@@ -144,6 +158,7 @@ Creep is the time-dependent deformation under sustained constant stress, signifi
 3. **Tertiary creep** — accelerating strain rate leading to rupture
 
 **Steady-state creep rate (Arrhenius model):**
+
 $$\dot{\epsilon}_s = A \sigma^n e^{-Q/(RT)}$$
 
 where $A$ is a material constant, $n$ is the stress exponent, $Q$ is the activation energy, $R$ is the gas constant, and $T$ is absolute temperature.
@@ -151,6 +166,7 @@ where $A$ is a material constant, $n$ is the stress exponent, $Q$ is the activat
 ### Stress Relaxation
 
 Stress relaxation is the decrease in stress over time under constant strain, important for bolted joints and seals:
+
 $$\sigma(t) = \sigma_0 \, e^{-t/\tau}$$
 
 where $\tau$ is the relaxation time constant.
@@ -208,7 +224,7 @@ The material is ductile ($\% EL > 5\%$) with good strength and formability.
 
 ### Example 2: Fatigue Life Assessment
 
-A steel shaft ($\sigma_u = 600$ MPa) is subjected to reversed bending with $\sigma_a = 250$ MPa and $\sigma_m = 100$ MPa.
+A steel shaft ($\sigma_u = 600$ MPa) is subjected to fluctuating bending with $\sigma_a = 250$ MPa and $\sigma_m = 100$ MPa.
 
 **Given:**
 - $\sigma_u = 600$ MPa, $\sigma_e \approx 0.5 \times 600 = 300$ MPa
@@ -231,3 +247,75 @@ The sum equals 1.0, indicating the shaft is exactly at the fatigue limit — it 
 - Use appropriate safety factors to account for material variability and loading uncertainty
 
 Understanding mechanical properties enables engineers to select materials that meet performance requirements while optimizing weight, cost, and manufacturability.
+
+## Exercises
+
+**Exercise 1.** In the tensile test of Example 1, the engineering strain at maximum load is 0.18. Find the true stress and true strain at that point. Using the Considère condition (necking begins when $\epsilon_{true} = n$), estimate the strain hardening exponent.
+
+<details>
+<summary>Answer</summary>
+
+$$\sigma_{true} = \sigma_{eng}(1 + \epsilon_{eng}) = 472.7 \times 1.18 = 558 \text{ MPa}, \quad \epsilon_{true} = \ln 1.18 = 0.166$$
+
+Necking starts at maximum load, so $n \approx 0.17$, within the typical range of 0.1 to 0.5.
+
+</details>
+
+**Exercise 2.** Compare the modulus of resilience of mild steel ($\sigma_y = 250$ MPa, $E = 200$ GPa) and aluminium 6061-T6 ($\sigma_y = 276$ MPa, $E = 69$ GPa), per unit volume and per unit mass. Which makes the lighter spring?
+
+<details>
+<summary>Answer</summary>
+
+- Steel: $u_r = 250^2/(2 \times 200\,000) = 0.156$ MPa $= 156$ kJ/m³, or 19.9 J/kg
+- Aluminium: $u_r = 276^2/(2 \times 69\,000) = 0.552$ MPa $= 552$ kJ/m³, or 204 J/kg
+
+Aluminium stores about 3.5 times more elastic energy per volume and 10 times more per mass, because of its lower modulus and density. Real springs use high-strength steels, whose much larger $\sigma_y$ enters squared.
+
+</details>
+
+**Exercise 3.** Using the property table, rank mild steel, Al 6061-T6, Ti-6Al-4V and CFRP for (a) a light, stiff tie ($E/\rho$) and (b) a light, strong beam ($\sigma_y^{2/3}/\rho$; use $\sigma_u$ for CFRP). Work in GPa, MPa and Mg/m³.
+
+<details>
+<summary>Answer</summary>
+
+(a) $E/\rho$: steel 25.5, Al 25.6, Ti 25.7, CFRP 87.5. The three metals are almost identical, which is why weight-critical stiff structures move to composites.
+
+(b) $\sigma^{2/3}/\rho$: steel 5.1, Al 15.7, Ti 20.7, CFRP 81.9. The ranking is CFRP, then titanium, aluminium and steel.
+
+</details>
+
+**Exercise 4.** The shaft of Example 2 ($\sigma_u = 600$ MPa, $\sigma_e = 300$ MPa) is redesigned so that $\sigma_a = 200$ MPa with $\sigma_m = 100$ MPa unchanged. Find the Goodman safety factor. What alternating stress would give a safety factor of 1.5?
+
+<details>
+<summary>Answer</summary>
+
+With the Goodman line scaled by $n$, $\sigma_a/\sigma_e + \sigma_m/\sigma_u = 1/n$:
+
+$$\frac{1}{n} = \frac{200}{300} + \frac{100}{600} = 0.833 \implies n = 1.2$$
+
+For $n = 1.5$: $\sigma_a = 300\,(1/1.5 - 100/600) = 150$ MPa.
+
+In practice $\sigma_e$ would first be reduced by the surface, size and reliability (Marin) factors, which lowers both results.
+
+</details>
+
+**Exercise 5.** A steel creeps with activation energy $Q = 250$ kJ/mol and stress exponent $n = 5$. By what factor does the steady-state creep rate increase if (a) the temperature rises from 800 K to 850 K, or (b) the stress rises by 20%?
+
+<details>
+<summary>Answer</summary>
+
+(a)
+
+$$\frac{\dot{\epsilon}_{850}}{\dot{\epsilon}_{800}} = \exp\left[\frac{Q}{R}\left(\frac{1}{800} - \frac{1}{850}\right)\right] = \exp\left[\frac{250\,000}{8.314} \times 7.35 \times 10^{-5}\right] = 9.1$$
+
+(b) $1.2^5 = 2.49$.
+
+A 50 K rise matters far more than a 20% stress increase, which is why creep design is dominated by temperature control.
+
+</details>
+
+## References
+
+- Callister, W. D., and Rethwisch, D. G., *Materials Science and Engineering: An Introduction*, 10th ed., Wiley, 2018.
+- Dowling, N. E., *Mechanical Behavior of Materials*, 4th ed., Pearson, 2013.
+- Ashby, M. F., *Materials Selection in Mechanical Design*, 5th ed., Butterworth-Heinemann, 2017.

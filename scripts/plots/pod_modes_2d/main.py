@@ -1,92 +1,107 @@
-import numpy as np
+"""Two-point POD: contributions of modes 1 and 2 to velocity signals at points a and b.
+
+Following the two-dimensional POD example (velocity measured at two points a
+and b), synthetic velocity signals u_a(t) and u_b(t) share an in-phase
+10 Hz component and carry an anti-phase 20 Hz harmonic plus seeded noise.
+After removing the mean, the m x 2 snapshot matrix is decomposed with the
+SVD, and the rank-one contributions U~^k = a_k phi_k^T of modes 1 and 2 are
+plotted for each point together with their sum.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Step 1: Generate Synthetic Data
+T_START, T_END = 0.9, 1.1  # time window [s]
+N_SAMPLES = 1000  # number of snapshots m
+FREQUENCY = 10.0  # fundamental frequency [Hz]
+AMP_FUNDAMENTAL = 1.0  # amplitude of the in-phase component [m/s]
+AMP_HARMONIC = 0.5  # amplitude of the anti-phase harmonic [m/s]
+NOISE_STD = 0.1  # standard deviation of measurement noise [m/s]
+SEED = 0  # random seed
 
-# Time vector
-t = np.linspace(0.9, 1.1, 1000)
 
-# Generate synthetic velocity data with clear periodic components
-U = (
-    np.sin(2 * np.pi * t * 10)
-    + 0.5 * np.sin(4 * np.pi * t * 10)
-    + np.random.randn(len(t)) * 0.1
-)
-V = (
-    np.cos(2 * np.pi * t * 10)
-    + 0.5 * np.cos(4 * np.pi * t * 10)
-    + np.random.randn(len(t)) * 0.1
-)
+def generate_signals(n_samples=N_SAMPLES, noise_std=NOISE_STD, seed=SEED):
+    """Return time and the snapshot matrix with columns u_a(t), u_b(t)."""
+    rng = np.random.default_rng(seed)
+    t = np.linspace(T_START, T_END, n_samples)
+    fundamental = AMP_FUNDAMENTAL * np.sin(2 * np.pi * FREQUENCY * t)
+    harmonic = AMP_HARMONIC * np.sin(4 * np.pi * FREQUENCY * t)
+    u_a = fundamental + harmonic + noise_std * rng.standard_normal(n_samples)
+    u_b = fundamental - harmonic + noise_std * rng.standard_normal(n_samples)
+    return t, np.column_stack((u_a, u_b))
 
-# Stack velocity data
-velocity_data = np.vstack((U, V)).T
 
-# Step 2: Apply SVD for POD
+def pod_contributions(snapshots):
+    """Return the mode contributions, POD modes and TKE fractions.
 
-# Perform Singular Value Decomposition (SVD)
-U_svd, S, VT = np.linalg.svd(velocity_data, full_matrices=False)
+    The snapshot matrix U' (mean removed) is factorised as U' = W S Phi^T.
+    The rows of Phi^T are the spatial modes phi_k, the columns of A = W S are
+    the time coefficients a_k, and U~^k = a_k phi_k^T has the same shape as U'.
+    """
+    fluctuations = snapshots - snapshots.mean(axis=0)
+    W, S, PhiT = np.linalg.svd(fluctuations, full_matrices=False)
+    time_coeffs = W * S
+    contributions = [np.outer(time_coeffs[:, k], PhiT[k, :]) for k in range(len(S))]
+    energy_fraction = S**2 / np.sum(S**2)
+    return contributions, PhiT, energy_fraction
 
-# Extract the modes and singular values
-modes = VT.T
-singular_values = S
 
-# Calculate the POD modes (Phi) and coefficients (A)
-Phi = U_svd
-A = np.dot(np.diag(S), VT)
+def plot_contributions(t, contributions, energy_fraction):
+    """Plot modes 1, 2 and their sum for u'_a (top) and u'_b (bottom)."""
+    mode1, mode2 = contributions[0], contributions[1]
+    combined = mode1 + mode2
+    fig, axes = plt.subplots(2, 1, figsize=(12, 8))
+    for col, (ax, point) in enumerate(zip(axes, ("a", "b"))):
+        ax.plot(
+            t,
+            mode1[:, col],
+            "r",
+            label=rf"$\tilde{{U}}^1$ ({100 * energy_fraction[0]:.0f}% TKE)",
+        )
+        ax.plot(
+            t,
+            mode2[:, col],
+            "b",
+            label=rf"$\tilde{{U}}^2$ ({100 * energy_fraction[1]:.0f}% TKE)",
+        )
+        ax.plot(t, combined[:, col], "k--", label=r"$U'=\tilde{U}^1+\tilde{U}^2$")
+        ax.set_xlabel("t (s)")
+        ax.set_ylabel(f"$u'_{point}$ (m/s)")
+        ax.legend(loc="upper right")
+    fig.suptitle("Contributions from modes 1 and 2 to $u'_a$ and $u'_b$")
+    fig.tight_layout()
+    return fig
 
-# Number of modes to retain
-num_modes = 2
 
-# Truncated POD modes and coefficients
-Phi_truncated = Phi[:, :num_modes]
-A_truncated = A[:num_modes, :]
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open a plot window"
+    )
+    parser.add_argument(
+        "--output", type=Path, metavar="DIR", help="save the figure as PNG in DIR"
+    )
+    args = parser.parse_args(argv)
 
-# Step 3: Correctly Calculate Mode Contributions
+    t, snapshots = generate_signals()
+    contributions, modes, energy_fraction = pod_contributions(snapshots)
+    for k in range(len(energy_fraction)):
+        print(
+            f"mode {k + 1}: phi = [{modes[k, 0]:+.3f}, {modes[k, 1]:+.3f}], "
+            f"TKE = {100 * energy_fraction[k]:.1f} %"
+        )
 
-# Calculate contributions over the entire time series
-mode1_contribution = np.dot(
-    Phi_truncated[:, 0].reshape(-1, 1), A_truncated[0, :].reshape(1, -1)
-)
-mode2_contribution = np.dot(
-    Phi_truncated[:, 1].reshape(-1, 1), A_truncated[1, :].reshape(1, -1)
-)
+    fig = plot_contributions(t, contributions, energy_fraction)
 
-# Sum contributions for combined effect
-combined_contribution = mode1_contribution + mode2_contribution
+    if args.output:
+        args.output.mkdir(parents=True, exist_ok=True)
+        fig.savefig(args.output / "pod_modes_2d.png", dpi=100, bbox_inches="tight")
+    if not args.no_show:
+        plt.show()
 
-# Ensure proper alignment
-t_aligned = t
 
-# Step 4: Plot Contributions
-
-# Plot the contributions
-plt.figure(figsize=(12, 8))
-
-plt.subplot(2, 1, 1)
-plt.plot(t_aligned, mode1_contribution[:, 0], "r", label="$\\overline{U}_1$")
-plt.plot(t_aligned, mode2_contribution[:, 0], "b", label="$\\overline{U}_2$")
-plt.plot(
-    t_aligned,
-    combined_contribution[:, 0],
-    "k--",
-    label="$U=\\overline{U}_1+\\overline{U}_2$",
-)
-plt.xlabel("t (s)")
-plt.ylabel("$u'_a$ (m/s)")
-plt.legend()
-
-plt.subplot(2, 1, 2)
-plt.plot(t_aligned, mode1_contribution[:, 0], "r", label="$\\overline{U}_1$")
-plt.plot(t_aligned, mode2_contribution[:, 0], "b", label="$\\overline{U}_2$")
-plt.plot(
-    t_aligned,
-    combined_contribution[:, 0],
-    "k--",
-    label="$U=\\overline{U}_1+\\overline{U}_2$",
-)
-plt.xlabel("t (s)")
-plt.ylabel("$u'_b$ (m/s)")
-plt.legend()
-
-plt.suptitle("Figure 10. Contributions from modes 1 and 2 to $u'_a$ and $u'_b$")
-plt.show()
+if __name__ == "__main__":
+    main()

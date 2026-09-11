@@ -47,8 +47,7 @@ Conservation of energy including thermal effects and viscous dissipation.
 ### 4. [Equation of State](./equation_of_state.md)
 Thermodynamic relationships between pressure, density, and temperature.
 
-### 5. [Conservation Form](./conservation_form.md)
-General mathematical framework for conservation laws.
+The general conservation form is summarised above; a dedicated page on it is planned in the [roadmap](../../../ROADMAP.md).
 
 ## Equation Coupling
 

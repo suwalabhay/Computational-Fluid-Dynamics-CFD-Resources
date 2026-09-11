@@ -62,9 +62,11 @@ In planar problems: $H_O = mvd$, where $d$ is the perpendicular distance from $O
 ### Angular Momentum of a Rigid Body
 
 About the mass center $G$:
+
 $$H_G = I_G \omega$$
 
 About a fixed point $O$:
+
 $$H_O = I_O \omega = (I_G + md^2)\omega$$
 
 where $d$ is the distance from $O$ to $G$.
@@ -136,15 +138,19 @@ A 2 kg ball moving at 6 m/s strikes a stationary 3 kg ball. The coefficient of r
 **Solution:**
 
 **Conservation of momentum:**
+
 $$2(6) + 3(0) = 2v_{A2} + 3v_{B2}$$
+
 $$12 = 2v_{A2} + 3v_{B2} \quad \text{...(1)}$$
 
 **Restitution:**
+
 $$v_{B2} - v_{A2} = e(v_{A1} - v_{B1}) = 0.7(6 - 0) = 4.2 \quad \text{...(2)}$$
 
 From (2): $v_{B2} = v_{A2} + 4.2$
 
 Substituting into (1):
+
 $$12 = 2v_{A2} + 3(v_{A2} + 4.2) = 5v_{A2} + 12.6$$
 
 $$v_{A2} = -0.12 \text{ m/s}, \quad v_{B2} = 4.08 \text{ m/s}$$
@@ -152,7 +158,9 @@ $$v_{A2} = -0.12 \text{ m/s}, \quad v_{B2} = 4.08 \text{ m/s}$$
 Ball $A$ bounces back slightly; ball $B$ moves forward.
 
 **Energy lost:**
+
 $$\Delta T = \frac{1}{2}(2)(6)^2 - \left[\frac{1}{2}(2)(0.12)^2 + \frac{1}{2}(3)(4.08)^2\right]$$
+
 $$\Delta T = 36 - [0.0144 + 24.97] = 11.02 \text{ J}$$
 
 ### Example 2: Ballistic Pendulum
@@ -169,14 +177,19 @@ A 10 g bullet embeds itself in a 2 kg wooden block suspended as a pendulum. The 
 **Solution:**
 
 **Step 1 — Impact (conservation of momentum):**
+
 $$m_b v_0 = (m_b + m_B)v'$$
+
 $$0.01 v_0 = (0.01 + 2)v' = 2.01v' \quad \text{...(1)}$$
 
 **Step 2 — Swing (conservation of energy):**
+
 $$\frac{1}{2}(m_b + m_B)v'^2 = (m_b + m_B)gh$$
+
 $$v' = \sqrt{2gh} = \sqrt{2(9.81)(0.15)} = 1.716 \text{ m/s}$$
 
 **Substituting back into (1):**
+
 $$v_0 = \frac{2.01(1.716)}{0.01} = 345 \text{ m/s}$$
 
 ### Example 3: Rocket Propulsion
@@ -194,9 +207,11 @@ A 1000 kg rocket in space exhausts propellant at 50 kg/s with an exhaust velocit
 **Solution:**
 
 **Thrust (force from exhaust):**
+
 $$F_{thrust} = \dot{m}_e v_e = 50(3000) = 150\,000 \text{ N} = 150 \text{ kN}$$
 
 **Tsiolkovsky rocket equation:**
+
 $$v = v_0 + v_e \ln\frac{m_0}{m_0 - \dot{m}_e t}$$
 
 Starting from rest ($v_0 = 0$) after $t = 10$ s:
@@ -220,18 +235,22 @@ A ball strikes a smooth wall at 10 m/s at an angle of 40° to the wall. The coef
 Define axes: $n$ normal to wall, $t$ tangent to wall.
 
 **Initial components:**
-$$v_{1n} = 10\sin 40° = 6.43 \text{ m/s}, \quad v_{1t} = 10\cos 40° = 7.66 \text{ m/s}$$
+
+$$v_{1n} = 10\sin 40^\circ = 6.43 \text{ m/s}, \quad v_{1t} = 10\cos 40^\circ = 7.66 \text{ m/s}$$
 
 **Tangential component (conserved, smooth wall):**
+
 $$v_{2t} = v_{1t} = 7.66 \text{ m/s}$$
 
 **Normal component (restitution):**
+
 $$v_{2n} = e \cdot v_{1n} = 0.8(6.43) = 5.14 \text{ m/s}$$
 
 **Rebound speed:**
+
 $$v_2 = \sqrt{5.14^2 + 7.66^2} = 9.23 \text{ m/s}$$
 
-**Rebound angle to wall:** $\alpha = \arctan(5.14/7.66) = 33.8°$ — shallower angle and lower speed than approach.
+**Rebound angle to wall:** $\alpha = \arctan(5.14/7.66) = 33.9^\circ$ — shallower angle and lower speed than approach.
 
 ## Applications
 
@@ -270,3 +289,82 @@ $$v_2 = \sqrt{5.14^2 + 7.66^2} = 9.23 \text{ m/s}$$
 - Always compute kinetic energy before and after to quantify energy lost ($e < 1$ means energy loss)
 
 Impulse-momentum methods are indispensable tools that complement Newton's second law and work-energy methods, completing the trio of fundamental approaches in classical dynamics.
+
+## Exercises
+
+**Exercise 1.** A 0.15 kg ball arrives at a bat at 30 m/s and leaves at 40 m/s in the opposite direction. The contact lasts 0.01 s. Find the impulse on the ball and the average contact force.
+
+<details>
+<summary>Answer</summary>
+
+Taking the outgoing direction as positive: $\text{Imp} = m(v_2 - v_1) = 0.15(40 - (-30)) = 10.5$ N·s.
+
+$$\bar{F} = \frac{10.5}{0.01} = 1050 \text{ N}$$
+
+This force acts in the outgoing direction.
+
+</details>
+
+**Exercise 2.** A 4 kg block at rest on a frictionless horizontal surface is pushed by a force $F(t) = 200t$ N for $0 \leq t \leq 0.5$ s. Find its speed at $t = 0.5$ s.
+
+<details>
+<summary>Answer</summary>
+
+$$\int_0^{0.5} 200t\,dt = 100(0.5)^2 = 25 \text{ N·s}$$
+
+$$v_2 = \frac{25}{4} = 6.25 \text{ m/s}$$
+
+</details>
+
+**Exercise 3.** Show that the kinetic energy lost in a direct central impact is
+
+$$\Delta T = \frac{1}{2}\frac{m_A m_B}{m_A + m_B}(1 - e^2)(v_{A1} - v_{B1})^2$$
+
+and check the result against Example 1.
+
+<details>
+<summary>Answer</summary>
+
+Write the kinetic energy of two particles as the energy of the mass centre plus the energy of relative motion:
+
+$$T = \frac{1}{2}(m_A + m_B)v_G^2 + \frac{1}{2}\mu v_{rel}^2$$
+
+where $\mu = \frac{m_A m_B}{m_A + m_B}$ and $v_{rel} = v_A - v_B$. Momentum conservation keeps $v_G$ unchanged, and restitution gives $v_{rel,2} = -e\,v_{rel,1}$. Hence $\Delta T = T_1 - T_2 = \frac{1}{2}\mu(1 - e^2)v_{rel,1}^2$.
+
+Example 1: $\mu = \frac{2 \times 3}{5} = 1.2$ kg, so $\Delta T = 0.5 \times 1.2 \times (1 - 0.49) \times 36 = 11.02$ J, which matches.
+
+</details>
+
+**Exercise 4.** A skater spins at 2 rev/s with moment of inertia 3.5 kg·m², then pulls in her arms to reduce it to 1.2 kg·m². Find the new spin rate and the kinetic energy before and after. Where does the extra energy come from?
+
+<details>
+<summary>Answer</summary>
+
+$$\omega_2 = \frac{I_1}{I_2}\omega_1 = \frac{3.5}{1.2} \times 2 = 5.83 \text{ rev/s}$$
+
+$T_1 = \frac{1}{2}(3.5)(4\pi)^2 = 276$ J and $T_2 = \frac{1}{2}(1.2)(2\pi \times 5.83)^2 = 806$ J.
+
+The internal forces exert no net moment about the spin axis, so angular momentum is conserved. They do, however, do work: the extra 530 J is supplied by the skater's muscles pulling the arms inward against the centripetal requirement.
+
+</details>
+
+**Exercise 5.** A smooth ball $A$ moving at 4 m/s strikes an identical stationary ball $B$. At impact the line of centres makes $30^\circ$ with $A$'s velocity, and $e = 0.9$. Find the velocities of both balls after impact.
+
+<details>
+<summary>Answer</summary>
+
+Along the line of impact ($n$): $v_{An} = 4\cos 30^\circ = 3.464$ m/s. Perpendicular ($t$): $v_{At} = 4\sin 30^\circ = 2.0$ m/s, which is unchanged.
+
+For equal masses the momentum and restitution equations along $n$ give
+
+$$v'_{An} = \frac{1 - e}{2}v_{An} = 0.173 \text{ m/s}, \quad v'_{Bn} = \frac{1 + e}{2}v_{An} = 3.291 \text{ m/s}$$
+
+Ball $A$: speed $\sqrt{2.0^2 + 0.173^2} = 2.01$ m/s, almost perpendicular to the line of centres (about $4.9^\circ$ from the tangent direction). Ball $B$: 3.29 m/s along the line of centres. Check: $0.173 + 3.291 = 3.464$ m/s, so momentum along $n$ is conserved.
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Dynamics*, 14th ed., Pearson, 2016.
+- J. L. Meriam, L. G. Kraige, *Engineering Mechanics: Dynamics*, Wiley.
+- F. P. Beer, E. R. Johnston, P. J. Cornwell, *Vector Mechanics for Engineers: Dynamics*, McGraw-Hill.

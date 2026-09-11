@@ -51,8 +51,8 @@ for t in range(num_iters):
         f[:, :, i] = np.roll(np.roll(f[:, :, i], cx, axis=0), cy, axis=1)
 
     # Boundary conditions (e.g., bounce-back)
-    f[0, :, [1,5,8]] = f[0, :, [3,6,7]]  # left wall bounce-back
-    f[-1, :, [3,6,7]] = f[-1, :, [1,5,8]] # right wall bounce-back
+    f[0, :, [1,5,8]] = f[0, :, [3,7,6]]  # left wall bounce-back
+    f[-1, :, [3,6,7]] = f[-1, :, [1,8,5]] # right wall bounce-back
 
     # Update macroscopic variables
     rho = np.sum(f, axis=2)
@@ -86,8 +86,60 @@ This note addresses common practical questions about LBM: it clarifies that LBM 
 | **Inputs** | Lattice dimensions $n_x \times n_y$, number of iterations, relaxation parameter $\omega$, initial distribution functions $f_i$ |
 | **Outputs** | Density field $\rho$, velocity field, boundary-enforced solution, convergence status |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/lattice_boltzmann_cylinder_flow/main.py` | Production-level LBM script for 2-D cylinder flow, complementing the simplified snippet shown in this note. |
+- [Lattice Boltzmann Cylinder Flow Simulation](../../../scripts/simulations/lattice_boltzmann_cylinder_flow/): simulates 2D flow past a circular cylinder with the lattice Boltzmann method (D2Q9 lattice, BGK collision operator) and animates the velocity magnitude with Matplotlib.
+
+## Exercises
+
+**Exercise 1.** The snippet uses a relaxation parameter $\omega = \Delta t/\tau$. For $\omega = 1.0$, what are $\tau$ and the lattice viscosity $\nu = (\tau - 1/2)/3$? What $\omega$ gives $\nu = 0.01$?
+
+<details>
+<summary>Answer</summary>
+
+$\omega = 1$ gives $\tau = 1$ and $\nu = (1 - 0.5)/3 = 1/6 \approx 0.167$. For $\nu = 0.01$, $\tau = 3 \times 0.01 + 0.5 = 0.53$ and $\omega = 1/0.53 \approx 1.887$. Values of $\omega$ approaching 2 give low viscosity but reduced stability.
+
+</details>
+
+**Exercise 2.** The snippet orders the velocities as $(0,0), (1,0), (0,1), (-1,0), (0,-1), (1,1), (-1,1), (-1,-1), (1,-1)$ with indices 0 to 8. List the index of the opposite direction $\bar{i}$ for each $i$, and write the correct bounce-back assignment for the left wall, where the unknown populations are those pointing in $+x$.
+
+<details>
+<summary>Answer</summary>
+
+The opposite map is $\bar{i} = (0, 3, 4, 1, 2, 7, 8, 5, 6)$ for $i = 0, \ldots, 8$.
+
+At the left wall the populations with $c_x = +1$ are $i = 1, 5, 8$, and their opposites are $3, 7, 6$. The assignment is therefore `f[0, :, [1,5,8]] = f[0, :, [3,7,6]]`, and at the right wall `f[-1, :, [3,6,7]] = f[-1, :, [1,8,5]]`. The pairing order matters. Pairing 5 with 6 would reverse only the $x$ component (a specular reflection, which behaves like a free-slip wall) instead of the full velocity reversal that gives no-slip.
+
+</details>
+
+**Exercise 3.** The snippet's collision uses $f_i^{\text{eq}} = \rho/9$ for all nine directions. For $\rho = 1$, compute $\sum_i f_i^{\text{eq}}$, $\sum_i f_i^{\text{eq}} c_i$ and $\sum_i f_i^{\text{eq}} c_{ix}^2$, and compare with the D2Q9 rest equilibrium $w_i \rho$ ($w = 4/9, 1/9, 1/36$). What physics does the simplification lose?
+
+<details>
+<summary>Answer</summary>
+
+Uniform equilibrium: the sum is $9 \times 1/9 = 1$, and the first moment is $0$ for any flow. For the second moment, $c_{ix}^2 = 1$ for the two cardinal $x$ directions and the four diagonals, so $\sum_i f_i^{\text{eq}} c_{ix}^2 = 6/9 = 2/3$.
+
+D2Q9 at rest: the second moment is $2 \times 1/9 + 4 \times 1/36 = 1/3$.
+
+The uniform equilibrium conserves mass. Because its momentum is always zero, however, the collision destroys the fluid momentum, and its second moment implies $c_s^2 = 2/3$ instead of $1/3$. A physical simulation must use the full equilibrium $w_i \rho [1 + c_i \cdot u/c_s^2 + (c_i \cdot u)^2/(2c_s^4) - u \cdot u/(2c_s^2)]$ with the local velocity.
+
+</details>
+
+**Exercise 4.** Estimate the memory of the distribution arrays (double precision) for (a) the snippet's $50 \times 50$ D2Q9 lattice and (b) a D3Q19 lattice of $512^3$ nodes storing two copies of $f$ (pre- and post-streaming). If the 3D code runs at 50 MLUPS (million lattice updates per second), how long do $10^4$ time steps take?
+
+<details>
+<summary>Answer</summary>
+
+(a) $50 \times 50 \times 9 \times 8 = 180000$ bytes, about 180 kB.
+
+(b) $512^3 \times 19 \times 2 \times 8 \approx 4.08 \times 10^{10}$ bytes, i.e. 38 GiB (about 41 GB).
+
+Run time: $512^3 \times 10^4 / (5 \times 10^7) \approx 2.68 \times 10^4$ s, about 7.5 hours. Memory and memory bandwidth, not arithmetic, are usually the bottleneck of LBM codes, which is why data layout and parallelization matter.
+
+</details>
+
+## References
+
+- T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva and E. M. Viggen, *The Lattice Boltzmann Method: Principles and Practice*, Springer, 2017.
+- S. Succi, *The Lattice Boltzmann Equation for Fluid Dynamics and Beyond*, Oxford University Press, 2001.
+- S. Chen and G. D. Doolen, "Lattice Boltzmann method for fluid flows", *Annual Review of Fluid Mechanics* 30, 1998.

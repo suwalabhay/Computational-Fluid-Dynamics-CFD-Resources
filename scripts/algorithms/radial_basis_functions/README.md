@@ -1,65 +1,65 @@
 # Radial Basis Functions
 
-This script fits a multiquadric radial basis function (RBF) interpolant through 11 scattered data points sampled from a non-linear test function. RBF interpolation is a mesh-free technique widely used in CFD for scattered-data interpolation, mesh deformation, and data-driven surrogate modelling; this example shows the complete workflow from data generation to prediction and visualisation.
+This script fits a multiquadric radial basis function (RBF) interpolant through 11 data points on $[0, 1]$ using SciPy's `Rbf` class and plots it on a fine grid. RBF interpolation needs no mesh, which is why it is used for scattered-data interpolation, mesh deformation and surrogate modelling in CFD.
 
 ## Overview
 
-- Samples 11 training points from a smooth non-linear test function.
-- Constructs a multiquadric RBF interpolant using SciPy's `Rbf` class.
-- Evaluates the interpolant on a fine prediction grid and compares it to the true function.
-- Plots the training data, the RBF prediction, and the ground truth on a single figure.
-- Illustrates how the shape parameter $\varepsilon$ governs the width of each basis function and thus the global smoothness of the interpolant.
+- Uses 11 fixed data points at $x = 0, 0.1, \dots, 1$, digitised from a reference plot. They are not generated from a formula.
+- Builds a multiquadric interpolant with `scipy.interpolate.Rbf` and SciPy's default shape parameter, and prints that parameter.
+- Evaluates the interpolant at 100 points in $[0, 1]$.
+- Plots the data points and the interpolant.
 
 ## Mathematical Background
 
 ### RBF Interpolant
 
-Given $n$ training locations $x_1, \dots, x_n \in \mathbb{R}$ with associated response values $y_1, \dots, y_n$, the RBF interpolant is
+For centres $x_1, \dots, x_n$ with values $y_1, \dots, y_n$:
 
-$$\tilde{y}(x) = \sum_{i=1}^{n} w_i\, \phi\!\bigl(\|x - x_i\|\bigr),$$
+$$
+\tilde{y}(x) = \sum_{i=1}^{n} w_i\, \phi\bigl(|x - x_i|\bigr).
+$$
 
-where $\phi : [0,\infty) \to \mathbb{R}$ is the chosen radial basis function and $\mathbf{w} = (w_1, \dots, w_n)^T$ are the interpolation weights.
+### Multiquadric Basis in SciPy
 
-### Multiquadric Basis Function
+SciPy's `Rbf` defines the multiquadric as
 
-The multiquadric basis function is
+$$
+\phi(r) = \sqrt{\left(\frac{r}{\varepsilon}\right)^2 + 1},
+$$
 
-$$\phi(r) = \sqrt{1 + (\varepsilon\, r)^2},$$
+so a larger $\varepsilon$ gives a flatter basis function. By default $\varepsilon$ is the average node spacing, estimated from the bounding box of the nodes. In one dimension that is $(x_{\max} - x_{\min})/n = 1/11 \approx 0.0909$ here.
 
-where $r = \|x - x_i\|$ is the distance from the evaluation point to the $i$-th centre and $\varepsilon > 0$ is the shape parameter. Larger $\varepsilon$ produces a narrower, more peaked basis; smaller $\varepsilon$ yields a broader, flatter basis. The multiquadric is globally supported and conditionally positive definite.
+### Weights
 
-### Weight Determination
+Requiring $\tilde{y}(x_j) = y_j$ gives the symmetric system
 
-Imposing exact interpolation at all $n$ training points gives the symmetric linear system
+$$
+\Phi\,\mathbf{w} = \mathbf{y}, \qquad \Phi_{ij} = \phi\bigl(|x_i - x_j|\bigr).
+$$
 
-$$\Phi\,\mathbf{w} = \mathbf{y},$$
-
-where $\mathbf{y} = (y_1, \dots, y_n)^T$ and the collocation matrix $\Phi \in \mathbb{R}^{n \times n}$ has entries
-
-$$\Phi_{ij} = \phi\!\bigl(\|x_i - x_j\|\bigr) = \sqrt{1 + \varepsilon^2(x_i - x_j)^2}, \quad i,j = 1,\dots,n.$$
-
-Because the multiquadric is conditionally positive definite of order 1, the system is non-singular for distinct centres.
-
-### Interpolation Error
-
-For sufficiently smooth target functions the RBF interpolant satisfies error estimates of the form
-
-$$\|\tilde{y} - y\|_\infty \leq C\, h^k,$$
-
-where $h$ is the fill distance (maximum gap between adjacent training points) and the exponent $k$ depends on the smoothness of $\phi$ and the target function.
+`Rbf` solves this system directly, with no polynomial term and the default `smooth=0`. For distinct centres the multiquadric matrix is non-singular (Micchelli, 1986).
 
 ## Implementation
 
-1. **Training data** — evaluate the test function at 11 equally spaced locations $x_i$ and store the responses $y_i$.
-2. **Interpolant construction** — instantiate `scipy.interpolate.Rbf(x_train, y_train, function='multiquadric')`; the constructor assembles $\Phi$ and solves $\Phi\mathbf{w} = \mathbf{y}$ internally.
-3. **Prediction grid** — create a dense array of evaluation points spanning the training domain.
-4. **Evaluation** — call the `Rbf` object on the prediction grid to obtain $\tilde{y}$ at each point.
-5. **Plotting** — plot the true function as a reference curve, overlay the training points as markers, and draw the RBF prediction curve; add axis labels, a legend, and a title.
+- `X_DATA` and `Y_DATA` hold the 11 data points, and `N_PREDICT` sets the number of evaluation points.
+- `fit_rbf(x, y, function="multiquadric")` returns the `scipy.interpolate.Rbf` object, which assembles and solves $\Phi\mathbf{w} = \mathbf{y}$.
+- `plot_interpolation(x, y, x_new, y_new)` plots the points and the interpolant.
+- `main` prints `rbf.epsilon`, evaluates the interpolant and saves or shows the figure.
+
+## Usage
+
+```bash
+python main.py                          # show the figure
+python main.py --no-show --output .     # save the figure as a PNG in the current directory
+```
 
 ## Output
 
-The script displays a single figure containing:
+![Multiquadric RBF interpolation of 11 points](radial_basis_functions.png)
 
-- The **true function** shown as a smooth reference curve over the full prediction domain.
-- **Training data** displayed as discrete markers at the 11 sample locations.
-- The **RBF interpolant** $\tilde{y}(x)$ plotted as a continuous curve, passing exactly through all training points and smoothly interpolating between them.
+The interpolant passes exactly through all 11 points. It follows the small oscillation between $x = 0$ and $x = 0.4$ and the steep rise from $y = 4$ to $y = 20$ over $x \in [0.8, 1]$ without large overshoots between the points.
+
+## Related Notes
+
+- [Radial Basis Functions](../../../notes/numerical/surrogates/radial_basis_functions.md)
+- [Surrogate Modelling Introduction](../../../notes/numerical/surrogates/intro.md)

@@ -324,13 +324,9 @@ $$
 - Model reduction can generate a set of ordinary differential equations (finite-dimensional dynamical system) simplifying partial differential equations in fluid mechanics (Galerkin projection).
 
 
-## References
-
-These notes are inspired by Julien Weiss's "A Tutorial on the Proper Orthogonal Decomposition," presented at the 2019 AIAA Aviation Forum in Dallas, Texas.
-
 ## Purpose in CFD
 
-This note extends the 2-D POD derivation to N dimensions, which is the form used in practical CFD applications. It explains how to build the snapshot matrix $\mathbf{U}$ from PIV or simulation data, compute the $m \times m$ covariance matrix (efficient when $m \ll n$), extract eigenvalues and modes, and reconstruct the original field. The procedure applies directly to velocity, pressure, or any scalar field.
+This note extends the 2-D POD derivation to N dimensions, which is the form used in practical CFD applications. It explains how to build the snapshot matrix $\mathbf{U}$ from PIV or simulation data, compute the $n \times n$ covariance matrix (or the $m \times m$ snapshot correlation matrix, which is cheaper when $m \ll n$), extract eigenvalues and modes, and reconstruct the original field. The procedure applies directly to velocity, pressure, or any scalar field.
 
 ## Input / Output
 
@@ -339,10 +335,81 @@ This note extends the 2-D POD derivation to N dimensions, which is the form used
 | **Inputs** | Snapshot matrix $\mathbf{U} \in \mathbb{R}^{m \times n}$ (rows = time instants, columns = spatial points), number of modes to retain |
 | **Outputs** | Eigenvalues $\lambda_k$, spatial modes, temporal coefficients, energy distribution, truncated reconstruction |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/pod/main.py` | Standard POD implementation using SVD on an $m \times n$ snapshot matrix. |
-| `scripts/algorithms/snapshot_pod/main.py` | Snapshot POD variant that works with the $m \times m$ correlation matrix for efficiency. |
-| `scripts/plots/longitudinal_velocity_fluctuations_and_projections/main.py` | Plots turbulent velocity fluctuations and their projection onto principal components (POD modes). |
+- [Eigenvector Projection of Velocity Fluctuations](../../../scripts/plots/eigenvector_projection/): finds the principal directions of correlated 2D velocity fluctuations from the eigenvectors of their covariance matrix and projects the data onto them.
+- [Longitudinal Velocity Fluctuations and Projections](../../../scripts/plots/longitudinal_velocity_fluctuations_and_projections/): plots synthetic two-point velocity fluctuations as time traces, as a scatter cloud, and projected onto a unit vector, which are the first steps of the two-point POD example.
+- [POD Analysis for Flow Fields](../../../scripts/plots/pod_analysis_for_flow_fields/): performs Proper Orthogonal Decomposition (POD) on a synthetic 100 × 50 snapshot matrix with the singular value decomposition (SVD) and plots the eigenvalue spectrum with the share of turbulent kinetic energy (TKE) in each mode.
+- [POD Modes of a Two-Point Velocity Signal](../../../scripts/plots/pod_modes_2d/): applies Proper Orthogonal Decomposition to velocity signals measured at two points, a and b, and plots how much each of the two POD modes contributes to each signal.
+- [POD Spatial Modes and Temporal Coefficients](../../../scripts/plots/pod_modes_and_temporal_coefficients/): extracts the first three POD spatial modes and their temporal coefficients from a synthetic two-dimensional, time-dependent field and plots them.
+- [Proper Orthogonal Decomposition (POD)](../../../scripts/algorithms/pod/): performs Proper Orthogonal Decomposition on a synthetic spatio-temporal field by taking the singular value decomposition of the mean-subtracted snapshot matrix.
+- [Snapshot Proper Orthogonal Decomposition (Snapshot POD)](../../../scripts/algorithms/snapshot_pod/): computes POD modes of a synthetic spatio-temporal field with the snapshot method, which solves an eigenvalue problem for the $M \times M$ temporal correlation matrix instead of the much larger $N \times N$ spatial one.
+
+## Exercises
+
+**Exercise 1.** For the separation-bubble data ($n = 5805$ points, $m = 3580$ snapshots), estimate the memory needed to store the covariance matrix $\mathbf{C}$ ($n \times n$) and the snapshot correlation matrix ($m \times m$) in double precision. How do these change when both $u'$ and $v'$ are included in the snapshot matrix?
+
+<details>
+<summary>Answer</summary>
+
+- $\mathbf{C}$: $5805^2 \times 8 \approx 2.70 \times 10^8$ bytes, about 270 MB.
+- $m \times m$ matrix: $3580^2 \times 8 \approx 1.03 \times 10^8$ bytes, about 103 MB.
+- With $u'$ and $v'$: $n = 11610$, so $\mathbf{C}$ needs $11610^2 \times 8 \approx 1.08 \times 10^9$ bytes (about 1.08 GB, four times larger). The $m \times m$ matrix is unchanged.
+
+</details>
+
+**Exercise 2.** The note reports that the first POD mode holds about 20% of the TKE and the second about 8%. What fraction of the TKE is contained in the two-mode low-order model $\tilde{\mathbf{U}} = \tilde{\mathbf{U}}^1 + \tilde{\mathbf{U}}^2$, and what fraction remains in $\mathbf{U} - \tilde{\mathbf{U}}$? Why may the percentages simply be added?
+
+<details>
+<summary>Answer</summary>
+
+The two-mode model holds $20\% + 8\% = 28\%$ and the residual holds $72\%$. The percentages add because the modes are orthonormal and the time coefficients are uncorrelated, so the energy (squared Frobenius norm) of a sum of mode contributions is the sum of their energies: $\|\tilde{\mathbf{U}}^1 + \tilde{\mathbf{U}}^2\|_F^2 = \|\tilde{\mathbf{U}}^1\|_F^2 + \|\tilde{\mathbf{U}}^2\|_F^2$ (proved in Exercise 4). A low 28% is typical of turbulent flows, where energy is spread over many modes.
+
+</details>
+
+**Exercise 3.** Consider $m = 3$ mean-subtracted snapshots at $n = 4$ points:
+
+$$
+\mathbf{U} = \begin{pmatrix} 1 & 0 & -1 & 2 \\ 0 & 1 & 1 & -1 \\ -1 & -1 & 0 & -1 \end{pmatrix}.
+$$
+
+Compute $\mathbf{C}$, its eigenvalues and energy fractions, the first two modes, and the matrix of time coefficients $\mathbf{A} = \mathbf{U}\mathbf{\Phi}$ (first two columns). Explain why only two eigenvalues are nonzero.
+
+<details>
+<summary>Answer</summary>
+
+$$
+\mathbf{C} = \frac{1}{2}\mathbf{U}^T\mathbf{U} = \begin{pmatrix} 1 & 0.5 & -0.5 & 1.5 \\ 0.5 & 1 & 0.5 & 0 \\ -0.5 & 0.5 & 1 & -1.5 \\ 1.5 & 0 & -1.5 & 3 \end{pmatrix}.
+$$
+
+The eigenvalues are $4.5, 1.5, 0, 0$, giving energy fractions of 75% and 25%. The modes (up to sign) are $\mathbf{\phi}_1 = (1, 0, -1, 2)/\sqrt{6}$ and $\mathbf{\phi}_2 = (1, 2, 1, 0)/\sqrt{6}$. You can check directly that $\mathbf{C}\mathbf{\phi}_1 = 4.5\,\mathbf{\phi}_1$ and $\mathbf{C}\mathbf{\phi}_2 = 1.5\,\mathbf{\phi}_2$.
+
+Time coefficients: $\mathbf{a}_1 = \mathbf{U}\mathbf{\phi}_1 = (6, -3, -3)/\sqrt{6} = (2.449, -1.225, -1.225)$ and $\mathbf{a}_2 = \mathbf{U}\mathbf{\phi}_2 = (0, 3, -3)/\sqrt{6} = (0, 1.225, -1.225)$. Check: $\mathbf{a}_1^T\mathbf{a}_1/2 = 4.5$, $\mathbf{a}_2^T\mathbf{a}_2/2 = 1.5$ and $\mathbf{a}_1^T\mathbf{a}_2 = 0$.
+
+Only two eigenvalues are nonzero because $\text{rank}(\mathbf{C}) = \text{rank}(\mathbf{U}) \le m - 1 = 2$: after mean subtraction the three rows sum to zero. In the separation-bubble case at most $3579$ of the $5805$ eigenvalues can be nonzero.
+
+</details>
+
+**Exercise 4.** Using $\mathbf{C}\mathbf{\Phi} = \mathbf{\Phi}\mathbf{\Lambda}$ with orthonormal $\mathbf{\Phi}$, prove that the time coefficients are uncorrelated, $\frac{1}{m-1}\mathbf{A}^T\mathbf{A} = \mathbf{\Lambda}$. Then show that the truncation error satisfies $\|\mathbf{U} - \sum_{k=1}^{r}\tilde{\mathbf{U}}^k\|_F^2 = (m-1)\sum_{k > r}\lambda_k$, and check this for $r = 1$ with the matrix of Exercise 3.
+
+<details>
+<summary>Answer</summary>
+
+$\frac{1}{m-1}\mathbf{A}^T\mathbf{A} = \mathbf{\Phi}^T\left(\frac{1}{m-1}\mathbf{U}^T\mathbf{U}\right)\mathbf{\Phi} = \mathbf{\Phi}^T\mathbf{C}\mathbf{\Phi} = \mathbf{\Phi}^T\mathbf{\Phi}\mathbf{\Lambda} = \mathbf{\Lambda}$. So $\mathbf{a}_k^T\mathbf{a}_l = (m-1)\lambda_k\delta_{kl}$.
+
+From $\mathbf{U} = \mathbf{A}\mathbf{\Phi}^T = \sum_k \mathbf{a}_k\mathbf{\phi}_k^T$, the error is $\mathbf{E} = \sum_{k > r}\mathbf{a}_k\mathbf{\phi}_k^T$. Therefore
+
+$$
+\|\mathbf{E}\|_F^2 = \text{tr}(\mathbf{E}^T\mathbf{E}) = \sum_{k,l > r} (\mathbf{a}_k^T\mathbf{a}_l)(\mathbf{\phi}_l^T\mathbf{\phi}_k) = \sum_{k > r}\mathbf{a}_k^T\mathbf{a}_k = (m-1)\sum_{k > r}\lambda_k.
+$$
+
+Check with Exercise 3: $\|\mathbf{U}\|_F^2 = 12 = 2(4.5 + 1.5)$. The rank-1 residual has squared norm $\|\mathbf{a}_2\|^2 = 3 = 2 \times 1.5$.
+
+</details>
+
+## References
+
+- J. Weiss, "A Tutorial on the Proper Orthogonal Decomposition", *AIAA Aviation 2019 Forum*, Dallas, Texas, 2019. These notes follow the notation and turbulent separation bubble example of this tutorial.
+- L. Sirovich, "Turbulence and the dynamics of coherent structures. Part I: Coherent structures", *Quarterly of Applied Mathematics* 45(3), 1987.
+- P. Holmes, J. L. Lumley, G. Berkooz and C. W. Rowley, *Turbulence, Coherent Structures, Dynamical Systems and Symmetry*, 2nd ed., Cambridge University Press, 2012.
+- K. Taira, S. L. Brunton, S. T. M. Dawson, C. W. Rowley, T. Colonius, B. J. McKeon, O. T. Schmidt, S. Gordeyev, V. Theofilis and L. S. Ukeiley, "Modal analysis of fluid flows: An overview", *AIAA Journal* 55(12), 2017.

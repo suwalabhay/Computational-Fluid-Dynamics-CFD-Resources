@@ -10,11 +10,17 @@ Gears are toothed machine elements that transmit rotary motion and power between
 
 **Key parameters:**
 - **Module** ($m$): Ratio of pitch diameter to number of teeth
+
 $$m = \frac{d}{N}$$
+
 - **Circular pitch** ($p_c$): Arc distance between adjacent teeth on the pitch circle
+
 $$p_c = \pi m$$
+
 - **Diametral pitch** ($P_d$): Number of teeth per unit pitch diameter (Imperial)
+
 $$P_d = \frac{N}{d} = \frac{1}{m}$$
+
 - **Pressure angle** ($\phi$): Angle between the line of action and the tangent to the pitch circle, typically 20° or 25°
 - **Addendum** ($a$): Radial distance from pitch circle to tooth tip, $a = m$
 - **Dedendum** ($b$): Radial distance from pitch circle to tooth root, $b = 1.25m$
@@ -60,12 +66,15 @@ where $v = \frac{\pi d N_{rpm}}{60}$ is the pitch line velocity.
 The resultant force acts along the line of action at the pressure angle $\phi$:
 
 **Tangential force** (transmits power):
+
 $$F_t = \frac{2T}{d} = \frac{P}{v}$$
 
 **Radial force** (separating force):
+
 $$F_r = F_t \tan\phi$$
 
 **Resultant force**:
+
 $$F = \frac{F_t}{\cos\phi}$$
 
 ### Helical Gear Forces
@@ -91,6 +100,7 @@ Helical gears have teeth cut at an angle to the shaft axis, providing smoother a
 **Normal pressure angle**: $\tan\phi_n = \tan\phi_t \cos\psi$
 
 **Virtual number of teeth** (for strength calculations):
+
 $$N_v = \frac{N}{\cos^3\psi}$$
 
 ### Advantages Over Spur Gears
@@ -130,7 +140,7 @@ Worm gears provide high reduction ratios in a compact package. The worm resemble
 
 ### Gear Ratio
 
-$$i = \frac{N_w}{N_g}$$
+$$i = \frac{\omega_{worm}}{\omega_{wheel}} = \frac{N_g}{N_w}$$
 
 where $N_w$ is the number of starts on the worm (typically 1–4) and $N_g$ is the number of teeth on the worm wheel.
 
@@ -199,16 +209,20 @@ $$i_{stage} \approx i_{total}^{1/n}$$
 Pitch diameter of pinion: $d_1 = mN_1 = 4 \times 20 = 80$ mm
 
 Pitch line velocity:
+
 $$v = \frac{\pi d_1 n}{60} = \frac{\pi \times 0.080 \times 1500}{60} = 6.28 \text{ m/s}$$
 
 Tangential force:
+
 $$F_t = \frac{P}{v} = \frac{15000}{6.28} = 2389 \text{ N}$$
 
 Radial force:
-$$F_r = F_t \tan\phi = 2389 \times \tan 20° = 870 \text{ N}$$
+
+$$F_r = F_t \tan\phi = 2389 \times \tan 20^\circ = 870 \text{ N}$$
 
 Resultant force:
-$$F = \frac{F_t}{\cos\phi} = \frac{2389}{\cos 20°} = 2542 \text{ N}$$
+
+$$F = \frac{F_t}{\cos\phi} = \frac{2389}{\cos 20^\circ} = 2542 \text{ N}$$
 
 ### Example 2: Planetary Gear Ratio
 
@@ -221,6 +235,7 @@ $$F = \frac{F_t}{\cos\phi} = \frac{2389}{\cos 20°} = 2542 \text{ N}$$
 Verify tooth constraint: $N_r = N_s + 2N_p \Rightarrow 60 = 24 + 2(18) = 60$ ✓
 
 Using the Willis equation with $\omega_r = 0$:
+
 $$\frac{0 - \omega_c}{\omega_s - \omega_c} = -\frac{N_s}{N_r} = -\frac{24}{60}$$
 
 $$-\omega_c = -\frac{24}{60}(\omega_s - \omega_c)$$
@@ -251,3 +266,87 @@ Gear ratio: $i = \omega_s / \omega_c = 3.5$
 - **Actuators**: Worm gear drives for flap and slat mechanisms
 
 Gears remain the most efficient and reliable means of mechanical power transmission, and a thorough understanding of gear theory is essential for any mechanical engineer working with rotating machinery.
+
+## Exercises
+
+**Exercise 1.** A spur gear pair with standard full-depth teeth has module $m = 3$ mm, pinion $N_1 = 18$ and gear $N_2 = 54$. Find the pitch diameters, centre distance, gear ratio, circular pitch, and the pinion's outside and root diameters.
+
+<details>
+<summary>Answer</summary>
+
+- Pitch diameters: $d_1 = mN_1 = 54$ mm, $d_2 = mN_2 = 162$ mm
+- Centre distance: $C = (d_1 + d_2)/2 = 108$ mm
+- Ratio: $i = N_2/N_1 = 3$
+- Circular pitch: $p_c = \pi m = 9.42$ mm
+- Pinion outside diameter: $d_1 + 2a = 54 + 2(3) = 60$ mm
+- Pinion root diameter: $d_1 - 2b = 54 - 2(1.25 \times 3) = 46.5$ mm
+
+</details>
+
+**Exercise 2.** Compute the contact ratio of the gear pair in Example 1 ($m = 4$ mm, $N_1 = 20$, $N_2 = 60$, $\phi = 20^\circ$, addendum $a = m$). Is it acceptable?
+
+<details>
+<summary>Answer</summary>
+
+Pitch radii 40 and 120 mm; addendum radii $r_{a1} = 44$ mm and $r_{a2} = 124$ mm; base radii $r_{b1} = 40\cos 20^\circ = 37.59$ mm and $r_{b2} = 112.76$ mm; $C = 160$ mm.
+
+$$\sqrt{44^2 - 37.59^2} = 22.87, \quad \sqrt{124^2 - 112.76^2} = 51.58, \quad C\sin\phi = 54.72$$
+
+$$CR = \frac{22.87 + 51.58 - 54.72}{\pi \times 4 \times \cos 20^\circ} = \frac{19.73}{11.81} = 1.67$$
+
+This is above the recommended minimum of 1.2: on average 1.67 tooth pairs share the load.
+
+</details>
+
+**Exercise 3.** A helical pinion has normal module $m_n = 3$ mm, 30 teeth, helix angle $\psi = 25^\circ$ and normal pressure angle $\phi_n = 20^\circ$. It transmits 10 kW at 1000 rpm. Find the transverse module, pitch diameter, transverse pressure angle and the tangential, radial and axial tooth forces.
+
+<details>
+<summary>Answer</summary>
+
+- $m_t = m_n/\cos\psi = 3/\cos 25^\circ = 3.310$ mm, so $d = 30 m_t = 99.30$ mm
+- $\tan\phi_t = \tan\phi_n/\cos\psi$ gives $\phi_t = 21.88^\circ$
+- $T = P/\omega = 10\,000/(1000 \times 2\pi/60) = 95.49$ N·m
+
+$$F_t = \frac{2T}{d} = \frac{2 \times 95.49}{0.09930} = 1923 \text{ N}$$
+
+$$F_r = \frac{F_t \tan\phi_n}{\cos\psi} = \frac{1923 \tan 20^\circ}{\cos 25^\circ} = 772 \text{ N}, \quad F_a = F_t\tan\psi = 897 \text{ N}$$
+
+The axial force of almost 900 N must be carried by a thrust-capable bearing.
+
+</details>
+
+**Exercise 4.** For the planetary set of Example 2 ($N_s = 24$, $N_p = 18$, $N_r = 60$): (a) the sun is held and the ring is driven at 1000 rpm; find the carrier speed. (b) The carrier is held and the sun turns at 3000 rpm; find the ring speed.
+
+<details>
+<summary>Answer</summary>
+
+(a) Willis with $\omega_s = 0$:
+
+$$\frac{\omega_r - \omega_c}{0 - \omega_c} = -\frac{24}{60} \implies \omega_r = 1.4\,\omega_c \implies \omega_c = \frac{1000}{1.4} = 714.3 \text{ rpm}$$
+
+in the same direction as the ring, matching $i = 1 + N_s/N_r = 1.4$.
+
+(b) With $\omega_c = 0$: $\omega_r/\omega_s = -24/60$, so $\omega_r = -1200$ rpm. The ring turns opposite to the sun and $i = -2.5$.
+
+</details>
+
+**Exercise 5.** A single-start worm drives a 40-tooth worm wheel. The lead angle is $\lambda = 4.5^\circ$ and the coefficient of friction is 0.08. The worm receives 1.5 kW at 1450 rpm. Find the reduction ratio, efficiency, output speed and output torque. Is the drive self-locking?
+
+<details>
+<summary>Answer</summary>
+
+- Ratio: $i = N_g/N_w = 40$, so the output speed is $1450/40 = 36.25$ rpm
+- Friction angle: $\phi_f = \tan^{-1}0.08 = 4.57^\circ$
+- Efficiency: $\eta = \tan 4.5^\circ/\tan(4.5^\circ + 4.57^\circ) = 0.0787/0.1597 = 0.493$
+- Input torque: $T_{in} = 1500/(1450 \times 2\pi/60) = 9.88$ N·m
+- Output torque: $T_{out} = T_{in}\, i\, \eta = 9.88 \times 40 \times 0.493 = 195$ N·m, which is 739 W of output power
+
+Since $\lambda = 4.5^\circ < \phi_f = 4.57^\circ$ the drive is nominally self-locking, but only just. Vibration lowers the effective friction, so a separate brake is needed where back-driving would be dangerous. Low efficiency and self-locking go together.
+
+</details>
+
+## References
+
+- Budynas, R. G., and Nisbett, J. K., *Shigley's Mechanical Engineering Design*, 10th ed., McGraw-Hill Education, 2015.
+- Norton, R. L., *Machine Design: An Integrated Approach*, 5th ed., Pearson, 2014.
+- Litvin, F. L., and Fuentes, A., *Gear Geometry and Applied Theory*, 2nd ed., Cambridge University Press, 2004.

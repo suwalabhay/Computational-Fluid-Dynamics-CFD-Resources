@@ -138,7 +138,7 @@ The compensator zero and pole must contribute the correct angle at the desired p
 
 $$\angle C(s_d) = \angle(s_d + z) - \angle(s_d + p) = \theta_{required}$$
 
-where $\theta_{required} = 180° - \angle G(s_d)H(s_d)$.
+where $\theta_{required} = 180^\circ - \angle G(s_d)H(s_d)$.
 
 ## Worked Examples
 
@@ -162,33 +162,35 @@ $$e_{ss} = \frac{3}{K_v} = \frac{3}{10} = 0.3$$
 
 ### Example 2: Lead Compensator Design
 
-**Given**: Plant $G(s) = \frac{4}{s(s+2)}$ in unity feedback. Desired phase margin $\geq 45°$ with $K_v \geq 20\;\text{s}^{-1}$.
+**Given**: Plant $G(s) = \frac{4}{s(s+2)}$ in unity feedback. Desired phase margin $\geq 45^\circ$ with $K_v \geq 20\;\text{s}^{-1}$.
 
 **Find**: Lead compensator parameters.
 
 **Solution**:
 
-**Step 1** — Set gain for steady-state requirement:
+**Step 1** — Set gain for steady-state requirement. Use the form $C(s) = K_c \frac{Ts+1}{\alpha Ts+1}$, whose DC gain is $K_c$:
 
-$$K_v = \lim_{s\to 0} s \cdot K_c \cdot \frac{s+z}{s+p} \cdot \frac{4}{s(s+2)} = K_c \cdot \frac{z}{p} \cdot \frac{4}{2} = 2K_c\frac{z}{p}$$
+$$K_v = \lim_{s\to 0} s \cdot K_c \frac{Ts+1}{\alpha Ts+1} \cdot \frac{4}{s(s+2)} = 2K_c$$
 
-Since lead has $z/p < 1$, we need $K_c$ large enough. Setting $K_c = 10$ initially gives $K_v = 20(z/p)$.
+so $K_c = 10$ gives $K_v = 20\;\text{s}^{-1}$. (In the pole-zero form $K_c' \frac{s+z}{s+p}$ the DC gain is $K_c' z/p$, so the gain must be raised to $K_c' = K_c/\alpha$.)
 
 **Step 2** — Evaluate uncompensated system $10 \cdot \frac{4}{s(s+2)} = \frac{40}{s(s+2)}$.
 
-At the gain crossover $|G(j\omega)| = 1$: solving numerically gives $\omega_{gc} \approx 5.8$ rad/s, with $PM \approx 18°$.
+At the gain crossover $|G(j\omega)| = 1$: solving $\omega\sqrt{\omega^2 + 4} = 40$ gives $\omega_{gc} \approx 6.2$ rad/s, with $PM = 90^\circ - \arctan(6.17/2) \approx 18^\circ$.
 
-**Step 3** — Required phase lead: $\phi_{max} = 45° - 18° + 12° = 39°$ (12° safety margin).
+**Step 3** — Required phase lead: $\phi_{max} = 45^\circ - 18^\circ + 12^\circ = 39^\circ$ (12° safety margin).
 
 **Step 4** — Compute $\alpha$:
 
-$$\alpha = \frac{1 - \sin 39°}{1 + \sin 39°} = \frac{1 - 0.629}{1 + 0.629} = \frac{0.371}{1.629} \approx 0.228$$
+$$\alpha = \frac{1 - \sin 39^\circ}{1 + \sin 39^\circ} = \frac{1 - 0.629}{1 + 0.629} = \frac{0.371}{1.629} \approx 0.228$$
 
-**Step 5** — Place maximum phase at the new crossover. The lead compensator magnitude at $\omega_m$ is $1/\sqrt{\alpha}$, so the new crossover satisfies $|\frac{40}{\omega_m^2}| \cdot \frac{1}{\sqrt{0.228}} = 1$, giving $\omega_m \approx 8.6$ rad/s. Then $T = \frac{1}{8.6\sqrt{0.228}} \approx 0.244$ s.
+**Step 5** — Place maximum phase at the new crossover. The lead compensator adds a gain of $1/\sqrt{\alpha}$ at $\omega_m$, so the new crossover is where the uncompensated magnitude equals $\sqrt{\alpha}$: $\frac{40}{\omega_m\sqrt{\omega_m^2 + 4}} = \sqrt{0.228} = 0.477$, giving $\omega_m \approx 9.05$ rad/s. Then $T = \frac{1}{9.05\sqrt{0.228}} \approx 0.232$ s.
 
-Zero: $z = 1/T \approx 4.1$, Pole: $p = 1/(\alpha T) \approx 18.0$.
+Zero: $z = 1/T \approx 4.3$, Pole: $p = 1/(\alpha T) \approx 19.0$.
 
-$$C(s) = 10 \cdot \frac{s + 4.1}{s + 18.0}$$
+$$C(s) = 10 \cdot \frac{0.232s + 1}{0.0527s + 1} = 44.0 \cdot \frac{s + 4.3}{s + 19.0}$$
+
+Check: the compensated loop crosses over at about 9.05 rad/s with $PM \approx 51^\circ$, meeting the specification.
 
 ### Example 3: Disturbance Rejection
 
@@ -221,3 +223,81 @@ Increasing $K$ reduces the disturbance effect. For $K = 99$, $y_{d,ss} = 0.01$.
 - Lag compensation is low-risk but cannot improve transient response — it only improves steady-state accuracy
 - Always verify the final design with a **time-domain simulation** (step response, ramp response) to confirm that the Bode-domain specifications translate correctly
 - In practice, sensor dynamics and actuator saturation often limit achievable bandwidth more than the compensator design
+
+## Exercises
+
+**Exercise 1.** A unity-feedback system has $G(s) = \frac{20}{(s+2)(s+5)}$. Determine the system type, the position error constant $K_p$, and the steady-state errors for a unit step and a unit ramp input.
+
+<details>
+<summary>Answer</summary>
+
+There is no free integrator, so the system is Type 0. The position error constant is $K_p = \lim_{s \to 0} G(s) = 20/10 = 2$.
+
+- Unit step: $e_{ss} = \frac{1}{1 + K_p} = \frac{1}{3} \approx 0.333$.
+- Unit ramp: $K_v = \lim_{s \to 0} sG(s) = 0$, so $e_{ss} = \infty$ (the output falls further and further behind the ramp).
+
+</details>
+
+**Exercise 2.** A plant $G(s) = \frac{10}{s+1}$ is placed in a unity-feedback loop. Use the sensitivity function to estimate the percentage change in the closed-loop DC gain when the plant gain rises by 10%, and compare the estimate with the exact change.
+
+<details>
+<summary>Answer</summary>
+
+At DC the sensitivity is $S_G^T = \frac{1}{1 + G(0)} = \frac{1}{11} = 0.0909$, so a 10% change in $G$ gives roughly $0.0909 \times 10\% \approx 0.91\%$ change in $T$.
+
+Exact: $T(0) = 10/11 = 0.9091$ before and $11/12 = 0.9167$ after, a change of $0.83\%$. The small difference arises because the sensitivity is a first-order (small-change) result. Without feedback the DC gain would change by the full 10%.
+
+</details>
+
+**Exercise 3.** A lead compensator $C(s) = \frac{Ts + 1}{\alpha T s + 1}$ has $\alpha = 0.1$ and $T = 0.5$ s. Find the maximum phase lead, the frequency at which it occurs, and the compensator gain in dB at that frequency. What is the high-frequency gain, and why does it matter?
+
+<details>
+<summary>Answer</summary>
+
+$$\phi_{max} = \sin^{-1}\frac{1 - 0.1}{1 + 0.1} = \sin^{-1}(0.818) = 54.9^\circ$$
+
+$$\omega_m = \frac{1}{T\sqrt{\alpha}} = \frac{1}{0.5\sqrt{0.1}} = 6.32 \text{ rad/s}$$
+
+At $\omega_m$ the gain is $1/\sqrt{\alpha} = 3.16$, i.e. 10 dB. At high frequency the gain tends to $1/\alpha = 10$ (20 dB), so sensor noise above the crossover is amplified tenfold. This is why lead compensation is usually limited to $\alpha \gtrsim 0.05$–$0.1$.
+
+</details>
+
+**Exercise 4.** In Example 3 (plant $G(s) = \frac{1}{s+1}$ with a step disturbance at the plant input), replace the proportional controller by a PI controller $C(s) = K + K_i/s$. Show that the steady-state output caused by the disturbance is zero, and state the conditions on $K$ and $K_i$ required for this result.
+
+<details>
+<summary>Answer</summary>
+
+$$\frac{Y_d(s)}{D(s)} = \frac{G}{1 + CG} = \frac{\frac{1}{s+1}}{1 + \frac{Ks + K_i}{s(s+1)}} = \frac{s}{s^2 + (1+K)s + K_i}$$
+
+With $D(s) = 1/s$, the final value theorem gives
+
+$$y_{d,ss} = \lim_{s \to 0} s \cdot \frac{s}{s^2 + (1+K)s + K_i} \cdot \frac{1}{s} = 0$$
+
+The integrator in the controller makes the loop gain infinite at DC, so a constant disturbance is fully rejected. The final value theorem only applies if the closed loop is stable, which for this second-order polynomial requires $1 + K > 0$ and $K_i > 0$.
+
+</details>
+
+**Exercise 5.** A lag network $C_{lag}(s) = \frac{Ts + 1}{\beta T s + 1}$ uses $\beta = 10$, with its zero placed one decade below the gain crossover frequency $\omega_{gc} = 0.5$ rad/s. Find $T$, the pole location, and the phase and magnitude that the network contributes at $\omega_{gc}$. Use the result to explain the safety margin in the lag design procedure.
+
+<details>
+<summary>Answer</summary>
+
+The zero is at $z = \omega_{gc}/10 = 0.05$ rad/s, so $T = 1/z = 20$ s. The pole is at $p = 1/(\beta T) = 0.005$ rad/s.
+
+At $\omega = 0.5$ rad/s:
+
+$$\angle C_{lag} = \arctan(0.5 \times 20) - \arctan(0.5 \times 200) = 84.29^\circ - 89.43^\circ = -5.1^\circ$$
+
+$$|C_{lag}| = \frac{\sqrt{1 + 10^2}}{\sqrt{1 + 100^2}} = 0.1005 \approx 1/\beta$$
+
+At crossover the network gain has already dropped to about $1/\beta$ of its DC value, so the low-frequency loop gain is $\beta = 10$ times (20 dB) larger relative to crossover, which improves the error constants. The network still costs about $5^\circ$ of phase at crossover, so the phase margin target in the design is increased by a few degrees to compensate.
+
+</details>
+
+## References
+
+- K. Ogata, *Modern Control Engineering*, 5th ed., Prentice Hall, 2010.
+- G. F. Franklin, J. D. Powell, A. Emami-Naeini, *Feedback Control of Dynamic Systems*, Pearson.
+- N. S. Nise, *Control Systems Engineering*, 7th ed., Wiley, 2015.
+- K. J. Åström, R. M. Murray, *Feedback Systems: An Introduction for Scientists and Engineers*, Princeton University Press, 2008.
+- S. Skogestad, I. Postlethwaite, *Multivariable Feedback Control: Analysis and Design*, 2nd ed., Wiley, 2005.

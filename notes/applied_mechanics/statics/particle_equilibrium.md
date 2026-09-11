@@ -23,8 +23,11 @@ For a particle to be in static equilibrium, the vector sum of all forces acting 
 $$\sum \mathbf{F} = 0$$
 
 In component form, this becomes:
+
 $$\sum F_x = 0$$
+
 $$\sum F_y = 0$$
+
 $$\sum F_z = 0$$
 
 These equations represent the mathematical statement that there is no net force in any direction.
@@ -47,36 +50,41 @@ A 100 kg mass is suspended by two cables making angles of 30° and 45° with the
 **Given:**
 - Mass: $m = 100$ kg
 - Weight: $W = mg = 100 \times 9.81 = 981$ N
-- Cable angles: $\theta_1 = 30°$, $\theta_2 = 45°$
+- Cable angles: $\theta_1 = 30^\circ$, $\theta_2 = 45^\circ$
 
 **Solution:**
 
 **Free Body Diagram:** Shows the mass as a particle with three forces: weight $W$ downward, and tensions $T_1$ and $T_2$ in the cables.
 
 **Force Components:**
-- $T_1$: $T_{1x} = T_1\cos(30°)$, $T_{1y} = T_1\sin(30°)$
-- $T_2$: $T_{2x} = -T_2\cos(45°)$, $T_{2y} = T_2\sin(45°)$
+- $T_1$: $T_{1x} = T_1\cos(30^\circ)$, $T_{1y} = T_1\sin(30^\circ)$
+- $T_2$: $T_{2x} = -T_2\cos(45^\circ)$, $T_{2y} = T_2\sin(45^\circ)$
 - $W$: $W_x = 0$, $W_y = -981$ N
 
 **Equilibrium Equations:**
-$$\sum F_x = T_1\cos(30°) - T_2\cos(45°) = 0$$
-$$\sum F_y = T_1\sin(30°) + T_2\sin(45°) - 981 = 0$$
+
+$$\sum F_x = T_1\cos(30^\circ) - T_2\cos(45^\circ) = 0$$
+
+$$\sum F_y = T_1\sin(30^\circ) + T_2\sin(45^\circ) - 981 = 0$$
 
 From the first equation:
-$$T_1 = T_2 \frac{\cos(45°)}{\cos(30°)} = T_2 \frac{\sqrt{2}/2}{\sqrt{3}/2} = T_2 \frac{\sqrt{2}}{\sqrt{3}}$$
+
+$$T_1 = T_2 \frac{\cos(45^\circ)}{\cos(30^\circ)} = T_2 \frac{\sqrt{2}/2}{\sqrt{3}/2} = T_2 \frac{\sqrt{2}}{\sqrt{3}}$$
 
 Substituting into the second equation:
+
 $$T_2 \frac{\sqrt{2}}{\sqrt{3}} \times \frac{1}{2} + T_2 \frac{\sqrt{2}}{2} = 981$$
 
 $$T_2 \left(\frac{\sqrt{2}}{2\sqrt{3}} + \frac{\sqrt{2}}{2}\right) = 981$$
 
-Solving: $T_2 = 717$ N and $T_1 = 586$ N
+Solving: $T_2 = 880$ N and $T_1 = 718$ N
 
 ## Three-Dimensional Particle Equilibrium
 
 ### Vector Analysis Method
 
 For 3D problems, we use three equilibrium equations:
+
 $$\sum F_x = 0, \quad \sum F_y = 0, \quad \sum F_z = 0$$
 
 Forces are typically expressed using:
@@ -128,8 +136,11 @@ The weight is at the origin O(0, 0, 0).
 - $\mathbf{W} = -500\mathbf{k}$ N
 
 **Equilibrium equations:**
+
 $$\sum F_x = 0.6T_A - \frac{2T_B}{\sqrt{33}} + \frac{T_C}{\sqrt{46}} = 0$$
+
 $$\sum F_y = \frac{2T_B}{\sqrt{33}} - \frac{3T_C}{\sqrt{46}} = 0$$
+
 $$\sum F_z = 0.8T_A + \frac{5T_B}{\sqrt{33}} + \frac{6T_C}{\sqrt{46}} - 500 = 0$$
 
 Solving this system yields the cable tensions.
@@ -140,6 +151,7 @@ Springs introduce force-displacement relationships in equilibrium problems.
 
 ### Hooke's Law
 For a linear spring:
+
 $$F = kx$$
 
 where:
@@ -149,10 +161,12 @@ where:
 
 ### Spring in Series
 Springs connected end-to-end:
+
 $$\frac{1}{k_{eq}} = \frac{1}{k_1} + \frac{1}{k_2} + ... + \frac{1}{k_n}$$
 
 ### Springs in Parallel
 Springs connected to common points:
+
 $$k_{eq} = k_1 + k_2 + ... + k_n$$
 
 ### Example 3: Spring-Mass System
@@ -162,11 +176,14 @@ A 50 kg mass is suspended by two springs in parallel with stiffnesses $k_1 = 100
 **Solution:**
 
 **Equivalent stiffness:**
+
 $$k_{eq} = k_1 + k_2 = 1000 + 1500 = 2500 \text{ N/m}$$
 
 **Equilibrium position:**
 At equilibrium, spring force balances weight:
+
 $$k_{eq}x = mg$$
+
 $$x = \frac{mg}{k_{eq}} = \frac{50 \times 9.81}{2500} = 0.196 \text{ m}$$
 
 ## Friction and Particle Equilibrium
@@ -175,6 +192,7 @@ When friction is present, additional force components must be considered.
 
 ### Static Friction
 Maximum static friction force:
+
 $$f_{s,max} = \mu_s N$$
 
 For equilibrium on an inclined plane:
@@ -259,3 +277,76 @@ Particle equilibrium provides the foundation for more complex structural analysi
 - Machine component design
 
 The principles learned here extend directly to rigid body equilibrium, where moment effects are added to force balance requirements.
+
+## Exercises
+
+**Exercise 1.** A 20 kg traffic light hangs at the midpoint of a cable whose two halves each make $15^\circ$ with the horizontal. Find the cable tension and comment on what happens as the sag angle shrinks.
+
+<details>
+<summary>Answer</summary>
+
+By symmetry, vertical equilibrium gives $2T\sin 15^\circ = mg = 196.2$ N, so
+
+$$T = \frac{196.2}{2\sin 15^\circ} = 379 \text{ N}$$
+
+This is almost twice the weight. As the angle tends to zero, $T \to \infty$, so a cable can never be pulled perfectly straight under a transverse load.
+
+</details>
+
+**Exercise 2.** Solve Example 1 in closed form. Show that for two cables at angles $\theta_1$ and $\theta_2$ above the horizontal supporting weight $W$, $T_1 = W\cos\theta_2/\sin(\theta_1 + \theta_2)$ and $T_2 = W\cos\theta_1/\sin(\theta_1 + \theta_2)$. Evaluate them.
+
+<details>
+<summary>Answer</summary>
+
+From $\sum F_x = 0$: $T_1 = T_2\cos\theta_2/\cos\theta_1$. Substituting into $\sum F_y = 0$:
+
+$$T_2\left(\frac{\cos\theta_2\sin\theta_1}{\cos\theta_1} + \sin\theta_2\right) = W \implies T_2\,\frac{\sin(\theta_1 + \theta_2)}{\cos\theta_1} = W$$
+
+This gives the stated results. With $W = 981$ N, $\theta_1 = 30^\circ$ and $\theta_2 = 45^\circ$:
+
+$$T_1 = \frac{981\cos 45^\circ}{\sin 75^\circ} = 718 \text{ N}, \quad T_2 = \frac{981\cos 30^\circ}{\sin 75^\circ} = 880 \text{ N}$$
+
+The steeper cable carries more load.
+
+</details>
+
+**Exercise 3.** Repeat Example 3 with the two springs ($k_1 = 1000$ N/m, $k_2 = 1500$ N/m) connected in series instead of in parallel. Find the equivalent stiffness and the static deflection under the 50 kg mass.
+
+<details>
+<summary>Answer</summary>
+
+$$k_{eq} = \left(\frac{1}{1000} + \frac{1}{1500}\right)^{-1} = 600 \text{ N/m}, \quad x = \frac{50 \times 9.81}{600} = 0.818 \text{ m}$$
+
+This is more than four times the parallel deflection of 0.196 m. In series each spring carries the full weight; in parallel the springs share it.
+
+</details>
+
+**Exercise 4.** Complete Example 2: solve the three equilibrium equations for the cable tensions $T_A$, $T_B$ and $T_C$, and check that the cable model is valid.
+
+<details>
+<summary>Answer</summary>
+
+Solving the linear system, for instance with a matrix solve:
+
+$$T_A = 103.1 \text{ N}, \quad T_B = 266.5 \text{ N}, \quad T_C = 209.8 \text{ N}$$
+
+Check for $x$: $0.6(103.1) - 2(266.5)/\sqrt{33} + 209.8/\sqrt{46} = 61.9 - 92.8 + 30.9 \approx 0$.
+
+All three tensions are positive. The cables can only pull, so a negative value would have meant that one "cable" had to push, and that support arrangement could not hold the weight.
+
+</details>
+
+**Exercise 5.** A small block rests on a plank whose inclination is slowly increased. With $\mu_s = 0.35$, at what angle does the block start to slide? Does the answer depend on the block's mass?
+
+<details>
+<summary>Answer</summary>
+
+Sliding starts when $W\sin\theta = \mu_s W\cos\theta$, i.e. $\theta_{critical} = \tan^{-1}0.35 = 19.3^\circ$. The weight cancels, so the angle does not depend on mass. That is why tilting-plane tests are a simple way to measure $\mu_s$.
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- Beer, F. P., Johnston, E. R., Mazurek, D. F., and Eisenberg, E. R., *Vector Mechanics for Engineers: Statics*, McGraw-Hill.
+- Meriam, J. L., and Kraige, L. G., *Engineering Mechanics: Statics*, Wiley.

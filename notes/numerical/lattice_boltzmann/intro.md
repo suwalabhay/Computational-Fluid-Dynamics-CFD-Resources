@@ -86,6 +86,7 @@ II. **Boundary Conditions:**
 III. **Poisson Pressure Equation:**
 
 - The pressure field often emerges from a **Poisson equation**:
+
  $$\nabla^2 p = f(u)$$
 
 - Making sure stable, accurate pressure solutions can be challenging, especially in complicated flows.
@@ -125,10 +126,10 @@ On a molecular level:
 Molecules like argon at room temperature move at ~400 m/s.  
 
 - **Mean Free Path (MFP):**  
-The average distance between molecular collisions (~3 nm).
+The average distance a molecule travels between collisions (~70 nm for a gas at atmospheric pressure; the mean spacing between molecules is only ~3 nm).
 
 - **Collision Times:**  
-Times between collisions (picoseconds) far smaller than macroscopic flow timescales.
+Times between collisions (~$10^{-10}$ s at atmospheric pressure) far smaller than macroscopic flow timescales.
 
 These microscopic properties underlie the **continuum assumption**, where macroscopic fields (velocity, pressure) represent averaged effects of countless molecular interactions.
 
@@ -200,8 +201,65 @@ This note motivates the Lattice Boltzmann Method (LBM) by reviewing the challeng
 | **Inputs** | Physical domain, flow regime (Reynolds number), choice of modeling scale, boundary complexity assessment |
 | **Outputs** | Justification for choosing LBM vs. traditional CFD, understanding of scale hierarchy (molecular → Boltzmann → Navier–Stokes) |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/lattice_boltzmann_cylinder_flow/main.py` | Complete LBM simulation of 2-D cylinder flow at Re = 350, demonstrating the mesoscopic approach introduced in this note. |
+- [Lattice Boltzmann Cylinder Flow Simulation](../../../scripts/simulations/lattice_boltzmann_cylinder_flow/): simulates 2D flow past a circular cylinder with the lattice Boltzmann method (D2Q9 lattice, BGK collision operator) and animates the velocity magnitude with Matplotlib.
+
+## Exercises
+
+**Exercise 1.** The companion script simulates flow past a cylinder at $\mathrm{Re} = UD/\nu = 350$. For water ($\nu = 1.0 \times 10^{-6}$ m²/s) flowing at $U = 0.1$ m/s, what cylinder diameter gives this Reynolds number?
+
+<details>
+<summary>Answer</summary>
+
+$D = \mathrm{Re}\,\nu / U = 350 \times 10^{-6} / 0.1 = 3.5 \times 10^{-3}$ m, i.e. 3.5 mm.
+
+</details>
+
+**Exercise 2.** For argon (molar mass 39.948 g/mol) at $T = 293.15$ K, compute the mean thermal speed $\bar{v} = \sqrt{8 k_B T/(\pi m)}$. Taking a hard-sphere diameter $d = 0.36$ nm and $p = 101325$ Pa, compute the mean free path $\ell_{\text{mfp}} = k_B T/(\sqrt{2}\,\pi d^2 p)$ and the mean collision time $\ell_{\text{mfp}}/\bar{v}$. Compare with the values quoted in the note.
+
+<details>
+<summary>Answer</summary>
+
+The molecular mass is $m = 39.948 \times 1.6605 \times 10^{-27} \approx 6.63 \times 10^{-26}$ kg.
+
+- $\bar{v} = \sqrt{8 \times 1.380649 \times 10^{-23} \times 293.15 / (\pi \times 6.63 \times 10^{-26})} \approx 394$ m/s, consistent with "~400 m/s".
+- $\ell_{\text{mfp}} \approx 6.9 \times 10^{-8}$ m, about 69 nm.
+- Collision time $\approx 6.9 \times 10^{-8} / 394 \approx 1.8 \times 10^{-10}$ s, of order $10^{-10}$ s.
+
+Both are many orders of magnitude below engineering length and time scales, which justifies the continuum hypothesis.
+
+</details>
+
+**Exercise 3.** Argon at atmospheric pressure flows through a microchannel of height 50 µm. Using $\ell_{\text{mfp}}$ from Exercise 2, compute the Knudsen number $\mathrm{Kn} = \ell_{\text{mfp}}/\ell$. Which column of the scale-comparison table applies, and is the continuum hypothesis valid (a common criterion is $\mathrm{Kn} < 0.01$)?
+
+<details>
+<summary>Answer</summary>
+
+$\mathrm{Kn} = 6.9 \times 10^{-8} / 5 \times 10^{-5} \approx 1.4 \times 10^{-3}$. This is below 0.01, so the continuum hypothesis holds and the macroscopic (NSE) description applies. A mesoscopic method such as LBM remains usable because it is built to recover the NSE in this small-Kn limit.
+
+</details>
+
+**Exercise 4.** Take the divergence of the incompressible NSE of Section 1 (constant $\rho$, body force $f = 0$) to derive the pressure Poisson equation $\nabla^2 p = -\rho \, \partial_i u_j \, \partial_j u_i$ (summation over repeated indices). Verify it for solid-body rotation $u = (-\Omega y, \Omega x)$, whose pressure field is $p = p_0 + \rho \Omega^2 (x^2 + y^2)/2$.
+
+<details>
+<summary>Answer</summary>
+
+Because $\nabla \cdot u = 0$, the divergence of $\partial u/\partial t$ and of $\eta \nabla^2 u$ both vanish. For the convective term,
+
+$$
+\partial_i \left( u_j \partial_j u_i \right) = \partial_i u_j \, \partial_j u_i + u_j \partial_j \left( \partial_i u_i \right) = \partial_i u_j \, \partial_j u_i,
+$$
+
+so $\rho \, \partial_i u_j \, \partial_j u_i = -\nabla^2 p$.
+
+For solid-body rotation, $\partial_x u_x = 0$, $\partial_y u_x = -\Omega$, $\partial_x u_y = \Omega$ and $\partial_y u_y = 0$. Then $\partial_i u_j \, \partial_j u_i = (\partial_x u_x)^2 + 2\,\partial_y u_x \, \partial_x u_y + (\partial_y u_y)^2 = -2\Omega^2$, which gives $\nabla^2 p = 2\rho\Omega^2$. Directly, $\nabla^2 \left[\rho\Omega^2(x^2 + y^2)/2\right] = \rho\Omega^2(1 + 1) = 2\rho\Omega^2$, so the two agree. In a CFD solver this equation must be solved at every time step, which LBM avoids.
+
+</details>
+
+## References
+
+- J. H. Ferziger and M. Perić, *Computational Methods for Fluid Dynamics*, 3rd ed., Springer, 2002.
+- G. A. Bird, *Molecular Gas Dynamics and the Direct Simulation of Gas Flows*, Oxford University Press, 1994.
+- T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva and E. M. Viggen, *The Lattice Boltzmann Method: Principles and Practice*, Springer, 2017.
+- S. Succi, *The Lattice Boltzmann Equation for Fluid Dynamics and Beyond*, Oxford University Press, 2001.

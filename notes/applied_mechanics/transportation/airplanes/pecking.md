@@ -40,6 +40,8 @@ Dynamic stability is important for understanding how systems behave in real-worl
 - In a **neutral pecking** system, the system continues to oscillate at a constant amplitude. This behavior occurs when there is no net energy loss or gain, allowing oscillations to persist indefinitely. Neutral pecking indicates a balance between damping forces and external energy inputs, maintaining steady-state oscillations.
 - In an **unstable pecking** system, the oscillations increase in amplitude over time. This instability arises when damping is insufficient to counteract energy inputs, leading to progressively larger oscillations. Unstable pecking can result in system failure or unpredictable behavior if not properly controlled.
 
+A note on terminology: "pecking" is not a standard term in the stability, vibration or flight-dynamics literature. The behaviour described here is normally called an oscillatory (dynamic) instability; a sustained constant-amplitude oscillation is a limit-cycle oscillation, and related aircraft pitch phenomena go by names such as porpoising, the phugoid and pilot-induced oscillation.
+
 Pecking is particularly relevant in aerodynamics, where structures like aircraft wings must withstand these oscillations to prevent fatigue or structural damage over time.
 
 #### Mathematical Representation of Pecking
@@ -64,7 +66,7 @@ $$\zeta = \frac{c}{2\sqrt{mk}}$$
 - In a **critically** damped system, the system achieves the fastest return to equilibrium without oscillating. When the damping ratio ($\zeta$) equals one, it balances responsiveness and stability effectively. Critical damping is often desirable in applications requiring quick stabilization.
 - In an **underdamped** system, the system oscillates with decreasing amplitude over time. The damping ratio ($\zeta$) is less than one, allowing for oscillatory behavior. Underdamped conditions are useful in scenarios where some oscillation is acceptable or necessary.
 
-Pecking occurs when the system is underdamped or neutrally damped ($\zeta \leq 1$).
+Oscillation ("pecking") occurs only when $\zeta < 1$: it decays for $0 < \zeta < 1$, keeps a constant amplitude (neutral) for $\zeta = 0$, and grows (unstable) for $\zeta < 0$, which requires negative damping, i.e. energy fed into the motion. A critically damped system ($\zeta = 1$) does not oscillate.
 
 ### Preventing Unstable Pecking
 
@@ -84,3 +86,67 @@ Analyzing pecking and stability isn't just theoretical; it's applied in various 
 - **Automotive Design** focuses on designing suspension systems that absorb shocks without causing excessive oscillations, providing a smooth ride. Designers integrate damping mechanisms to control vibrations and enhance vehicle stability. They test components under various conditions to ensure reliability and comfort.
 - **Civil Engineering** entails building structures that can withstand dynamic loads, such as wind or earthquakes, without entering unstable oscillations. Engineers apply principles of structural dynamics to design buildings, bridges, and other infrastructure. They employ seismic isolation techniques to mitigate the effects of natural forces.
 - **Mechanical Systems** require designing machinery parts that operate smoothly without resonant vibrations that could lead to wear or failure. Mechanical engineers use vibration analysis to identify potential issues and improve component longevity. They select appropriate materials and design tolerances to minimize operational disturbances.
+
+### Exercises
+
+**Exercise 1.** A system has $m = 2$ kg, $k = 800$ N/m and $c = 8$ N·s/m. Find the natural frequency, the damping ratio and the damped frequency. Classify the response.
+
+<details>
+<summary>Answer</summary>
+
+$$\omega_n = \sqrt{k/m} = 20 \text{ rad/s}, \quad \zeta = \frac{c}{2\sqrt{mk}} = \frac{8}{2\sqrt{1600}} = 0.10$$
+
+$\omega_d = \omega_n\sqrt{1 - \zeta^2} = 19.9$ rad/s.
+
+Since $0 < \zeta < 1$ the system is underdamped: it oscillates with decaying amplitude.
+
+</details>
+
+**Exercise 2.** What damping coefficient would make the system of Exercise 1 critically damped? What happens to the response if $c$ is doubled beyond that value?
+
+<details>
+<summary>Answer</summary>
+
+$c_{cr} = 2\sqrt{mk} = 2\sqrt{2 \times 800} = 80$ N·s/m. At $c = 160$ N·s/m, $\zeta = 2$: the system is overdamped. It returns to equilibrium without oscillating, but more slowly than the critically damped system.
+
+</details>
+
+**Exercise 3.** For $\zeta = 0.1$, find the logarithmic decrement $\delta = 2\pi\zeta/\sqrt{1 - \zeta^2}$, the ratio of successive peak amplitudes, and the number of cycles needed for the amplitude to halve.
+
+<details>
+<summary>Answer</summary>
+
+$\delta = 2\pi(0.1)/\sqrt{0.99} = 0.631$, so successive peaks shrink by a factor $e^{0.631} = 1.88$.
+
+The amplitude halves after $\ln 2/\delta = 1.10$ cycles. Conversely, measuring the decay of successive peaks in a test is a standard way to find $\zeta$.
+
+</details>
+
+**Exercise 4.** Suppose an energy source (for example aerodynamic forcing) makes the effective damping of the system in Exercise 1 negative, $c = -1$ N·s/m. Find $\zeta$, the exponential growth rate of the oscillation amplitude and the time for the amplitude to double.
+
+<details>
+<summary>Answer</summary>
+
+$\zeta = -1/80 = -0.0125$. The amplitude varies as $e^{-\zeta\omega_n t} = e^{-(c/2m)t}$, so the growth rate is $-c/(2m) = 0.25$ s⁻¹ and the doubling time is $\ln 2/0.25 = 2.77$ s.
+
+Even a very small negative damping ratio gives an oscillation that grows without limit in a linear model. In reality nonlinearities usually cap it as a limit cycle, or the structure fails first. Flutter is the classic example.
+
+</details>
+
+**Exercise 5.** Explain, with an example, how a system can be statically stable but dynamically unstable. Can a statically unstable system be dynamically stable without active control?
+
+<details>
+<summary>Answer</summary>
+
+Static stability only says that the initial tendency is to return, i.e. there is a restoring force. If energy is fed in faster than damping removes it (negative damping), the system overshoots by more each cycle. Examples are a wing in flutter, or an aircraft that is statically stable in pitch but has a divergent phugoid or Dutch roll mode: the restoring moment exists, yet the oscillation grows.
+
+A statically unstable system (negative stiffness) diverges monotonically, and no amount of passive damping can make it return, so it cannot be dynamically stable on its own. Relaxed-stability fighter aircraft fly only because a flight-control computer supplies the missing stiffness.
+
+</details>
+
+### References
+
+- Rao, S. S., *Mechanical Vibrations*, Pearson.
+- Den Hartog, J. P., *Mechanical Vibrations*, 4th ed., McGraw-Hill, 1956.
+- Nelson, R. C., *Flight Stability and Automatic Control*, 2nd ed., McGraw-Hill, 1998.
+- Etkin, B., and Reid, L. D., *Dynamics of Flight: Stability and Control*, 3rd ed., Wiley, 1996.

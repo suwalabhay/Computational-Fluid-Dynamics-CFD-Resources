@@ -80,3 +80,71 @@ Deciding whether to use an Eulerian or Lagrangian perspective depends on the pro
 | Equations    | Continuity, Navier-Stokes                | Material derivative, particle dynamics  |
 | Applications | Flow field analysis, CFD simulations     | Particle tracking, pollutant dispersion |
 
+## Related Scripts
+
+- [Eulerian and Lagrangian Flow Descriptions](../../../scripts/plots/eulerian_lagrangian_flows/): contrasts the Eulerian and Lagrangian descriptions of fluid motion using the time-dependent Double Gyre flow.
+- [Eulerian Cylinder Flow](../../../scripts/simulations/eulerian_cylinder_flow/): simulates 2D incompressible, inviscid flow past a circular cylinder on a fixed Eulerian grid and renders a dye tracer in real time with Pygame.
+- [Kelvin-Helmholtz Instability Simulation](../../../scripts/simulations/kelvin_helmholtz_instability/): simulates the Kelvin-Helmholtz instability, the rolling-up of a shear layer between fluid streams moving in opposite directions, in a periodic 2D incompressible flow drawn in real time with Pygame.
+- [Simplified Real-Time Fluid Dynamics Simulator](../../../scripts/simulations/simplified_real_time_fluid_dynamics_simulator/): is an interactive 2D smoke simulation that uses Jos Stam's Stable Fluids algorithm (1999) to approximate the incompressible Navier-Stokes equations fast enough to run in real time in a Pygame window.
+
+## Exercises
+
+**Exercise 1.** A thermometer is mounted on a fixed weather mast, and a second one rides on a drifting balloon. Which measures an Eulerian quantity and which a Lagrangian one? Which time derivative does each record: $\partial T/\partial t$ or $DT/Dt$?
+
+<details>
+<summary>Answer</summary>
+
+The mast thermometer stays at a fixed point, so it is Eulerian and records $\partial T/\partial t$. The balloon moves with the air, so it is Lagrangian and records the material derivative $DT/Dt = \partial T/\partial t + \vec{v} \cdot \nabla T$.
+
+</details>
+
+**Exercise 2.** In a one-dimensional air stream, the temperature field is $T(x,t) = 20 + 0.5x - 0.1t$ (°C, with $x$ in m and $t$ in s). The air moves at $u = 2$ m/s. Find the rate of change of temperature seen by (a) a fixed probe and (b) a fluid particle.
+
+<details>
+<summary>Answer</summary>
+
+(a) $\partial T/\partial t = -0.1$ K/s.
+
+(b) The particle also sees the convective change:
+
+$$\frac{DT}{Dt} = \frac{\partial T}{\partial t} + u\frac{\partial T}{\partial x} = -0.1 + 2 \times 0.5 = 0.9 \text{ K/s}$$
+
+The fixed probe sees the air cooling, but a particle heats up, because it is carried into warmer regions faster than the field cools.
+
+</details>
+
+**Exercise 3.** The Eulerian velocity field $u = kx$, $v = -ky$ is a steady stagnation-point flow. (a) Integrate $d\vec{X}/dt = \vec{v}(\vec{X})$ to find the Lagrangian trajectory of a particle released at $(X_0, Y_0)$ at $t = 0$. (b) Show that $d^2\vec{X}/dt^2$ equals the Eulerian acceleration $(\vec{v} \cdot \nabla)\vec{v}$ evaluated at the particle position.
+
+<details>
+<summary>Answer</summary>
+
+(a) $dX/dt = kX$ gives $X = X_0 e^{kt}$, and $dY/dt = -kY$ gives $Y = Y_0 e^{-kt}$. Eliminating $t$ gives $XY = X_0 Y_0$, so the particles move along hyperbolas.
+
+(b) Lagrangian: $d^2X/dt^2 = k^2 X_0 e^{kt} = k^2 X$ and $d^2Y/dt^2 = k^2 Y$.
+
+Eulerian: the flow is steady, so $\vec{a} = (u\,\partial u/\partial x + v\,\partial u/\partial y,\; u\,\partial v/\partial x + v\,\partial v/\partial y) = (kx \cdot k,\; -ky \cdot (-k)) = (k^2 x, k^2 y)$.
+
+At $x = X$, $y = Y$ the two agree. A steady field can still accelerate particles, entirely through the convective term.
+
+</details>
+
+**Exercise 4.** The one-dimensional unsteady field is $u(x,t) = x/(1+t)$. (a) Find the path $X(t)$ of the particle at $X_0$ when $t = 0$. (b) Compute that particle's velocity and acceleration. (c) Confirm the result with $Du/Dt = \partial u/\partial t + u\,\partial u/\partial x$.
+
+<details>
+<summary>Answer</summary>
+
+(a) $dX/dt = X/(1+t)$ gives $\ln X = \ln(1+t) + C$, so $X = X_0(1+t)$.
+
+(b) The velocity is $dX/dt = X_0$, a constant, so the acceleration is zero.
+
+(c) $\partial u/\partial t = -x/(1+t)^2$ and $u\,\partial u/\partial x = \dfrac{x}{1+t}\cdot\dfrac{1}{1+t} = x/(1+t)^2$. They add to $Du/Dt = 0$.
+
+At a fixed point the velocity decreases in time, but each particle keeps a constant speed: the local and convective accelerations cancel exactly.
+
+</details>
+
+## References
+
+- P. K. Kundu, I. M. Cohen, D. R. Dowling, *Fluid Mechanics*, 6th ed., Academic Press, 2016.
+- G. K. Batchelor, *An Introduction to Fluid Dynamics*, Cambridge University Press, 1967.
+- R. L. Panton, *Incompressible Flow*, 4th ed., Wiley, 2013.

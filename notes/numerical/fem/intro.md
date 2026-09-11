@@ -96,7 +96,9 @@ F^e_{i} = \int_{x_{e,\text{start}}}^{x_{e,\text{end}}} \phi_i^e(x)\,f(x)\,dx$$
 These integrals capture how each pair of shape functions interacts under the problem’s differential operator and forcing term.
 
 5) Assemble the Global System. The local element stiffness matrices $K^e$ and load vectors $F^e$ are added into global matrices $K$ and global vectors $F$. This leads to a large system of equations
+
 $$K\,U = F$$
+
 where $U$ is the vector of unknown nodal values.
 
 6) Apply Boundary Conditions. Prescribed displacements (Dirichlet) are incorporated by fixing nodal values in $U$. Prescribed fluxes (Neumann) appear as boundary integrals in the load vector. Other boundary conditions, like Robin or mixed types, can also be handled in the weak form with additional surface integrals.
@@ -125,7 +127,7 @@ assuming homogeneous Dirichlet boundary conditions eliminate boundary terms. The
 
 $$K\,U = F$$
 
-where $K$ is an $N\times N$ matrix, $U$ is the vector of nodal unknowns, and $F$ is the load vector. After applying the boundary conditions $u(0)=0$ and $u(1)=0$, the resulting system can be solved for the interior nodes.
+where $K$ is an $(N+1)\times(N+1)$ matrix (one row per node, before boundary conditions are applied), $U$ is the vector of nodal unknowns, and $F$ is the load vector. After applying the boundary conditions $u(0)=0$ and $u(1)=0$, the resulting system can be solved for the interior nodes.
 
 ### IMPLEMENTATION AND APPLICATIONS
 
@@ -146,6 +148,78 @@ The Finite Element Method (FEM) divides the domain into elements (triangles, qua
 | **Inputs** | Domain $\Omega$, element mesh, polynomial degree, forcing function $f(x)$, boundary conditions (Dirichlet, Neumann), material properties $p(x)$ |
 | **Outputs** | Nodal solution vector $U$, global stiffness matrix $K$, load vector $F$, approximate solution $u_h(x)$ |
 
-## Related Python Scripts
+## Related Scripts
 
 There are no dedicated FEM simulation scripts in this repository. For hands-on FEM implementations, consider open-source packages such as [FEniCS](https://fenicsproject.org/) or [deal.II](https://www.dealii.org/). The POD and ROM scripts listed under those notes use solution snapshots that could originate from an FEM solver.
+
+## Exercises
+
+**Exercise 1.** On an element $[x_a, x_b]$ of length $h$, the linear shape functions are $\phi_1 = (x_b - x)/h$ and $\phi_2 = (x - x_a)/h$. Compute the element stiffness matrix $K^e$ for $p(x) = 1$ and the load vector $F^e$ for a constant $f$.
+
+<details>
+<summary>Answer</summary>
+
+$\phi_1' = -1/h$ and $\phi_2' = 1/h$, so $K^e_{ij} = \int_{x_a}^{x_b}\phi_i'\phi_j'\,dx$ gives:
+
+- diagonal entries $K^e_{11} = K^e_{22} = 1/h$
+- off-diagonal entries $K^e_{12} = K^e_{21} = -1/h$
+
+Since $\int\phi_i\,dx = h/2$, the load vector is $F^e_1 = F^e_2 = fh/2$.
+
+</details>
+
+**Exercise 2.** Solve $-u'' = 1$ on $[0,1]$ with $u(0) = u(1) = 0$ using three equal linear elements ($h = 1/3$). Assemble the global $4 \times 4$ system, apply the boundary conditions, solve for the interior nodal values, and compare with the exact solution $u = x(1 - x)/2$.
+
+<details>
+<summary>Answer</summary>
+
+Adding the element contributions (each $1/h = 3$) gives a tridiagonal global stiffness matrix:
+
+- rows 0 and 3: $3, -3$
+- rows 1 and 2: $-3, 6, -3$
+
+The global load vector is $F = (1/6, 1/3, 1/3, 1/6)$.
+
+Deleting the rows and columns of the Dirichlet nodes 0 and 3 leaves
+
+$$6U_1 - 3U_2 = \frac{1}{3}, \qquad -3U_1 + 6U_2 = \frac{1}{3}$$
+
+so $U_1 = U_2 = 1/9$.
+
+The exact value is $u(1/3) = \frac{1}{3}\cdot\frac{2}{3}/2 = 1/9$. The nodal values are exact, a known property of linear elements for 1D problems of this form, while between the nodes the approximation is piecewise linear.
+
+</details>
+
+**Exercise 3.** For a variable coefficient $p(x) = 1 + x$, compute $K^e$ for the linear element $[0.5, 1]$.
+
+<details>
+<summary>Answer</summary>
+
+The shape-function derivatives are $\pm 1/h$ with $h = 0.5$, so every entry equals $\pm\frac{1}{h^2}\int_{0.5}^{1}(1 + x)\,dx$. The integral is $0.5 + (1 - 0.25)/2 = 0.875$, and dividing by $h^2 = 0.25$ gives 3.5.
+
+$K^e$ has diagonal entries $3.5$ and off-diagonal entries $-3.5$. For linear elements, $K^e$ is just the constant-coefficient matrix multiplied by the average of $p$ over the element ($1.75/0.5 = 3.5$).
+
+</details>
+
+**Exercise 4.** Solve $-u'' = 0$ on $[0,1]$ with $u(0) = 0$ and the Neumann condition $u'(1) = g$, using two linear elements. Show how the boundary term in the weak form enters the load vector, and compare the result with the exact solution.
+
+<details>
+<summary>Answer</summary>
+
+The weak form is $\int_0^1 w'u'\,dx - [w u']_0^1 = 0$. Since $w(0) = 0$ at the Dirichlet node and $u'(1) = g$, the boundary term becomes $g\,w(1)$ and adds $g$ to the load entry of the last node.
+
+With $h = 0.5$ (so $1/h = 2$), deleting node 0 leaves
+
+$$4U_1 - 2U_2 = 0, \qquad -2U_1 + 2U_2 = g$$
+
+so $U_1 = g/2$ and $U_2 = g$. This matches the exact solution $u = gx$.
+
+The Neumann condition was never imposed directly on $U$. It entered naturally through the load vector.
+
+</details>
+
+## References
+
+- T. J. R. Hughes, *The Finite Element Method: Linear Static and Dynamic Finite Element Analysis*, Prentice-Hall, 1987.
+- G. Strang, G. J. Fix, *An Analysis of the Finite Element Method*, Prentice-Hall, 1973.
+- O. C. Zienkiewicz, R. L. Taylor, J. Z. Zhu, *The Finite Element Method: Its Basis and Fundamentals*, 7th ed., Butterworth-Heinemann, 2013.

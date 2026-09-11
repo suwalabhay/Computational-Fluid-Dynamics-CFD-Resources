@@ -51,12 +51,15 @@ A problem is statically indeterminate when the number of unknown reactions excee
 For a bar fixed at both ends with an applied load $P$ at an intermediate point:
 
 **Equilibrium:**
+
 $$R_A + R_B = P$$
 
 **Compatibility (total deformation is zero):**
+
 $$\delta_{AB} = 0 \implies \frac{R_A L_1}{A E} - \frac{R_B L_2}{A E} = 0$$
 
 **Solving:**
+
 $$R_A = P \frac{L_2}{L_1 + L_2}, \quad R_B = P \frac{L_1}{L_1 + L_2}$$
 
 ## Thermal Deformation and Stress
@@ -131,28 +134,37 @@ A steel pipe (outer diameter 60 mm, inner diameter 50 mm) is filled with concret
 **Solution:**
 
 **Areas:**
+
 $$A_s = \frac{\pi}{4}(60^2 - 50^2) = 863.9 \text{ mm}^2$$
+
 $$A_c = \frac{\pi}{4}(50^2) = 1963.5 \text{ mm}^2$$
 
 **Compatibility** — both materials deform equally:
+
 $$\delta_s = \delta_c \implies \frac{P_s L}{A_s E_s} = \frac{P_c L}{A_c E_c}$$
 
 $$\frac{P_s}{A_s E_s} = \frac{P_c}{A_c E_c}$$
 
 **Equilibrium:**
+
 $$P_s + P_c = 200 \text{ kN}$$
 
 From compatibility:
+
 $$P_s = P_c \frac{A_s E_s}{A_c E_c} = P_c \frac{863.9 \times 200}{1963.5 \times 25} = 3.52\,P_c$$
 
 Substituting into equilibrium:
+
 $$3.52\,P_c + P_c = 200 \implies P_c = 44.2 \text{ kN}, \quad P_s = 155.8 \text{ kN}$$
 
 **Stresses:**
+
 $$\sigma_s = \frac{155\,800}{863.9} = 180.3 \text{ MPa}$$
+
 $$\sigma_c = \frac{44\,200}{1963.5} = 22.5 \text{ MPa}$$
 
 **Deformation:**
+
 $$\delta = \frac{P_s L}{A_s E_s} = \frac{155\,800 \times 1500}{863.9 \times 200\,000} = 1.35 \text{ mm}$$
 
 ### Example 2: Thermal Stress in a Constrained Bar
@@ -161,7 +173,7 @@ An aluminum bar ($L = 0.5$ m) is placed between two rigid walls at 20°C. The te
 
 **Given:**
 - $E_{Al} = 70$ GPa, $\alpha_{Al} = 23 \times 10^{-6}$ /°C
-- $\Delta T = 60°C$, $L = 0.5$ m
+- $\Delta T = 60^\circ\text{C}$, $L = 0.5$ m
 
 **Find:** Stress in the bar.
 
@@ -183,20 +195,23 @@ A flat bar (width $w = 50$ mm, thickness $t = 10$ mm) has a central hole of diam
 
 **Given:**
 - $w = 50$ mm, $t = 10$ mm, $d = 10$ mm
-- $P = 20$ kN, $K_t = 3.0$ (from chart for $d/w = 0.2$)
+- $P = 20$ kN, $K_t \approx 2.5$ (net-section chart value for $d/w = 0.2$; the value 3.0 applies to a hole in a very wide plate)
 
 **Find:** Maximum stress at the hole.
 
 **Solution:**
 
 **Net area:**
+
 $$A_{net} = (w - d) \times t = (50 - 10) \times 10 = 400 \text{ mm}^2$$
 
 **Nominal stress:**
+
 $$\sigma_{nom} = \frac{P}{A_{net}} = \frac{20\,000}{400} = 50 \text{ MPa}$$
 
 **Maximum stress:**
-$$\sigma_{max} = K_t \times \sigma_{nom} = 3.0 \times 50 = 150 \text{ MPa}$$
+
+$$\sigma_{max} = K_t \times \sigma_{nom} = 2.5 \times 50 = 125 \text{ MPa}$$
 
 ## Principle of Saint-Venant
 
@@ -227,3 +242,78 @@ Saint-Venant's principle states that localized effects of loading become negligi
 - Stress concentrations are critical for fatigue but less so for static ductile failure
 
 Mastery of axial loading analysis is the foundation for tackling more complex loading scenarios such as torsion, bending, and combined loading.
+
+## Exercises
+
+**Exercise 1.** A steel bar ($E = 200$ GPa) is fixed at A. Segment AB is 1 m long with $A = 400$ mm²; segment BC is 0.5 m long with $A = 200$ mm². A 50 kN force pulls to the right at B, and a 20 kN force pushes to the left at C. Find the internal force in each segment and the displacement of C.
+
+<details>
+<summary>Answer</summary>
+
+Cutting each segment and looking at the free end:
+
+- BC carries the load at C: $N_{BC} = -20$ kN (compression)
+- AB carries both loads: $N_{AB} = 50 - 20 = 30$ kN (tension)
+
+$$\delta_C = \frac{30\,000 \times 1000}{400 \times 200\,000} + \frac{-20\,000 \times 500}{200 \times 200\,000} = 0.375 - 0.250 = 0.125 \text{ mm}$$
+
+C moves 0.125 mm to the right.
+
+</details>
+
+**Exercise 2.** A bar of cross-section 300 mm² is fixed between two walls. A 60 kN axial load is applied 0.4 m from wall A and 0.6 m from wall B. Find both reactions and the stress in each segment.
+
+<details>
+<summary>Answer</summary>
+
+From the formula in the notes:
+
+$$R_A = P\frac{L_2}{L_1 + L_2} = 60 \times 0.6 = 36 \text{ kN}, \quad R_B = 60 \times 0.4 = 24 \text{ kN}$$
+
+The shorter, stiffer segment takes more load. Segment A is in tension, $36\,000/300 = 120$ MPa; segment B is in compression, $24\,000/300 = 80$ MPa.
+
+</details>
+
+**Exercise 3.** Repeat Example 2 (aluminium bar, $L = 0.5$ m, $\Delta T = 60^\circ$C), but with a 0.2 mm gap between the bar and one wall at the start. Find the stress after heating.
+
+<details>
+<summary>Answer</summary>
+
+Free expansion: $\alpha\Delta T L = 23 \times 10^{-6} \times 60 \times 500 = 0.69$ mm. The gap absorbs 0.2 mm, so the walls suppress the remaining 0.49 mm:
+
+$$\sigma = -E\frac{0.49}{500} = -70\,000 \times 9.8 \times 10^{-4} = -68.6 \text{ MPa}$$
+
+The stress is compressive. A small gap removes 29% of the thermal stress, which is the idea behind expansion joints.
+
+</details>
+
+**Exercise 4.** For the concrete-filled steel pipe of Example 1, what axial load makes the steel reach its yield stress of 250 MPa? What is the concrete stress at that load, and is it likely to be acceptable?
+
+<details>
+<summary>Answer</summary>
+
+Both materials share the same strain $\epsilon = \sigma_s/E_s = 1.25 \times 10^{-3}$, so
+
+$$P = \epsilon\,(A_s E_s + A_c E_c) = 1.25 \times 10^{-3}\,(863.9 \times 200\,000 + 1963.5 \times 25\,000) = 277 \text{ kN}$$
+
+The concrete stress is $\sigma_c = E_c\epsilon = 31.3$ MPa. That is close to or above the compressive strength of ordinary concrete, so the concrete may govern before the steel yields. The confinement provided by the pipe raises the concrete's effective strength.
+
+</details>
+
+**Exercise 5.** The plate of Example 3 ($w = 50$ mm, $t = 10$ mm, hole $d = 10$ mm, $K_t \approx 2.5$) is made of a steel whose allowable peak stress is 180 MPa. What is the largest axial load? Why do designers often ignore $K_t$ for a single static load on a ductile plate, but never for fatigue?
+
+<details>
+<summary>Answer</summary>
+
+$$P_{max} = \frac{\sigma_{allow}A_{net}}{K_t} = \frac{180 \times 400}{2.5} = 28.8 \text{ kN}$$
+
+Under a single static load a ductile material yields locally at the hole edge and redistributes the stress, so the net-section stress $P/A_{net}$ governs failure. Under cyclic loading, fatigue cracks start at the stress peak, so the concentration (through $K_f$) directly shortens life.
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Mechanics of Materials*, 10th ed., Pearson, 2017.
+- Beer, F. P., Johnston, E. R., DeWolf, J. T., and Mazurek, D. F., *Mechanics of Materials*, 7th ed., McGraw-Hill Education, 2015.
+- Gere, J. M., and Goodno, B. J., *Mechanics of Materials*, 8th ed., Cengage Learning, 2013.
+- Pilkey, W. D., and Pilkey, D. F., *Peterson's Stress Concentration Factors*, 3rd ed., Wiley, 2008.

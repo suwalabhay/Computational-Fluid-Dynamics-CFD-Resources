@@ -10,29 +10,36 @@ The **position vector** $\mathbf{r}(t)$ describes the location of a particle rel
 $$\mathbf{r}(t) = x(t)\mathbf{i} + y(t)\mathbf{j} + z(t)\mathbf{k}$$
 
 The **magnitude** of position (distance from origin):
+
 $$r = |\mathbf{r}| = \sqrt{x^2 + y^2 + z^2}$$
 
 ### Displacement
 **Displacement** is the change in position over a time interval:
+
 $$\Delta \mathbf{r} = \mathbf{r}(t_2) - \mathbf{r}(t_1)$$
 
 Note: Displacement is different from distance traveled—displacement is a vector representing the straight-line change in position.
 
 ### Velocity
 **Average velocity** over a time interval:
+
 $$\mathbf{v}_{avg} = \frac{\Delta \mathbf{r}}{\Delta t} = \frac{\mathbf{r}(t_2) - \mathbf{r}(t_1)}{t_2 - t_1}$$
 
 **Instantaneous velocity** (first derivative of position):
+
 $$\mathbf{v}(t) = \frac{d\mathbf{r}}{dt} = \dot{x}\mathbf{i} + \dot{y}\mathbf{j} + \dot{z}\mathbf{k}$$
 
 **Speed** is the magnitude of velocity:
+
 $$v = |\mathbf{v}| = \sqrt{\dot{x}^2 + \dot{y}^2 + \dot{z}^2}$$
 
 ### Acceleration
 **Average acceleration** over a time interval:
+
 $$\mathbf{a}_{avg} = \frac{\Delta \mathbf{v}}{\Delta t} = \frac{\mathbf{v}(t_2) - \mathbf{v}(t_1)}{t_2 - t_1}$$
 
 **Instantaneous acceleration** (first derivative of velocity, second derivative of position):
+
 $$\mathbf{a}(t) = \frac{d\mathbf{v}}{dt} = \frac{d^2\mathbf{r}}{dt^2} = \ddot{x}\mathbf{i} + \ddot{y}\mathbf{j} + \ddot{z}\mathbf{k}$$
 
 ## One-Dimensional Motion
@@ -49,15 +56,19 @@ For motion along a straight line (say, the x-axis):
 When acceleration is constant ($a = $ constant), we have:
 
 1. **Velocity as function of time:**
+
    $$v(t) = v_0 + at$$
 
 2. **Position as function of time:**
+
    $$x(t) = x_0 + v_0 t + \frac{1}{2}at^2$$
 
 3. **Velocity-position relationship:**
+
    $$v^2 = v_0^2 + 2a(x - x_0)$$
 
 4. **Average velocity:**
+
    $$v_{avg} = \frac{v_0 + v}{2}$$
 
 ### Example 1: Projectile Motion (Vertical)
@@ -74,14 +85,19 @@ A ball is thrown vertically upward with initial velocity $v_0 = 20$ m/s.
 **Solution:**
 
 **Maximum height** occurs when $v = 0$:
+
 $$0 = 20 - 9.81t_{max}$$
+
 $$t_{max} = \frac{20}{9.81} = 2.04 \text{ s}$$
 
 $$y_{max} = 0 + 20(2.04) + \frac{1}{2}(-9.81)(2.04)^2 = 20.4 \text{ m}$$
 
 **Time to return to ground** ($y = 0$):
+
 $$0 = 0 + 20t - \frac{1}{2}(9.81)t^2$$
+
 $$t(20 - 4.905t) = 0$$
+
 $$t = 0 \text{ or } t = \frac{20}{4.905} = 4.08 \text{ s}$$
 
 ## Two-Dimensional Motion
@@ -95,13 +111,17 @@ For a projectile launched at angle $\theta_0$ with initial speed $v_0$:
 - $a_x = 0, a_y = -g$
 
 **Kinematic equations:**
+
 $$x(t) = v_0\cos\theta_0 \cdot t$$
+
 $$y(t) = v_0\sin\theta_0 \cdot t - \frac{1}{2}gt^2$$
 
 $$v_x(t) = v_0\cos\theta_0$$
+
 $$v_y(t) = v_0\sin\theta_0 - gt$$
 
 **Trajectory equation** (eliminating time):
+
 $$y = x\tan\theta_0 - \frac{gx^2}{2v_0^2\cos^2\theta_0}$$
 
 **Key results:**
@@ -114,19 +134,22 @@ $$y = x\tan\theta_0 - \frac{gx^2}{2v_0^2\cos^2\theta_0}$$
 A cannon fires a projectile at 45° with initial speed 100 m/s.
 
 **Given:**
-- $v_0 = 100$ m/s, $\theta_0 = 45°$
+- $v_0 = 100$ m/s, $\theta_0 = 45^\circ$
 - $g = 9.81$ m/s²
 
 **Solution:**
 
 **Range:**
-$$R = \frac{(100)^2\sin(2 \times 45°)}{9.81} = \frac{10000 \times 1}{9.81} = 1019 \text{ m}$$
+
+$$R = \frac{(100)^2\sin(2 \times 45^\circ)}{9.81} = \frac{10000 \times 1}{9.81} = 1019 \text{ m}$$
 
 **Maximum height:**
-$$H = \frac{(100)^2\sin^2(45°)}{2 \times 9.81} = \frac{10000 \times 0.5}{19.62} = 255 \text{ m}$$
+
+$$H = \frac{(100)^2\sin^2(45^\circ)}{2 \times 9.81} = \frac{10000 \times 0.5}{19.62} = 255 \text{ m}$$
 
 **Time of flight:**
-$$T = \frac{2 \times 100 \times \sin(45°)}{9.81} = \frac{200 \times 0.707}{9.81} = 14.4 \text{ s}$$
+
+$$T = \frac{2 \times 100 \times \sin(45^\circ)}{9.81} = \frac{200 \times 0.707}{9.81} = 14.4 \text{ s}$$
 
 ## Curvilinear Motion
 
@@ -139,10 +162,13 @@ For motion along a curved path, we use:
 - **Normal direction** ($\mathbf{e}_n$): Perpendicular to path, toward center of curvature
 
 **Velocity:**
+
 $$\mathbf{v} = v\mathbf{e}_t$$
+
 where $v$ is the speed (scalar).
 
 **Acceleration:**
+
 $$\mathbf{a} = a_t\mathbf{e}_t + a_n\mathbf{e}_n$$
 
 where:
@@ -177,15 +203,19 @@ A car travels around a circular track of radius 200 m. Its speed increases from 
 **Solution:**
 
 **Tangential acceleration:**
+
 $$a_t = \frac{v_2 - v_1}{\Delta t} = \frac{30 - 20}{10} = 1 \text{ m/s}^2$$
 
 **Normal acceleration at $t = 0$:**
+
 $$a_{n1} = \frac{v_1^2}{R} = \frac{20^2}{200} = 2 \text{ m/s}^2$$
 
 **Normal acceleration at $t = 10$ s:**
+
 $$a_{n2} = \frac{v_2^2}{R} = \frac{30^2}{200} = 4.5 \text{ m/s}^2$$
 
 **Total acceleration at $t = 10$ s:**
+
 $$a = \sqrt{a_t^2 + a_{n2}^2} = \sqrt{1^2 + 4.5^2} = 4.61 \text{ m/s}^2$$
 
 ## Relative Motion
@@ -194,12 +224,15 @@ $$a = \sqrt{a_t^2 + a_{n2}^2} = \sqrt{1^2 + 4.5^2} = 4.61 \text{ m/s}^2$$
 If particle A moves with velocity $\mathbf{v}_A$ and particle B with velocity $\mathbf{v}_B$, then:
 
 **Velocity of A relative to B:**
+
 $$\mathbf{v}_{A/B} = \mathbf{v}_A - \mathbf{v}_B$$
 
 **Velocity of B relative to A:**
+
 $$\mathbf{v}_{B/A} = \mathbf{v}_B - \mathbf{v}_A = -\mathbf{v}_{A/B}$$
 
 ### Relative Acceleration
+
 $$\mathbf{a}_{A/B} = \mathbf{a}_A - \mathbf{a}_B$$
 
 ### Example 4: River Crossing
@@ -212,15 +245,19 @@ A boat can travel at 5 m/s in still water. It needs to cross a river that is 100
 - Boat velocity relative to ground: $\mathbf{v}_{boat} = 3\mathbf{i} + 5\mathbf{j}$ m/s
 
 **Time to cross:**
+
 $$t = \frac{100 \text{ m}}{5 \text{ m/s}} = 20 \text{ s}$$
 
 **Downstream drift:**
+
 $$x = 3 \times 20 = 60 \text{ m}$$
 
 **Case 2: Boat aims to go straight across**
 The boat must aim upstream at angle $\theta$:
+
 $$\sin\theta = \frac{3}{5}$$
-$$\theta = 36.87°$$
+
+$$\theta = 36.87^\circ$$
 
 Effective velocity across river: $v_{across} = 5\cos\theta = 4$ m/s
 Time to cross: $t = \frac{100}{4} = 25$ s
@@ -230,15 +267,20 @@ Time to cross: $t = \frac{100}{4} = 25$ s
 When acceleration is not constant, integration is required:
 
 ### Given $a(t)$:
+
 $$v(t) = v_0 + \int_0^t a(\tau) d\tau$$
+
 $$x(t) = x_0 + \int_0^t v(\tau) d\tau$$
 
 ### Given $a(v)$:
 Using $a = v\frac{dv}{dx}$:
+
 $$v dv = a dx$$
+
 $$\int_{v_0}^v v' dv' = \int_{x_0}^x a dx'$$
 
 ### Given $a(x)$:
+
 $$v^2 = v_0^2 + 2\int_{x_0}^x a dx'$$
 
 ### Example 5: Variable Acceleration
@@ -250,11 +292,13 @@ A particle starts from rest and has acceleration $a(t) = 2 + 3t$ m/s².
 **Solution:**
 
 **Velocity:**
+
 $$v(t) = 0 + \int_0^t (2 + 3\tau) d\tau = [2\tau + \frac{3\tau^2}{2}]_0^t = 2t + 1.5t^2$$
 
 At $t = 4$ s: $v(4) = 2(4) + 1.5(4)^2 = 8 + 24 = 32$ m/s
 
 **Position:**
+
 $$x(t) = 0 + \int_0^t (2\tau + 1.5\tau^2) d\tau = [\tau^2 + 0.5\tau^3]_0^t = t^2 + 0.5t^3$$
 
 At $t = 4$ s: $x(4) = (4)^2 + 0.5(4)^3 = 16 + 32 = 48$ m
@@ -262,15 +306,19 @@ At $t = 4$ s: $x(4) = (4)^2 + 0.5(4)^3 = 16 + 32 = 48$ m
 ## Parametric Equations
 
 Sometimes motion is described parametrically:
+
 $$x = x(t), \quad y = y(t), \quad z = z(t)$$
 
 **Velocity components:**
+
 $$v_x = \frac{dx}{dt}, \quad v_y = \frac{dy}{dt}, \quad v_z = \frac{dz}{dt}$$
 
 **Speed:**
+
 $$v = \sqrt{v_x^2 + v_y^2 + v_z^2}$$
 
 **Acceleration components:**
+
 $$a_x = \frac{dv_x}{dt}, \quad a_y = \frac{dv_y}{dt}, \quad a_z = \frac{dv_z}{dt}$$
 
 ## Applications in Engineering
@@ -329,3 +377,74 @@ Understanding particle kinematics is essential for:
 - Safety and performance optimization
 
 This foundation in describing motion prepares for the next step: understanding why objects move as they do through the study of kinetics, where forces and motion are related.
+
+## Related Scripts
+
+- [Charged Particle Dynamics in a Magnetic Field](../../../scripts/simulations/charged_particle_dynamics_in_a_magnetic_field_using_runge_kutta_methods/): integrates the motion of a charged particle in a uniform magnetic field with the classical fourth-order Runge–Kutta (RK4) method and animates the resulting helical trajectory in 3D.
+
+## Exercises
+
+**Exercise 1.** A car travelling at 25 m/s brakes with a constant deceleration of 6 m/s². Find the stopping time and stopping distance.
+
+<details>
+<summary>Answer</summary>
+
+$t = \frac{v_0}{a} = \frac{25}{6} = 4.17$ s. From $v^2 = v_0^2 + 2a(x - x_0)$ with $v = 0$:
+
+$$x - x_0 = \frac{25^2}{2 \times 6} = 52.1 \text{ m}$$
+
+</details>
+
+**Exercise 2.** A stone is thrown horizontally at 15 m/s from the top of a 45 m cliff. Find the time of flight, the horizontal distance travelled, and the speed and direction at impact.
+
+<details>
+<summary>Answer</summary>
+
+$t = \sqrt{2h/g} = \sqrt{90/9.81} = 3.03$ s and $x = 15 \times 3.03 = 45.4$ m.
+
+At impact $v_x = 15$ m/s and $v_y = gt = 29.7$ m/s downward, so $v = \sqrt{15^2 + 29.7^2} = 33.3$ m/s, directed $\arctan(29.7/15) = 63.2^\circ$ below the horizontal.
+
+</details>
+
+**Exercise 3.** Using $R = v_0^2\sin(2\theta_0)/g$, show that the range on level ground is maximized at $\theta_0 = 45^\circ$ and that complementary angles give the same range. Evaluate $R$ and $H$ for $v_0 = 50$ m/s at $30^\circ$ and at $60^\circ$.
+
+<details>
+<summary>Answer</summary>
+
+$\sin(2\theta_0)$ has its maximum value 1 at $2\theta_0 = 90^\circ$. Also $\sin(2(90^\circ - \theta_0)) = \sin(180^\circ - 2\theta_0) = \sin(2\theta_0)$, so $\theta_0$ and $90^\circ - \theta_0$ give the same range.
+
+For both angles $R = 2500 \times 0.866/9.81 = 220.7$ m. The heights differ: $H_{30} = \frac{(50\sin 30^\circ)^2}{2g} = 31.9$ m and $H_{60} = \frac{(50\sin 60^\circ)^2}{2g} = 95.6$ m.
+
+</details>
+
+**Exercise 4.** A particle moving in a straight line experiences a resisting acceleration $a = -kv$ with $k = 0.5\;\text{s}^{-1}$ and $v_0 = 20$ m/s at $x = 0$. Find $v(t)$, $v(x)$ and the total distance travelled.
+
+<details>
+<summary>Answer</summary>
+
+From $dv/dt = -kv$: $v(t) = v_0 e^{-kt} = 20e^{-0.5t}$ m/s.
+
+Using $a = v\,dv/dx = -kv$ gives $dv/dx = -k$, so $v(x) = v_0 - kx$.
+
+The particle stops ($v = 0$) at $x = v_0/k = 40$ m. It approaches this distance only as $t \to \infty$, because the speed decays exponentially.
+
+</details>
+
+**Exercise 5.** A car drives through a dip shaped as $y = x^2/200$ (in metres). At the lowest point its speed is 20 m/s and it is accelerating along the path at 2 m/s². Find the radius of curvature and the magnitude of the total acceleration there.
+
+<details>
+<summary>Answer</summary>
+
+$$\rho = \frac{\left[1 + (dy/dx)^2\right]^{3/2}}{|d^2y/dx^2|} = \frac{(1 + 0)^{3/2}}{1/100} = 100 \text{ m}$$
+
+$a_n = v^2/\rho = 400/100 = 4$ m/s², directed upward toward the centre of curvature. With $a_t = 2$ m/s²:
+
+$$a = \sqrt{2^2 + 4^2} = 4.47 \text{ m/s}^2$$
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Dynamics*, 14th ed., Pearson, 2016.
+- J. L. Meriam, L. G. Kraige, *Engineering Mechanics: Dynamics*, Wiley.
+- F. P. Beer, E. R. Johnston, P. J. Cornwell, *Vector Mechanics for Engineers: Dynamics*, McGraw-Hill.

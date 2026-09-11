@@ -1,51 +1,92 @@
-import numpy as np
+"""Kriging-type interpolation with a cubic spline correlation function.
+
+Samples y(x) = (3x - 3)^2 sin(2x - 10) at 11 points in [0, 1], solves the
+interpolation system R w = y for four values of the correlation parameter
+theta, and compares each interpolant with the true function.
+"""
+
+import argparse
+from pathlib import Path
+
 import matplotlib.pyplot as plt
-from scipy.interpolate import Rbf
+import numpy as np
+
+N_SAMPLES = 11  # training points in [0, 1]
+N_PREDICT = 100  # prediction points in [0, 1]
+THETA_VALUES = [0.1, 3.0, 6.5, 10.0]  # correlation parameters, one panel each
 
 
-# Define the original function
-def y(x):
+def test_function(x):
+    """Ground truth y(x) = (3x - 3)^2 sin(2x - 10)."""
     return (3 * x - 3) ** 2 * np.sin(2 * x - 10)
 
 
-# Generate original data points
-x_data = np.linspace(0, 1, 11)
-y_data = y(x_data)
-x_fine = np.linspace(0, 1, 100)
+def cubic_spline(h, theta):
+    """Cubic spline correlation in the scaled lag xi = theta |h|."""
+    xi = theta * np.abs(h)
+    return np.where(
+        xi <= 1,
+        1 - 1.5 * xi**2 + 0.75 * xi**3,
+        np.where(xi <= 2, 0.25 * (2 - xi) ** 3, 0.0),
+    )
 
 
-# Define the cubic spline basis function with a fixed epsilon
-def make_cubic_spline_basis(epsilon):
-    def cubic_spline_basis(r):
-        abs_r = epsilon * np.abs(r)
-        return np.where(
-            abs_r <= 1,
-            1 - 1.5 * abs_r**2 + 0.75 * abs_r**3,
-            np.where(abs_r <= 2, 0.25 * (2 - abs_r) ** 3, 0),
-        )
-
-    return cubic_spline_basis
+def fit_weights(x_data, y_data, theta):
+    """Solve R w = y with R_ij = R(x_i - x_j; theta)."""
+    corr = cubic_spline(x_data[:, None] - x_data[None, :], theta)
+    return np.linalg.solve(corr, y_data)
 
 
-# Define theta values
-theta_values = [0.1, 3, 6.5, 10.0]
+def predict(x_new, x_data, weights, theta):
+    """Evaluate y~(x) = sum_i w_i R(x - x_i; theta)."""
+    return cubic_spline(x_new[:, None] - x_data[None, :], theta) @ weights
 
-# Create subplots
-fig, axs = plt.subplots(2, 2, figsize=(12, 10))
 
-# Perform and plot Kriging interpolation for each theta
-for ax, theta in zip(axs.ravel(), theta_values):
-    cubic_spline = make_cubic_spline_basis(theta)
-    rbf = Rbf(x_data, y_data, function=cubic_spline)
-    y_fine = rbf(x_fine)
+def plot_interpolants(x_data, y_data, x_fine, thetas):
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+    for ax, theta in zip(axs.ravel(), thetas):
+        weights = fit_weights(x_data, y_data, theta)
+        y_fine = predict(x_fine, x_data, weights, theta)
 
-    ax.plot(x_fine, y(x_fine), "k--", label="$y(x)$")
-    ax.plot(x_fine, y_fine, "b-", label="$\\tilde{y}(x)$")
-    ax.plot(x_data, y_data, "ks")
-    ax.set_title(f"$\\theta={theta}$")
-    ax.set_xlabel("$x$")
-    ax.set_ylabel("$y$")
-    ax.legend()
+        ax.plot(x_fine, test_function(x_fine), "k--", label="$y(x)$")
+        ax.plot(x_fine, y_fine, "b-", label=r"$\tilde{y}(x)$")
+        ax.plot(x_data, y_data, "ks", label="samples")
+        ax.set_title(rf"$\theta={theta}$")
+        ax.set_xlabel("$x$")
+        ax.set_ylabel("$y$")
+        ax.legend()
+    fig.tight_layout()
+    return fig
 
-plt.tight_layout()
-plt.show()
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--no-show", action="store_true", help="do not open the plot window"
+    )
+    parser.add_argument(
+        "--output", metavar="DIR", help="save the figure as a PNG in DIR"
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    x_data = np.linspace(0.0, 1.0, N_SAMPLES)
+    y_data = test_function(x_data)
+    x_fine = np.linspace(0.0, 1.0, N_PREDICT)
+    fig = plot_interpolants(x_data, y_data, x_fine, THETA_VALUES)
+
+    if args.output:
+        out_dir = Path(args.output)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        fig.savefig(out_dir / "kriging_interpolation.png", dpi=100, bbox_inches="tight")
+    if args.no_show:
+        plt.close(fig)
+    else:
+        plt.show()
+
+
+if __name__ == "__main__":
+    main()

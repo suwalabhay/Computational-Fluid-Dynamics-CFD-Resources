@@ -40,7 +40,7 @@ $$\boldsymbol{\tau} = \mu \left[\nabla \vec{v} + (\nabla \vec{v})^T\right] + \la
 
 where:
 - $\mu$ = dynamic viscosity
-- $\lambda$ = bulk viscosity (often $\lambda = -\frac{2}{3}\mu$)
+- $\lambda$ = second viscosity coefficient (Stokes' hypothesis $\lambda = -\frac{2}{3}\mu$ corresponds to zero bulk viscosity $\lambda + \frac{2}{3}\mu$)
 - $\boldsymbol{I}$ = identity tensor
 
 For incompressible flow ($\nabla \cdot \vec{v} = 0$), this simplifies to:
@@ -64,12 +64,15 @@ $$\frac{\partial \vec{v}}{\partial t} + (\vec{v} \cdot \nabla)\vec{v} = -\frac{1
 In Cartesian coordinates $(x, y, z)$ with velocity components $(u, v, w)$:
 
 **x-momentum:**
+
 $$\frac{\partial u}{\partial t} + u\frac{\partial u}{\partial x} + v\frac{\partial u}{\partial y} + w\frac{\partial u}{\partial z} = -\frac{1}{\rho}\frac{\partial p}{\partial x} + \nu\nabla^2 u + f_x$$
 
 **y-momentum:**
+
 $$\frac{\partial v}{\partial t} + u\frac{\partial v}{\partial x} + v\frac{\partial v}{\partial y} + w\frac{\partial v}{\partial z} = -\frac{1}{\rho}\frac{\partial p}{\partial y} + \nu\nabla^2 v + f_y$$
 
 **z-momentum:**
+
 $$\frac{\partial w}{\partial t} + u\frac{\partial w}{\partial x} + v\frac{\partial w}{\partial y} + w\frac{\partial w}{\partial z} = -\frac{1}{\rho}\frac{\partial p}{\partial z} + \nu\nabla^2 w + f_z$$
 
 where $\nabla^2 = \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2}$ is the Laplacian operator.
@@ -79,12 +82,15 @@ where $\nabla^2 = \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y
 In cylindrical coordinates $(r, \theta, z)$:
 
 **r-momentum:**
+
 $$\frac{\partial v_r}{\partial t} + v_r\frac{\partial v_r}{\partial r} + \frac{v_\theta}{r}\frac{\partial v_r}{\partial \theta} + v_z\frac{\partial v_r}{\partial z} - \frac{v_\theta^2}{r} = -\frac{1}{\rho}\frac{\partial p}{\partial r} + \nu\left(\nabla^2 v_r - \frac{v_r}{r^2} - \frac{2}{r^2}\frac{\partial v_\theta}{\partial \theta}\right) + f_r$$
 
 **θ-momentum:**
+
 $$\frac{\partial v_\theta}{\partial t} + v_r\frac{\partial v_\theta}{\partial r} + \frac{v_\theta}{r}\frac{\partial v_\theta}{\partial \theta} + v_z\frac{\partial v_\theta}{\partial z} + \frac{v_r v_\theta}{r} = -\frac{1}{\rho r}\frac{\partial p}{\partial \theta} + \nu\left(\nabla^2 v_\theta - \frac{v_\theta}{r^2} + \frac{2}{r^2}\frac{\partial v_r}{\partial \theta}\right) + f_\theta$$
 
 **z-momentum:**
+
 $$\frac{\partial v_z}{\partial t} + v_r\frac{\partial v_z}{\partial r} + \frac{v_\theta}{r}\frac{\partial v_z}{\partial \theta} + v_z\frac{\partial v_z}{\partial z} = -\frac{1}{\rho}\frac{\partial p}{\partial z} + \nu\nabla^2 v_z + f_z$$
 
 ## Special Cases
@@ -139,7 +145,7 @@ $$-\nabla p$$
 
 ### Viscous Force
 
-$$\nabla \cdot \boldsymbol{\tau} = \mu \nabla^2 \vec{v}$$ (for incompressible flow)
+$$\nabla \cdot \boldsymbol{\tau} = \mu \nabla^2 \vec{v} \quad \text{(incompressible flow, constant } \mu \text{)}$$
 
 - Represents internal friction effects
 - Tends to smooth out velocity gradients
@@ -166,6 +172,7 @@ $$\rho \vec{f}$$
 ### No-Slip Condition
 
 At solid walls:
+
 $$\vec{v} = \vec{v}_{wall}$$
 
 For stationary walls: $\vec{v} = 0$
@@ -173,6 +180,7 @@ For stationary walls: $\vec{v} = 0$
 ### Free-Slip Condition
 
 At free surfaces or symmetry planes:
+
 $$\vec{v} \cdot \vec{n} = 0, \quad \frac{\partial v_t}{\partial n} = 0$$
 
 where $v_t$ is tangential velocity and $n$ is normal direction.
@@ -189,6 +197,7 @@ Several exact solutions exist for simplified geometries:
 ### Couette Flow
 
 Flow between parallel plates, one moving:
+
 $$u(y) = \frac{U y}{h}$$
 
 where $U$ is the plate velocity and $h$ is the gap height.
@@ -196,6 +205,7 @@ where $U$ is the plate velocity and $h$ is the gap height.
 ### Poiseuille Flow
 
 Pressure-driven flow in a circular pipe:
+
 $$u(r) = \frac{\Delta p}{4\mu L}(R^2 - r^2)$$
 
 where $\Delta p$ is pressure drop, $L$ is pipe length, and $R$ is pipe radius.
@@ -203,6 +213,7 @@ where $\Delta p$ is pressure drop, $L$ is pipe length, and $R$ is pipe radius.
 ### Stagnation Point Flow
 
 Flow near a stagnation point:
+
 $$u = ax, \quad v = -ay$$
 
 where $a$ is a constant related to the strain rate.
@@ -288,3 +299,102 @@ The equations conserve:
 - Energy (in absence of viscosity)
 
 Understanding the Navier-Stokes equations is fundamental to all of fluid mechanics and forms the basis for both theoretical analysis and computational fluid dynamics.
+
+## Related Scripts
+
+- [Backward-Facing Step Flow (SIMPLE Algorithm)](../../../scripts/simulations/backward_facing_step_simple/): solves steady 2D laminar incompressible flow over a backward-facing step with the finite volume method and the SIMPLE pressure–velocity coupling algorithm.
+- [Eulerian Cylinder Flow](../../../scripts/simulations/eulerian_cylinder_flow/): simulates 2D incompressible, inviscid flow past a circular cylinder on a fixed Eulerian grid and renders a dye tracer in real time with Pygame.
+- [Froude Number vs. Flow Velocity](../../../scripts/plots/froude_number/): plots the length-based Froude number $Fr = U/\sqrt{gL}$ against speed for hulls of 5, 10, 15, and 20 m, with reference lines at hull speed and at the approximate start of planing.
+- [Kelvin-Helmholtz Instability Simulation](../../../scripts/simulations/kelvin_helmholtz_instability/): simulates the Kelvin-Helmholtz instability, the rolling-up of a shear layer between fluid streams moving in opposite directions, in a periodic 2D incompressible flow drawn in real time with Pygame.
+- [Lid-Driven Cavity Flow Simulation](../../../scripts/simulations/lid_driven_cavity/): solves the 2D incompressible Navier-Stokes equations for flow in a square cavity driven by a moving lid at a Reynolds number of 100 and animates the velocity field.
+- [Rayleigh-Bénard Convection Simulation](../../../scripts/simulations/rayleigh_benard_convection/): simulates Rayleigh-Bénard convection, the buoyancy-driven flow in a fluid layer heated from below and cooled from above, and draws the temperature field in real time with Pygame.
+- [Simplified Real-Time Fluid Dynamics Simulator](../../../scripts/simulations/simplified_real_time_fluid_dynamics_simulator/): is an interactive 2D smoke simulation that uses Jos Stam's Stable Fluids algorithm (1999) to approximate the incompressible Navier-Stokes equations fast enough to run in real time in a Pygame window.
+- [Velocity Layers and Viscosity](../../../scripts/plots/velocity_layers_viscosity/): draws a schematic of three stacked fluid layers moving at different speeds to illustrate Newton's law of viscosity, $\tau = \mu\, du/dy$.
+- [Wall Shear in Pipe Cross-Section](../../../scripts/plots/wall_shear_pipe_cross_section/): sketches fully developed laminar (Hagen-Poiseuille) flow in a circular pipe, with velocity arrows whose lengths follow the parabolic profile $u(r) = u_{max}(1 - (r/R)^2)$.
+
+## Exercises
+
+**Exercise 1.** Compute $Re = UL/\nu$ in water ($\nu = 1.0 \times 10^{-6}$ m²/s) for (a) a bacterium swimming at $U = 30$ μm/s with $L = 1$ μm and (b) a ship at $U = 10$ m/s with $L = 100$ m. Which simplified form of the equations suits each?
+
+<details>
+<summary>Answer</summary>
+
+(a) $Re = (30 \times 10^{-6})(10^{-6})/10^{-6} = 3 \times 10^{-5}$. Inertia is negligible, so the Stokes equations $0 = -\nabla p + \mu\nabla^2\vec{v}$ apply.
+
+(b) $Re = 10 \times 100/10^{-6} = 10^9$. The flow outside thin boundary layers is essentially inviscid (Euler equations), the boundary layers themselves are turbulent, and the complete problem needs RANS or LES modeling.
+
+</details>
+
+**Exercise 2.** Verify that the Couette profile $u = Uy/h$, $v = 0$ with uniform pressure is an exact solution of the incompressible Navier–Stokes equations that satisfies the no-slip conditions, and find the wall shear stress.
+
+<details>
+<summary>Answer</summary>
+
+- Continuity: $\partial u/\partial x = 0$ and $v = 0$, so it holds.
+- x-momentum: $\partial u/\partial t = 0$, $u\,\partial u/\partial x = 0$, $v\,\partial u/\partial y = 0$, $\partial p/\partial x = 0$ and $\nu\,\partial^2 u/\partial y^2 = 0$, so every term vanishes.
+- y-momentum: every term is zero.
+- No-slip: $u(0) = 0$ and $u(h) = U$.
+
+The shear stress is uniform: $\tau = \mu\, du/dy = \mu U/h$.
+
+</details>
+
+**Exercise 3.** Starting from $u(r) = \frac{\Delta p}{4\mu L}(R^2 - r^2)$, derive the Hagen–Poiseuille flow rate and show that the mean velocity is half the centreline velocity. Evaluate $u_{max}$, $Q$ and $Re = \rho \bar{V} (2R)/\mu$ for water ($\rho = 998$ kg/m³, $\mu = 1.0 \times 10^{-3}$ Pa s) with $R = 1$ mm, $L = 1$ m and $\Delta p = 100$ Pa.
+
+<details>
+<summary>Answer</summary>
+
+$$Q = \int_0^R u\, 2\pi r\, dr = \frac{\pi \Delta p}{2\mu L}\left(\frac{R^4}{2} - \frac{R^4}{4}\right) = \frac{\pi R^4 \Delta p}{8\mu L}$$
+
+Since $u_{max} = \Delta p R^2/(4\mu L)$, the mean velocity is $\bar{V} = Q/(\pi R^2) = \Delta p R^2/(8\mu L) = u_{max}/2$.
+
+Numbers:
+
+- $u_{max} = 100 \times 10^{-6}/(4 \times 10^{-3}) = 0.025$ m/s
+- $Q = \pi \times 10^{-12} \times 100/(8 \times 10^{-3}) = 3.93 \times 10^{-8}$ m³/s
+- $\bar{V} = 0.0125$ m/s
+- $Re = 998 \times 0.0125 \times 0.002/10^{-3} = 25$, which is laminar, so the solution is self-consistent.
+
+</details>
+
+**Exercise 4.** For the stagnation-point flow $u = ax$, $v = -ay$ (steady, no body force), show that the flow is incompressible and irrotational, and use the Navier–Stokes equations to find the pressure field.
+
+<details>
+<summary>Answer</summary>
+
+$\partial u/\partial x + \partial v/\partial y = a - a = 0$, and $\omega_z = \partial v/\partial x - \partial u/\partial y = 0$. The viscous terms vanish because $\nabla^2 u = \nabla^2 v = 0$.
+
+- x-momentum: $u\,\partial u/\partial x = a^2 x = -\frac{1}{\rho}\partial p/\partial x$.
+- y-momentum: $v\,\partial v/\partial y = a^2 y = -\frac{1}{\rho}\partial p/\partial y$.
+
+Integrating both,
+
+$$p = p_0 - \frac{\rho a^2}{2}(x^2 + y^2)$$
+
+which is Bernoulli's equation with $p_0$ the stagnation pressure. This field does not satisfy no-slip on the wall $y = 0$. Hiemenz's solution adds a thin viscous layer there.
+
+</details>
+
+**Exercise 5.** Pressure-driven flow between parallel plates at $y = \pm h$ has $dp/dx = -G$ (constant). Reduce the x-momentum equation for fully developed flow, solve for $u(y)$, and find the flow rate per unit width and the ratio of mean to maximum velocity.
+
+<details>
+<summary>Answer</summary>
+
+For fully developed flow, $v = 0$ and $u = u(y)$, so the convective terms vanish and $0 = G + \mu\, d^2u/dy^2$. With $u(\pm h) = 0$:
+
+$$u(y) = \frac{G}{2\mu}(h^2 - y^2)$$
+
+The flow rate per unit width is
+
+$$q = \int_{-h}^{h} u\, dy = \frac{2 G h^3}{3\mu}$$
+
+The maximum is $u_{max} = Gh^2/(2\mu)$ and the mean is $\bar{u} = q/(2h) = Gh^2/(3\mu)$, so $\bar{u}/u_{max} = 2/3$. For a round pipe the ratio is $1/2$.
+
+</details>
+
+## References
+
+- G. K. Batchelor, *An Introduction to Fluid Dynamics*, Cambridge University Press, 1967.
+- F. M. White, *Viscous Fluid Flow*, 3rd ed., McGraw-Hill, 2006.
+- R. L. Panton, *Incompressible Flow*, 4th ed., Wiley, 2013.
+- L. D. Landau, E. M. Lifshitz, *Fluid Mechanics*, 2nd ed., Pergamon Press, 1987.

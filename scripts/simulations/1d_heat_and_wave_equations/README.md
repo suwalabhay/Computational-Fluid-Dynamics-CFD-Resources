@@ -1,60 +1,66 @@
 # 1D Heat and Wave Equation Simulations
 
-This script numerically solves both the 1D heat equation and the 1D wave equation using explicit finite difference schemes. It demonstrates fundamental time-stepping techniques in computational physics and highlights the stability conditions that govern each method.
+This script solves the 1D heat equation with the implicit Crank–Nicolson scheme and the 1D wave equation with the explicit leapfrog scheme, animating both from the same initial Gaussian pulse. Running them side by side contrasts diffusion, where the pulse spreads and decays, with wave propagation, where it splits into two travelling pulses that reflect from the fixed ends.
 
 ## Overview
 
-- Solves the 1D heat (diffusion) equation via the explicit forward-Euler finite difference method
-- Solves the 1D wave equation via the explicit leapfrog (second-order in time) finite difference method
-- Enforces stability criteria for both equations before time-stepping
-- Visualises the evolving temperature and displacement fields over time
+- Uses one uniform grid of `NX = 500` points on $0 \le x \le L$ with $L = 10$, and the same initial pulse $u(x,0) = e^{-5(x - L/2)^2}$ for both equations.
+- Advances the heat equation (diffusivity `D = 1`) with Crank–Nicolson, using a sparse LU factorisation computed once.
+- Advances the wave equation (speed `C = 1`) with the explicit leapfrog scheme, with a second-order start for a pulse at rest.
+- Holds $u = 0$ at both ends (homogeneous Dirichlet conditions) for both equations.
+- Sets one time step for both equations from the wave CFL limit (Courant number `COURANT = 0.9`). It prints the Courant number and $r = D\Delta t/\Delta x^2$, and warns if the Courant number exceeds 1.
+- Animates both solutions in a two-panel dark-themed figure with the current time shown on each panel.
 
 ## Mathematical Background
 
 ### Heat Equation
 
-The 1D heat equation governs diffusive transport of temperature $u(x,t)$:
+$$\frac{\partial u}{\partial t} = D \frac{\partial^2 u}{\partial x^2}$$
 
-$$\frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2}$$
+Crank–Nicolson averages the central second difference $\delta^2 u_i = u_{i+1} - 2u_i + u_{i-1}$ between time levels $n$ and $n+1$:
 
-where $\alpha$ is the thermal diffusivity.
+$$u_i^{n+1} - \frac{r}{2}\,\delta^2 u_i^{n+1} = u_i^n + \frac{r}{2}\,\delta^2 u_i^n, \qquad r = \frac{D\,\Delta t}{\Delta x^2}$$
 
-### Explicit Finite Difference Discretisation (Heat)
-
-Approximating both derivatives on a uniform grid:
-
-$$\frac{\partial^2 u}{\partial x^2} \approx \frac{u_{i+1}^n - 2u_i^n + u_{i-1}^n}{\Delta x^2}, \qquad \frac{\partial u}{\partial t} \approx \frac{u_i^{n+1} - u_i^n}{\Delta t}$$
-
-Stability requires the time step to satisfy:
-
-$$\Delta t \leq \frac{\Delta x^2}{2\alpha}$$
+The scheme is second-order accurate in time and space and unconditionally stable, so $r$ can be much larger than the explicit limit $r \le 1/2$. With the default grid $r \approx 45$.
 
 ### Wave Equation
 
-The 1D wave equation models displacement $u(x,t)$ propagating at speed $c$:
-
 $$\frac{\partial^2 u}{\partial t^2} = c^2 \frac{\partial^2 u}{\partial x^2}$$
 
-### Leapfrog Discretisation (Wave)
+The leapfrog scheme uses central differences in both time and space:
 
-The second-order time derivative is discretised as:
+$$u_i^{n+1} = 2u_i^n - u_i^{n-1} + C^2\,\delta^2 u_i^n, \qquad C = \frac{c\,\Delta t}{\Delta x}$$
 
-$$\frac{\partial^2 u}{\partial t^2} \approx \frac{u_i^{n+1} - 2u_i^n + u_i^{n-1}}{\Delta t^2}$$
-
-Stability (CFL condition) requires:
-
-$$\frac{c\,\Delta t}{\Delta x} \leq 1$$
+It is stable for $C \le 1$ (CFL condition). For a pulse at rest ($\partial u/\partial t = 0$), the first step uses $u_i^{-1} = u_i^0 + \tfrac{1}{2}C^2\,\delta^2 u_i^0$. The exact solution is $u = \tfrac{1}{2}[f(x - ct) + f(x + ct)]$ until the halves reach the boundaries, where they reflect with inverted sign.
 
 ## Implementation
 
-1. Define spatial grid, time step, and physical parameters ($\alpha$ for heat; $c$ for wave)
-2. Verify stability conditions ($\Delta t \leq \Delta x^2/2\alpha$ and $c\Delta t/\Delta x \leq 1$)
-3. Set initial conditions (e.g., Gaussian pulse or step function)
-4. Apply boundary conditions (Dirichlet or Neumann) at domain edges
-5. Advance each equation through time using the respective explicit update formula
-6. Render or save snapshots of the field at selected time steps
+- `make_grid` builds the grid and picks $\Delta t \le$ `COURANT` $\cdot \Delta x / c$ so that an integer number of steps reaches `T = 500`.
+- `crank_nicolson_operators` assembles the sparse matrices $A = I - \tfrac{r}{2}\delta^2$ and $B = I + \tfrac{r}{2}\delta^2$ with identity boundary rows, and factorises $A$ with `scipy.sparse.linalg.splu`.
+- `heat_step` solves $A u^{n+1} = B u^n$ and `wave_step` applies the leapfrog update. Both work in place.
+- `initial_state` creates the Gaussian pulse and the second-order starting level for the wave.
+- `setup_figure` draws the two panels. `main` either animates with `FuncAnimation` (one step per frame) or, with `--no-show`, runs the steps directly and draws the final state.
+
+## Usage
+
+```bash
+python main.py                                        # animate up to t = 500 (27,723 frames)
+python main.py --steps 500                            # animate the first 500 steps only
+python main.py --no-show --output . --steps 100       # save the state at t = 1.8 as a PNG
+```
+
+- `--steps N` runs exactly `N` time steps (one per animation frame). Each step is $\Delta t = 0.018$.
+- `--no-show` skips the window.
+- `--output DIR` saves `heat_and_wave_1d.png` in `DIR`.
 
 ## Output
 
-- **Heat simulation**: animated or saved frames showing temperature profile diffusing and flattening over time
-- **Wave simulation**: animated or saved frames showing the displacement profile propagating and reflecting from boundaries
+![Heat and wave solutions at t = 1.8](heat_and_wave_1d.png)
+
+The figure shows the state after 100 steps ($t \approx 1.8$). The top panel shows the heat solution, which has spread into a wide, low Gaussian: its peak has fallen from 1 to about $1/\sqrt{1 + 20Dt} \approx 0.16$. The bottom panel shows the wave solution, where the initial pulse has split into two half-amplitude pulses moving apart at speed $c = 1$. Later in the animation the heat profile decays towards zero, while the wave pulses reflect with inverted sign at $x = 0$ and $x = L$ and pass through each other.
+
+## Related Notes
+
+- [Finite difference method](../../../notes/numerical/fdm/intro.md)
+- [Finite difference discretization](../../../notes/numerical/fdm/discretization.md)
+- [Numerical stability: explicit and implicit schemes](../../../notes/numerical/cfd/numerical_stability.md)

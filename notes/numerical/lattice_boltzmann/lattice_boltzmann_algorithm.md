@@ -58,17 +58,17 @@ $$
 (c_i) = \begin{pmatrix}
 0 & 1 & 0 & -1 & 0 & 1 & -1 & 1 & -1 \\
 0 & 0 & 1 & 0 & -1 & 1 & 1 & -1 & -1
-\end{pmatrix} \Delta x
+\end{pmatrix} \frac{\Delta x}{\Delta t}
 $$
 
 For the D3Q19 model:
 
 $$
 (c_i) = \begin{pmatrix}
-0 & 1 & -1 & 0 & 0 & 0 & 1 & -1 & 1 & -1 & 1 & -1 & 1 & -1 & 1 & -1 & 0 & 0 & 0 \\
-0 & 0 & 0 & 1 & -1 & 0 & 1 & 1 & -1 & -1 & 0 & 0 & 1 & 1 & -1 & -1 & 1 & 1 & -1 \\
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & -1 & 1 & -1 & 1 & -1 & -1 & 1 & 1
-\end{pmatrix} \Delta t
+0 & 1 & -1 & 0 & 0 & 0 & 0 & 1 & -1 & 1 & -1 & 0 & 0 & 1 & -1 & 1 & -1 & 0 & 0 \\
+0 & 0 & 0 & 1 & -1 & 0 & 0 & 1 & -1 & 0 & 0 & 1 & -1 & -1 & 1 & 0 & 0 & 1 & -1 \\
+0 & 0 & 0 & 0 & 0 & 1 & -1 & 0 & 0 & 1 & -1 & 1 & -1 & 0 & 0 & -1 & 1 & -1 & 1
+\end{pmatrix} \frac{\Delta x}{\Delta t}
 $$
 
 ## Moments and Macroscopic Variables
@@ -117,6 +117,7 @@ Repeat the collision and streaming steps until the desired time is reached.
 - Approximate integrals:
 
 $$\int_{-\infty}^{\infty} f(\xi) e^{-\xi^2} d\xi \approx \sum_i w_i f(x_i),$$
+
 where $x_i, w_i$ come from Hermite polynomial roots and weights.
 
 **Benefit**:
@@ -131,6 +132,7 @@ where $x_i, w_i$ come from Hermite polynomial roots and weights.
 From Chapman-Enskog analysis:
 
 $$\nu = c_s^2 \left( \tau - \frac{\Delta t}{2} \right),$$
+
 where $c_s = \frac{1}{\sqrt{3}}(\frac{\Delta x}{\Delta t})$ is the LBM speed of sound.
 
 **Speed of Sound**:
@@ -142,6 +144,7 @@ $c_s$ is a model-dependent quantity and relates the lattice spacing $\Delta x$ a
 The equilibrium distribution function:
 
 $$f_i^{\text{eq}} = w_i \rho \left[1 + \frac{c_i \cdot u}{c_s^2} + \frac{(c_i \cdot u)^2}{2c_s^4} - \frac{u \cdot u}{2c_s^2}\right],$$
+
 ensures correct mass, momentum, and pressure representation.
 
 ## Why LBM Works
@@ -258,7 +261,9 @@ $$w_0 = 4/9, \quad w_{1,2,3,4} = 1/9, \quad w_{5,6,7,8} = 1/36.$$
 - Set initial density $\rho_0 = 1.0$ (commonly used).
 - Set initial velocity field $(u_{x}, u_{y}) = (0,0)$ or a desired initial flow (e.g., a uniform inflow at the left boundary).
 - Compute initial equilibrium distributions $f_i^{\text{eq}}(\rho_0, u_x, u_y)$ at each cell using:
+
 $$f_i^{\text{eq}} = w_i \rho_0 \left[ 1 + \frac{c_i \cdot u}{c_s^2} + \frac{(c_i \cdot u)^2}{2c_s^4} - \frac{u \cdot u}{2 c_s^2} \right].$$
+
 - Set $f_i(x,y,0) = f_i^{\text{eq}}$.
 
 #### 4. Implement Collision and Streaming Steps
@@ -394,8 +399,82 @@ This note is a comprehensive implementation guide for the LBM algorithm. It cove
 | **Inputs** | Domain size $N_x \times N_y$, lattice spacing $\Delta x$, time step $\Delta t$, relaxation time $\tau$, initial density $\rho_0$ and velocity $\mathbf{u}_0$, boundary condition types, maximum iterations $T_{\max}$ |
 | **Outputs** | Density field $\rho(x,t)$, velocity field $\mathbf{u}(x,t)$, pressure (from $\rho$), vorticity, residual/convergence history, saved fields for visualization (VTK/HDF5) |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/lattice_boltzmann_cylinder_flow/main.py` | Full LBM implementation for 2-D cylinder flow (Re = 350) following the algorithm steps described here. |
+- [Lattice Boltzmann Cylinder Flow Simulation](../../../scripts/simulations/lattice_boltzmann_cylinder_flow/): simulates 2D flow past a circular cylinder with the lattice Boltzmann method (D2Q9 lattice, BGK collision operator) and animates the velocity magnitude with Matplotlib.
+
+## Exercises
+
+**Exercise 1.** For the D2Q9 weights $w_0 = 4/9$, $w_{1,\ldots,4} = 1/9$, $w_{5,\ldots,8} = 1/36$, show that $\sum_i w_i = 1$, $\sum_i w_i c_i = 0$ and $\sum_i w_i c_{i\alpha} c_{i\beta} = c_s^2 \delta_{\alpha\beta}$ with $c_s^2 = 1/3$ (lattice units, $\Delta x = \Delta t = 1$).
+
+<details>
+<summary>Answer</summary>
+
+- $\sum_i w_i = 4/9 + 4 \times 1/9 + 4 \times 1/36 = 4/9 + 4/9 + 1/9 = 1$.
+- Every velocity appears together with its opposite and with equal weight, so $\sum_i w_i c_i = 0$.
+- $xx$ component: the cardinal vectors $(\pm 1, 0)$ give $2 \times 1/9 = 2/9$, and the four diagonals give $4 \times 1/36 = 1/9$. The total is $1/3$; the $yy$ component is the same by symmetry.
+- $xy$ component: only diagonals contribute. $(1,1)$ and $(-1,-1)$ give $+1/36$ each, while $(1,-1)$ and $(-1,1)$ give $-1/36$ each, so the sum is zero.
+
+</details>
+
+**Exercise 2.** In lattice units, compute the viscosity for $\tau/\Delta t = 0.8$. Convert it to physical units for $\Delta x = 1$ mm and $\Delta t = 0.1$ ms. With the same $\Delta x$ and $\Delta t$, what $\tau/\Delta t$ would water ($\nu = 10^{-6}$ m²/s) require, and why is that a problem?
+
+<details>
+<summary>Answer</summary>
+
+$\nu_{\text{lb}} = c_s^2(\tau/\Delta t - 1/2) = (0.8 - 0.5)/3 = 0.1$. Since $\nu = \nu_{\text{lb}} \, \Delta x^2/\Delta t$, this corresponds to $\nu = 0.1 \times 10^{-6}/10^{-4} = 1.0 \times 10^{-3}$ m²/s.
+
+For water, $\nu_{\text{lb}} = \nu \, \Delta t/\Delta x^2 = 10^{-6} \times 10^{-4}/10^{-6} = 10^{-4}$, so $\tau/\Delta t = 0.5 + 3 \times 10^{-4} = 0.5003$. This is extremely close to the BGK stability limit of $1/2$. In practice one refines $\Delta x$, changes $\Delta t$ (which also changes the lattice Mach number), or uses a more robust collision operator.
+
+</details>
+
+**Exercise 3.** You want to simulate flow past a cylinder at $\mathrm{Re} = 100$ with the diameter resolved by $N = 40$ lattice cells and an inflow speed $U_{\text{lb}} = 0.05$ (lattice units). Compute $\nu_{\text{lb}}$, $\tau$ and the lattice Mach number $\mathrm{Ma} = U_{\text{lb}}/c_s$. Repeat for $\mathrm{Re} = 1000$ at the same $N$ and $U_{\text{lb}}$.
+
+<details>
+<summary>Answer</summary>
+
+$\mathrm{Re} = U_{\text{lb}} N/\nu_{\text{lb}}$ gives $\nu_{\text{lb}} = 0.05 \times 40/100 = 0.02$. Then $\tau = 3\nu_{\text{lb}} + 1/2 = 0.56$, and $\mathrm{Ma} = 0.05\sqrt{3} \approx 0.087$. Compressibility errors scale as $\mathrm{Ma}^2 \approx 0.0075$, which is acceptable.
+
+For $\mathrm{Re} = 1000$: $\nu_{\text{lb}} = 0.002$ and $\tau = 0.506$, too close to $1/2$ for plain BGK. Increasing $U_{\text{lb}}$ is limited by Mach number, so the practical remedies are more cells across the cylinder or a more stable collision model (e.g. MRT or regularized schemes).
+
+</details>
+
+**Exercise 4.** Evaluate the D2Q9 equilibrium $f_i^{\text{eq}}$ for $\rho = 1$ and $u = (0.1, 0)$ in lattice units. Check that $\sum_i f_i^{\text{eq}} = \rho$, $\sum_i f_i^{\text{eq}} c_i = \rho u$ and $\sum_i f_i^{\text{eq}} c_{ix} c_{ix} = \rho c_s^2 + \rho u_x^2$.
+
+<details>
+<summary>Answer</summary>
+
+With $c_s^2 = 1/3$, the bracket is $1 + 3(c_i \cdot u) + 4.5(c_i \cdot u)^2 - 1.5\,u \cdot u$, and $u \cdot u = 0.01$.
+
+| $c_i$ | $w_i$ | $c_i \cdot u$ | $f_i^{\text{eq}}$ |
+|---|---|---|---|
+| $(0,0)$ | 4/9 | 0 | 0.437778 |
+| $(1,0)$ | 1/9 | 0.1 | 0.147778 |
+| $(-1,0)$ | 1/9 | -0.1 | 0.081111 |
+| $(0,\pm 1)$ | 1/9 | 0 | 0.109444 each |
+| $(1,\pm 1)$ | 1/36 | 0.1 | 0.036944 each |
+| $(-1,\pm 1)$ | 1/36 | -0.1 | 0.020278 each |
+
+- Sum: 1.000000.
+- $x$-momentum: $0.147778 - 0.081111 + 2(0.036944 - 0.020278) = 0.1$; $y$-momentum: 0 by symmetry.
+- $\sum_i f_i^{\text{eq}} c_{ix}^2 = 0.147778 + 0.081111 + 2(0.036944 + 0.020278) = 0.343333 = 1/3 + 0.01$.
+
+</details>
+
+**Exercise 5.** A body-force-driven channel (plane Poiseuille flow) has width $H = 50$ lattice units, $\tau = 0.8$ and body acceleration $g = 10^{-5}$ (lattice units). Solving $\nu \, d^2u/dy^2 = -g$ with no-slip walls gives $u(y) = g\,y(H - y)/(2\nu)$. Compute $u_{\max}$, the lattice Mach number based on $u_{\max}$, and the Reynolds number based on the mean velocity and $H$. Is this a good validation case for the scheme?
+
+<details>
+<summary>Answer</summary>
+
+$\nu = (0.8 - 0.5)/3 = 0.1$. The maximum is at $y = H/2$: $u_{\max} = gH^2/(8\nu) = 10^{-5} \times 2500/0.8 = 0.03125$. Then $\mathrm{Ma} = 0.03125\sqrt{3} \approx 0.054$. The mean velocity of a parabola is $\bar{u} = \tfrac{2}{3}u_{\max} \approx 0.02083$, so $\mathrm{Re} = \bar{u} H/\nu \approx 10.4$.
+
+Yes: the flow is laminar and low-Mach with a known exact profile. Comparing the simulated profile against $u(y)$ tests the viscosity–relaxation relation and the wall treatment. With simple bounce-back the effective wall lies about halfway between the wall node and the first fluid node, so $y$ must be measured from that position.
+
+</details>
+
+## References
+
+- T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva and E. M. Viggen, *The Lattice Boltzmann Method: Principles and Practice*, Springer, 2017.
+- Y. H. Qian, D. d'Humières and P. Lallemand, "Lattice BGK models for Navier-Stokes equation", *Europhysics Letters* 17(6), 1992.
+- S. Chen and G. D. Doolen, "Lattice Boltzmann method for fluid flows", *Annual Review of Fluid Mechanics* 30, 1998.
+- S. Succi, *The Lattice Boltzmann Equation for Fluid Dynamics and Beyond*, Oxford University Press, 2001.

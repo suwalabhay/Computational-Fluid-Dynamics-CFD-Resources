@@ -69,13 +69,13 @@ where $u = u(x,t)$ might represent a scalar quantity such as temperature, $v$ is
 
 Suppose the domain $x \in [0, L]$ is subdivided into $N$ control volumes, each centered at $x_i$, with edges at $x_{i-1/2}$ and $x_{i+1/2}$. Integrating the equation over the control volume from $x_{i-1/2}$ to $x_{i+1/2}$ and applying the divergence theorem gives
 
-$$\int_{x_{i-1/2}}^{x_{i+1/2}} \frac{\partial u}{\partial t}\dx 
-+ \int_{x_{i-1/2}}^{x_{i+1/2}} v \frac{\partial u}{\partial x}\dx
-= \int_{x_{i-1/2}}^{x_{i+1/2}} D \frac{\partial^2 u}{\partial x^2}\dx$$
+$$\int_{x_{i-1/2}}^{x_{i+1/2}} \frac{\partial u}{\partial t}\,dx 
++ \int_{x_{i-1/2}}^{x_{i+1/2}} v \frac{\partial u}{\partial x}\,dx
+= \int_{x_{i-1/2}}^{x_{i+1/2}} D \frac{\partial^2 u}{\partial x^2}\,dx$$
 
 The middle term involving convection can be expressed as the net flux of $u$ through the boundaries:
 
-$$\int_{x_{i-1/2}}^{x_{i+1/2}} v \frac{\partial u}{\partial x}\dx 
+$$\int_{x_{i-1/2}}^{x_{i+1/2}} v \frac{\partial u}{\partial x}\,dx 
 = v\,u \Big|_{x_{i+1/2}} - v\,u \Big|_{x_{i-1/2}}$$
 
 and similarly for the diffusion term by considering its gradient at each boundary. After approximating $u$ and its derivatives or fluxes at $x_{i-1/2}$ and $x_{i+1/2}$ through suitable interpolation schemes, one obtains a discretized equation relating $u_i$ (the cell-average or center value in cell $i$) to its neighboring values. The complete set of discrete equations for $i = 1,\dots,N$ can then be solved at each time step, ensuring that each control volume properly accounts for convection and diffusion fluxes across its boundaries.
@@ -116,9 +116,79 @@ The Finite Volume Method (FVM) is the dominant discretization technique in indus
 | **Inputs** | Control-volume mesh (structured or unstructured), conservation law $\partial\phi/\partial t + \nabla\cdot\mathbf{F}=0$, flux interpolation scheme, boundary conditions, diffusion coefficient $D$, velocity $v$ |
 | **Outputs** | Cell-averaged values $\phi_i$, face fluxes $F_{i\pm 1/2}$, assembled algebraic system, converged field solution |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/backward_facing_step_simple/main.py` | Implements the SIMPLE algorithm on a finite-volume grid for a 2-D backward-facing step, demonstrating flux computation and pressure correction. |
-| `scripts/simulations/lid_driven_cavity/main.py` | Pressure-based Navier–Stokes solver using control-volume ideas consistent with FVM principles. |
+- [Backward-Facing Step Flow (SIMPLE Algorithm)](../../../scripts/simulations/backward_facing_step_simple/): solves steady 2D laminar incompressible flow over a backward-facing step with the finite volume method and the SIMPLE pressure–velocity coupling algorithm.
+- [Lid-Driven Cavity Flow Simulation](../../../scripts/simulations/lid_driven_cavity/): solves the 2D incompressible Navier-Stokes equations for flow in a square cavity driven by a moving lid at a Reynolds number of 100 and animates the velocity field.
+
+## Exercises
+
+**Exercise 1.** Explain why summing the finite-volume equations over all cells of a 1D domain gives a statement of global conservation that involves only the boundary fluxes.
+
+<details>
+<summary>Answer</summary>
+
+Cell $i$ gains $F_{i-1/2}$ and loses $F_{i+1/2}$. The same numerical flux $F_{i+1/2}$ is the gain of cell $i+1$. When all cells are summed, every interior flux appears once with each sign and cancels, leaving
+
+$$\frac{d}{dt}\sum_i u_i\,\Delta x = F_{1/2} - F_{N+1/2}$$
+
+This holds exactly for any flux formula, provided both neighbours use the same face flux.
+
+</details>
+
+**Exercise 2.** For steady convection-diffusion, $v\,du/dx = D\,d^2u/dx^2$, central differencing on a uniform grid gives $a_P u_P = a_W u_W + a_E u_E$ with $a_W = D/\Delta x + v/2$, $a_E = D/\Delta x - v/2$ and $a_P = a_W + a_E$. Find the cell Péclet number above which $a_E$ becomes negative, and evaluate it for $v = 2$ m/s, $D = 0.01$ m²/s and $\Delta x = 0.02$ m.
+
+<details>
+<summary>Answer</summary>
+
+$a_E < 0$ when $v/2 > D/\Delta x$, that is when $Pe_\Delta = v\Delta x/D > 2$.
+
+Here $Pe_\Delta = 2 \times 0.02/0.01 = 4$. The downstream neighbour gets a negative weight, so the solution can overshoot and wiggle.
+
+Two fixes: refine to $\Delta x < 0.01$ m, or use an upwind (or bounded high-resolution) convection scheme, which keeps all coefficients positive.
+
+</details>
+
+**Exercise 3.** For pure advection, $u_t + v u_x = 0$ with $v = 1$ m/s, use the explicit upwind finite-volume update $u_i^{n+1} = u_i^n - \frac{v\Delta t}{\Delta x}(u_i^n - u_{i-1}^n)$ with $\Delta x = 0.1$ m and $\Delta t = 0.05$ s. The cell values are $(1, 1, 0, 0)$, and cell 0 is held at 1 by the inflow. (a) Advance one step. (b) Check that the change in total content equals the net boundary flux.
+
+<details>
+<summary>Answer</summary>
+
+(a) The Courant number is $C = v\Delta t/\Delta x = 0.5 \le 1$, so the step is stable.
+
+- $u_1 = 1 - 0.5(1 - 1) = 1$
+- $u_2 = 0 - 0.5(0 - 1) = 0.5$
+- $u_3 = 0 - 0.5(0 - 0) = 0$
+
+(b) Over cells 1 to 3, the content changes by $\Delta x\sum\Delta u = 0.1 \times 0.5 = 0.05$. The net flux is $\Delta t\,(v u_0 - v u_3) = 0.05 \times (1 - 0) = 0.05$. The two agree.
+
+</details>
+
+**Exercise 4.** Solve $v\,du/dx = D\,d^2u/dx^2$ on $[0, 1]$ with $u(0) = 1$, $u(1) = 0$, $v = 0.1$ m/s and $D = 0.1$ m²/s, using 5 cells and central differencing. Boundary faces use the boundary value for convection and a half-cell distance for diffusion. Compare with the exact solution $u = 1 - (e^{vx/D} - 1)/(e^{vL/D} - 1)$.
+
+<details>
+<summary>Answer</summary>
+
+$\Delta x = 0.2$, so $D/\Delta x = 0.5$ and $Pe_\Delta = 0.2$. The coefficients are:
+
+- Interior cells: $a_W = 0.55$, $a_E = 0.45$, $a_P = 1.0$.
+- Cell 1: $1.55\,u_1 - 0.45\,u_2 = 1.1\,u(0)$.
+- Cell 5: $1.45\,u_5 - 0.55\,u_4 = 0.9\,u(1) = 0$.
+
+| $x$ | FVM (central) | exact |
+|-----|---------------|-------|
+| 0.1 | 0.9421 | 0.9388 |
+| 0.3 | 0.8006 | 0.7964 |
+| 0.5 | 0.6276 | 0.6225 |
+| 0.7 | 0.4163 | 0.4100 |
+| 0.9 | 0.1579 | 0.1505 |
+
+The largest error is below 0.008. Because $Pe_\Delta < 2$, all coefficients are positive and central differencing is accurate and free of wiggles.
+
+</details>
+
+## References
+
+- H. K. Versteeg, W. Malalasekera, *An Introduction to Computational Fluid Dynamics: The Finite Volume Method*, 2nd ed., Pearson Prentice Hall, 2007.
+- R. J. LeVeque, *Finite Volume Methods for Hyperbolic Problems*, Cambridge University Press, 2002.
+- J. H. Ferziger, M. Perić, R. L. Street, *Computational Methods for Fluid Dynamics*, 4th ed., Springer, 2020.

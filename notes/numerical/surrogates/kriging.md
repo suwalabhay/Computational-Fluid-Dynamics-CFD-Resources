@@ -11,6 +11,7 @@ Kriging treats the unknown function of interest, typically denoted by $y(x)$ for
 Consider a function modeled as  
 
 $$y(x) = \sum_{j=1}^{K} \beta_j f_j(x) + z(x),$$  
+
 where the functions $f_j(x)$ are known and capture the global or trend-like behavior, and the coefficients $\beta_j \in \mathbb{R}$ are unknown parameters. The term $z(x)$ represents the more complex, nonlinear part of the function, and is assumed to be a realization of a Gaussian process with zero mean, variance $\sigma^2$, and a correlation structure defined by a chosen correlation function $R(\|x-\tilde{x}\|)$.
 
 A key assumption is second-order stationarity, meaning that the covariance depends only on the distance between points, not on their absolute position. Formally,  
@@ -39,13 +40,10 @@ $$\begin{pmatrix}
 R & F \\
 F^T & 0
 \end{pmatrix}
-
 \begin{pmatrix}
 \lambda(x) \\ \mu(x)
 \end{pmatrix}
-
 =
-
 \begin{pmatrix}
 r(x) \\ f(x)
 \end{pmatrix}
@@ -64,19 +62,15 @@ $$\text{MSE}[\hat{y}(x)] = \mathbb{E}[(\hat{y}(x)-y(x))^2].$$
 This can be written explicitly as:
 
 $$\text{MSE}[\hat{y}(x)] = \sigma^2 \left\{1 - 
-
 \begin{pmatrix}
 r(x) \\ f(x)
 \end{pmatrix}^T
-
 \begin{pmatrix}
 R & F \\ F^T & 0
 \end{pmatrix}^{-1}
-
 \begin{pmatrix}
 r(x) \\ f(x)
 \end{pmatrix}
-
 \right\}
 $$  
 
@@ -89,6 +83,7 @@ When working with noisy data, additional regularization terms can be introduced,
 Kriging can be viewed as a weighted sum of correlation functions and low-order regression functions. After solving the initial system once, the evaluation of the Kriging surrogate at any new point $x$ is straightforward:
 
 $$\hat{y}(x) = (w^{(Y)})^T r(x) + (w^{(f)})^T f(x),$$  
+
 where the weight vectors $w^{(Y)}$ and $w^{(f)}$ depend only on the sample set and not on $x$.
 
 This structure resembles radial basis function interpolation, where each sample point acts as a center for a basis function, here given by the correlation function. The difference is that Kriging ensures these basis functions emerge from a probabilistic and theoretically well-grounded model, while RBF methods usually adopt a more direct interpolation standpoint without a stochastic model.
@@ -104,9 +99,10 @@ The correlation function $R(\| x - \tilde{x} \|)$ lies at the heart of Kriging. 
 For instance, the Gaussian correlation function
 
 $$R(h) = \exp\{ -\theta h^2 \}$$
+
 produces very smooth interpolants but can be ill-conditioned if the data are highly correlated.
 
-The choice of correlation function and its parameters $\theta = (\theta_1, \ldots, \theta_d)^T$ plays a crucial role in shaping the approximation quality. The parameter $\theta_k$ can be interpreted as a length scale along the $x_k$-direction. A small $\theta_k$ means rapid decay of correlation, focusing the prediction on nearby points. A large $\theta_k$ spreads the influence of observations over a larger region. For multi-dimensional problems, one can even model anisotropy and rotation of axes through transformations of the input space, though this becomes complex for higher dimensions.
+The choice of correlation function and its parameters $\theta = (\theta_1, \ldots, \theta_d)^T$ plays a crucial role in shaping the approximation quality. The parameter $\theta_k$ acts as an inverse length scale along the $x_k$-direction. A large $\theta_k$ means rapid decay of correlation, focusing the prediction on nearby points. A small $\theta_k$ spreads the influence of observations over a larger region. For multi-dimensional problems, one can even model anisotropy and rotation of axes through transformations of the input space, though this becomes complex for higher dimensions.
 
 Below is a plot reference (do not remove):
 
@@ -131,6 +127,7 @@ In geostatistics, one may opt for variograms instead of correlation functions. A
 Consider a one-dimensional test function:
 
 $$y(x) = (6x - 2)^2 \sin(12x - 4)$$
+
 on the interval $\Omega = [0, 1]$. Suppose we choose nine sample points distributed more densely near the upper half of the domain where the function exhibits more erratic behavior.
 
 Let us demonstrate how to build a Kriging surrogate step-by-step, including the estimation of $\theta$ and the evaluation of $\hat{y}(x)$.
@@ -147,22 +144,18 @@ For instance, if $x^{(1)} = 0.0$:
 
 $$y(0.0) = (6 \cdot 0 - 2)^2 \sin(-4) = 4 \sin(-4).$$
 
-If we approximate $\sin(-4)$ numerically (with $\sin(-4) \approx -0.7568$), this gives:
+If we approximate $\sin(-4)$ numerically (with $\sin(-4) \approx 0.7568$), this gives:
 
-$$y(0.0) \approx 4 \cdot (-0.7568) = -3.0272.$$
+$$y(0.0) \approx 4 \cdot 0.7568 = 3.0272.$$
 
 Similarly, we compute $y(x^{(i)})$ for all sample points.
 
 II. Choose a correlation function, for example a cubic correlation function. Its general form for a one-dimensional case might be:
 
 $$R(h,\theta) = \begin{cases}
-
 1 - 6(|\theta|h)^2 + 6(|\theta|h)^3 & \text{if } 0 \leq |\theta|h < 0.5, \\
-
 2(1-|\theta|h)^3 & \text{if } 0.5 \leq |\theta|h < 1, \\
-
 0 & \text{if } 1 \leq |\theta|h.
-
 \end{cases}$$
 
 Here, $h = |x - x^{(i)}|$ is the distance, and $\theta > 0$ is the hyperparameter that we need to estimate.
@@ -180,6 +173,7 @@ Suppose after optimization we find an approximately optimal $\theta^* = 2.5$.
 V. Once $\theta^*$ is determined, we form the Kriging predictor:
 
 $$\hat{y}(x) = f(x)^T\hat{\beta} + r(x)^T R(\theta^*)^{-1} (Y - F\hat{\beta}),$$
+
 where $\hat{\beta}$ and $\sigma^{2*}$ are the estimated parameters. For each $x$, we compute $r(x)$, the correlation vector between $x$ and all sample points. Solving the linear systems provides the Kriging weights.
 
 With the chosen $\theta^*=2.5$, the surrogate matches the data well in the denser upper half of the interval and gives a reasonably good approximation elsewhere, though it may struggle a bit in regions like $(0,0.25)$ where samples are sparse.
@@ -199,10 +193,85 @@ Kriging (Gaussian-process regression) is the most widely used surrogate in simul
 | **Inputs** | Sample points $\{x^{(i)}\}_{i=1}^N$, observations $Y = (y_1,\dots,y_N)^T$, correlation function $R(\cdot)$, hyperparameters $\theta$ |
 | **Outputs** | Kriging predictor $\hat{y}(x)$, mean squared error $\hat{s}^2(x)$, confidence interval, optimized hyperparameters $\hat{\theta}$ via MLE |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/kriging_interpolation/main.py` | Implements Kriging interpolation with cubic-spline correlation functions and visualizes predictions for varying hyperparameters. |
-| `scripts/algorithms/correlation_functions/main.py` | Plots the correlation functions (linear, exponential, Gaussian, cubic spline) discussed in the hyperparameter selection section. |
-| `scripts/algorithms/condition_number_of_the_correlation_matrix/main.py` | Analyzes how the condition number of the Kriging correlation matrix varies with hyperparameters, illustrating numerical stability. |
+- [Condition Number of the Correlation Matrix](../../../scripts/algorithms/condition_number_of_the_correlation_matrix/): plots how the condition number of a kriging correlation matrix changes with the correlation parameter $\theta$ for the linear, exponential, Gaussian and cubic spline correlation functions.
+- [Correlation Functions](../../../scripts/algorithms/correlation_functions/): plots four correlation functions used in kriging surrogate models (linear, exponential, Gaussian and cubic spline) for several values of the correlation parameter $\theta$.
+- [Kriging Interpolation](../../../scripts/algorithms/kriging_interpolation/): interpolates 11 samples of $y(x) = (3x-3)^2 \sin(2x-10)$ with a kriging-type predictor built on the cubic spline correlation function, for four values of the correlation parameter $\theta$.
+
+## Exercises
+
+**Exercise 1.** Evaluate the test function $y(x) = (6x - 2)^2\sin(12x - 4)$ at the nine sample points $X = \{0, 0.125, \ldots, 1\}$ of the worked example (four decimals).
+
+<details>
+<summary>Answer</summary>
+
+| $x$ | 0 | 0.125 | 0.25 | 0.375 | 0.5 | 0.625 | 0.75 | 0.875 | 1 |
+|---|---|---|---|---|---|---|---|---|---|
+| $y$ | 3.0272 | -0.9351 | -0.2104 | 0.0300 | 0.9093 | -1.0743 | -5.9933 | 2.2722 | 15.8297 |
+
+Note that $\sin(-4) = +0.7568$, because $4$ rad lies in the third quadrant, where the sine is negative.
+
+</details>
+
+**Exercise 2.** For the Gaussian correlation $R(h) = \exp(-\theta h^2)$ with $\theta = 10$, compute $R(0.125)$ and $R(0.5)$, and the distance $h_{1/2}$ at which the correlation drops to $0.5$. How does $h_{1/2}$ change if $\theta$ is multiplied by 4?
+
+<details>
+<summary>Answer</summary>
+
+$R(0.125) = e^{-0.15625} = 0.8553$ and $R(0.5) = e^{-2.5} = 0.0821$. From $\exp(-\theta h^2) = 1/2$, $h_{1/2} = \sqrt{\ln 2/\theta} = 0.2633$. Multiplying $\theta$ by 4 halves $h_{1/2}$, to $0.1316$. So $\theta$ behaves like an inverse squared length scale: larger $\theta$ means faster decay of correlation.
+
+</details>
+
+**Exercise 3.** With the cubic correlation function of the worked example and $\theta = 2.5$, compute the correlation between samples at lags $h = 0, 0.125, 0.25, 0.375, 0.5$. How many nonzero entries does the $9 \times 9$ matrix $R(\theta)$ have?
+
+<details>
+<summary>Answer</summary>
+
+With $\xi = \theta h$:
+
+| $h$ | 0 | 0.125 | 0.25 | 0.375 | 0.5 |
+|---|---|---|---|---|---|
+| $\xi$ | 0 | 0.3125 | 0.625 | 0.9375 | 1.25 |
+| $R$ | 1 | $1 - 6\xi^2 + 6\xi^3 = 0.59717$ | $2(1 - \xi)^3 = 0.10547$ | $2(1 - \xi)^3 = 0.00049$ | 0 |
+
+Only lags of up to three spacings are nonzero, so $R$ is banded with half-bandwidth 3. It has $9 + 2(8 + 7 + 6) = 51$ nonzeros out of 81. Compactly supported correlations give sparse, better-conditioned matrices.
+
+</details>
+
+**Exercise 4.** An ordinary Kriging model ($f(x) = 1$) has samples $X = (0, 1)$, $Y = (1, 3)$ and $R(h) = \exp(-h^2)$ ($\theta = 1$). Compute $\hat{\beta}$, the predictions $\hat{y}(0.25)$ and $\hat{y}(0.5)$, and $\text{MSE}/\sigma^2$ at both points.
+
+<details>
+<summary>Answer</summary>
+
+$R = \begin{pmatrix} 1 & \rho \\ \rho & 1 \end{pmatrix}$ with $\rho = e^{-1} = 0.3679$. By symmetry $R^{-1}\mathbf{1} \propto \mathbf{1}$, so $\hat{\beta} = \mathbf{1}^T R^{-1} Y/\mathbf{1}^T R^{-1}\mathbf{1} = 2$. Then $Y - \hat{\beta} = (-1, 1)$ and $R^{-1}(-1, 1)^T = (-1, 1)^T/(1 - \rho)$, so
+
+$$
+\hat{y}(x) = 2 + \frac{r_2(x) - r_1(x)}{1 - e^{-1}}.
+$$
+
+- $x = 0.5$: $r_1 = r_2$, so $\hat{y} = 2$ and $\text{MSE}/\sigma^2 = 0.1263$.
+- $x = 0.25$: $r_1 = e^{-0.0625} = 0.9394$ and $r_2 = e^{-0.5625} = 0.5698$, so $\hat{y} = 2 - 0.3696/0.6321 = 1.4153$ and $\text{MSE}/\sigma^2 = 0.0667$.
+
+The MSE is smaller near a sample. The prediction bends toward the mean $\hat{\beta} = 2$ rather than following the straight line between the data.
+
+</details>
+
+**Exercise 5.** Prove the interpolation property using the Kriging system: at a sample point $x = x^{(i)}$, show that $\lambda = e_i$, $\mu = 0$ solves the system, so $\hat{y}(x^{(i)}) = y_i$, and that the MSE formula gives zero.
+
+<details>
+<summary>Answer</summary>
+
+At $x^{(i)}$ the correlation vector is column $i$ of $R$, $r = R e_i$, and $f(x^{(i)}) = F^T e_i$ (row $i$ of $F$ as a column). Then $R e_i + F \cdot 0 = r$ and $F^T e_i = f$, so $(\lambda, \mu) = (e_i, 0)$ solves the system. The saddle-point matrix is nonsingular when $R$ is positive definite and $F$ has full column rank, so the solution is unique and $\hat{y}(x^{(i)}) = e_i^T Y = y_i$.
+
+For the MSE, $M^{-1}(r, f)^T = (e_i, 0)^T$, so the quadratic form equals $(r, f)^T(e_i, 0)^T = r_i = R(0) = 1$, and $\text{MSE} = \sigma^2(1 - 1) = 0$.
+
+</details>
+
+## References
+
+- J. Sacks, W. J. Welch, T. J. Mitchell and H. P. Wynn, "Design and analysis of computer experiments", *Statistical Science* 4(4), 1989.
+- G. Matheron, "Principles of geostatistics", *Economic Geology* 58(8), 1963.
+- N. A. C. Cressie, *Statistics for Spatial Data*, revised ed., Wiley, 1993.
+- C. E. Rasmussen and C. K. I. Williams, *Gaussian Processes for Machine Learning*, MIT Press, 2006.
+- A. I. J. Forrester, A. Sóbester and A. J. Keane, *Engineering Design via Surrogate Modelling: A Practical Guide*, Wiley, 2008.

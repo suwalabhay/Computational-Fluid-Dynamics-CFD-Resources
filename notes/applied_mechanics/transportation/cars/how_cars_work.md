@@ -187,3 +187,75 @@ The starter motor uses electrical energy from the battery to turn the engine ove
 - **Engages the Flywheel**: Rotates the engine's crankshaft to start the engine cycles.
 - **High Current Draw**: Requires significant power, highlighting the importance of a well-charged battery.
 
+## Exercises
+
+**Exercise 1.** In a four-stroke engine, how many crankshaft revolutions make up one complete cycle? How many power strokes per second does a four-cylinder engine produce at 3000 rpm, and why does adding cylinders make an engine run more smoothly?
+
+<details>
+<summary>Answer</summary>
+
+One cycle (intake, compression, power, exhaust) takes two crankshaft revolutions, so each cylinder fires once every two revolutions.
+
+At 3000 rpm there are 50 rev/s, i.e. 25 cycles per second per cylinder, and $4 \times 25 = 100$ power strokes per second.
+
+More cylinders mean power pulses that are more frequent, smaller and overlapping. The torque delivered to the crankshaft is steadier, so a smaller flywheel is needed.
+
+</details>
+
+**Exercise 2.** An engine delivers 200 N·m. First gear has a ratio of 3.5, the final drive 4.1, and the driveline efficiency is 0.90. The tyre rolling radius is 0.31 m. Find the tractive force at the wheels and the corresponding acceleration of a 1400 kg car, ignoring rolling resistance, drag and wheel slip. Why does a transmission need several gears?
+
+<details>
+<summary>Answer</summary>
+
+$$F = \frac{T\,i_g\,i_f\,\eta}{r} = \frac{200 \times 3.5 \times 4.1 \times 0.90}{0.31} = 8330 \text{ N}, \quad a = \frac{8330}{1400} = 5.95 \text{ m/s}^2$$
+
+In practice tyre grip limits this: for a front-driven car with about 60% of its weight on the driven wheels and $\mu \approx 0.9$, the limit is about 7.4 kN.
+
+The engine produces useful torque only over a limited speed range. Low gears multiply torque for starting and climbing; high gears let the car cruise with the engine at moderate, efficient speeds.
+
+</details>
+
+**Exercise 3.** A driver presses the brake pedal with 300 N and the pedal lever ratio is 4:1. The master cylinder bore is 20 mm and each caliper piston has a diameter of 50 mm. Find the hydraulic pressure and the clamping force per caliper piston, ignoring the brake booster.
+
+<details>
+<summary>Answer</summary>
+
+The force on the master cylinder is $300 \times 4 = 1200$ N, so
+
+$$p = \frac{1200}{\pi(0.010)^2} = 3.82 \text{ MPa}$$
+
+$$F_{clamp} = p \times \pi(0.025)^2 = 7.5 \text{ kN}$$
+
+This is a hydraulic advantage of $(50/20)^2 = 6.25$. The same pressure reaches every caliper, and a vacuum or electric booster multiplies the pedal force further in a real car.
+
+</details>
+
+**Exercise 4.** Explain why an anti-lock braking system (ABS) shortens stopping distances on most surfaces and preserves steering, using the idea that tyre friction depends on wheel slip.
+
+<details>
+<summary>Answer</summary>
+
+Longitudinal tyre force rises with slip (the difference between vehicle speed and wheel peripheral speed) to a peak, typically at around 10–20% slip on dry pavement. It then falls toward the lower sliding value when the wheel locks (100% slip).
+
+A locked tyre also cannot generate lateral force, so the car cannot be steered. ABS senses impending lock-up and modulates the pressure to keep each wheel near the peak of the slip curve. This gives close to maximum braking force while keeping lateral grip.
+
+On loose gravel or deep snow a locked wheel can build a wedge of material, so stopping distances with ABS may be longer there.
+
+</details>
+
+**Exercise 5.** A starter motor draws 150 A at 12 V for 2 s. How much energy and charge does this take from the battery? Compare the charge with a 60 Ah battery, and explain why a battery can still fail to start a car on a cold morning.
+
+<details>
+<summary>Answer</summary>
+
+Energy: $150 \times 12 \times 2 = 3.6$ kJ. Charge: $150 \times 2 = 300$ C $= 0.083$ Ah, about 0.14% of a 60 Ah battery.
+
+Starting is limited by power, not stored charge. In the cold the battery's internal resistance rises, which lowers the terminal voltage under the high current. At the same time the engine oil is thicker, so the starter needs more torque. The voltage may then fall too far to crank the engine fast enough, even though most of the charge remains.
+
+</details>
+
+## References
+
+- Heywood, J. B., *Internal Combustion Engine Fundamentals*, McGraw-Hill, 1988.
+- Gillespie, T. D., *Fundamentals of Vehicle Dynamics*, Society of Automotive Engineers, 1992.
+- Stone, R., and Ball, J. K., *Automotive Engineering Fundamentals*, SAE International, 2004.

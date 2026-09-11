@@ -45,22 +45,14 @@ $$f(x) := \bar{y}(\bar{\phi}(p), p, a).$$
 The Kriging system, ensuring optimal weights, is:
 
 $$\begin{pmatrix}
-
 R & F \\ F^T & 0
-
 \end{pmatrix}
-
 \begin{pmatrix}
-
 \lambda(x) \\ \mu(x)
-
 \end{pmatrix}
-
 =
-
 \begin{pmatrix}
 r(x) \\ f(x)
-
 \end{pmatrix}.$$
 
 Solving this system yields $\lambda(x)$ and $\mu(x)$, which in turn gives the prediction $\hat{y}(x) = \lambda(x)^T Y$.
@@ -70,22 +62,14 @@ Solving this system yields $\lambda(x)$ and $\mu(x)$, which in turn gives the pr
 Using matrix operations, one can write the Hierarchical Kriging predictor in a compact form:
 
 $$\hat{y}(x) = 
-
 \begin{pmatrix}
 r(x)^T & f(x)
-
 \end{pmatrix}
-
 \begin{pmatrix}
-
 R & F \\ F^T & 0
-
 \end{pmatrix}^{-1}
-
 \begin{pmatrix}
-
 Y \\ 0
-
 \end{pmatrix}.$$
 
 Alternatively, if we define:
@@ -103,22 +87,14 @@ This form mirrors the structure of standard Kriging but replaces the regression 
 In practice, the preferred formulation for implementation is the block matrix inversion form. Rather than explicitly computing $\beta$, one solves:
 
 $$\begin{pmatrix}
-
 R & F \\ F^T & 0
-
 \end{pmatrix}
-
 \begin{pmatrix}
 w^{(Y)} \\ w^{(f)}
-
 \end{pmatrix}
-
 =
-
 \begin{pmatrix}
-
 Y \\ 0
-
 \end{pmatrix},$$
 
 where $\begin{pmatrix} w^{(Y)} \\ w^{(f)} \end{pmatrix}$ is independent of $x$ and can be solved once and stored. The predictor evaluation at a new point $x$ then involves computing $(r(x), f(x))$ and taking their dot product with the stored solution. This method is computationally efficient and maintains the exact interpolation property.
@@ -146,9 +122,62 @@ High-fidelity CFD is expensive, but cheaper low-fidelity models (coarser meshes,
 | **Inputs** | Low-fidelity model $\hat{y}_c(x)$, high-fidelity samples $\{(x^{(i)}, y^{(i)})\}$, correlation function $R(\cdot)$, hyperparameters |
 | **Outputs** | Hierarchical Kriging predictor $\hat{y}(x)$ combining low- and high-fidelity information, mean squared error, optimized hyperparameters |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/kriging_interpolation/main.py` | Standard Kriging implementation that can be extended to hierarchical Kriging by substituting the trend model. |
-| `scripts/algorithms/correlation_functions/main.py` | Correlation function library used in both standard and hierarchical Kriging. |
+- [Correlation Functions](../../../scripts/algorithms/correlation_functions/): plots four correlation functions used in kriging surrogate models (linear, exponential, Gaussian and cubic spline) for several values of the correlation parameter $\theta$.
+- [Kriging Interpolation](../../../scripts/algorithms/kriging_interpolation/): interpolates 11 samples of $y(x) = (3x-3)^2 \sin(2x-10)$ with a kriging-type predictor built on the cubic spline correlation function, for four values of the correlation parameter $\theta$.
+
+## Exercises
+
+**Exercise 1.** Three high-fidelity samples have values $Y = (1.2, 2.1, 3.3)$, and the low-fidelity model gives $F = (1.0, 2.0, 3.0)$ at the same points. Assuming uncorrelated residuals ($R = I$), compute the scaling factor $\beta = (F^T R^{-1} F)^{-1} F^T R^{-1} Y$ and the residuals $Y - F\beta$ that the correlation term must interpolate.
+
+<details>
+<summary>Answer</summary>
+
+$F^T F = 1 + 4 + 9 = 14$ and $F^T Y = 1.2 + 4.2 + 9.9 = 15.3$, so $\beta = 15.3/14 \approx 1.0929$. The residuals are $Y - F\beta = (0.1071, -0.0857, 0.0214)$. The low-fidelity model underpredicts by about 9% overall, and the Gaussian-process part corrects the small remaining local differences.
+
+</details>
+
+**Exercise 2.** Using the form $\hat{y}(x) = f(x)\beta + r(x)^T R^{-1}(Y - F\beta)$, prove that hierarchical Kriging interpolates the high-fidelity data: $\hat{y}(x^{(i)}) = y_i$.
+
+<details>
+<summary>Answer</summary>
+
+At a sample point, the correlation vector is the $i$-th column of $R$, so $r(x^{(i)}) = R e_i$, and $f(x^{(i)}) = F_i$. Therefore
+
+$$
+\hat{y}(x^{(i)}) = F_i\beta + e_i^T R R^{-1}(Y - F\beta) = F_i\beta + (y_i - F_i\beta) = y_i.
+$$
+
+This holds for any $\beta$ and any low-fidelity model, provided $R$ is nonsingular (no nugget term).
+
+</details>
+
+**Exercise 3.** The high-fidelity response is $y(x) = 2x + 0.5x(1 - x)$ and the low-fidelity model is $\bar{y}(x) = 2x$. High-fidelity samples are taken at $x = 0, 0.5, 1$, with correlation $R(h) = \exp(-10h^2)$. Compute $\beta$ and the hierarchical Kriging prediction at $x = 0.25$, and compare with $\bar{y}(0.25)$, $\beta\bar{y}(0.25)$ and the true value.
+
+<details>
+<summary>Answer</summary>
+
+$Y = (0, 1.125, 2)$ and $F = (0, 1, 2)$. The off-diagonal correlations are $e^{-2.5} = 0.0821$ (neighbours) and $e^{-10} \approx 4.5 \times 10^{-5}$.
+
+Solving gives $\beta = 1.0225$ and residuals $Y - F\beta = (0, 0.1025, -0.0450)$. With $r(0.25) = (e^{-0.625}, e^{-0.625}, e^{-5.625})$, the prediction is $\hat{y}(0.25) = 0.5639$.
+
+For comparison, $\bar{y}(0.25) = 0.5$, $\beta\bar{y}(0.25) = 0.5112$ and $y(0.25) = 0.59375$. The correlation correction closes about 68% of the gap between the low-fidelity model and the truth using only three expensive samples. The rest comes from the limited sample density and the choice of $\theta$.
+
+</details>
+
+**Exercise 4.** Suppose the high-fidelity data are an exact multiple of the low-fidelity values at the samples, $Y = cF$. Show that $\beta = c$ and that the predictor reduces to $\hat{y}(x) = c\,\bar{y}(x)$ everywhere. Why is this a desirable property for variable-fidelity modelling?
+
+<details>
+<summary>Answer</summary>
+
+$\beta = (F^T R^{-1} F)^{-1} F^T R^{-1}(cF) = c$, so $Y - F\beta = 0$ and the correlation term vanishes. Then $\hat{y}(x) = f(x)\beta = c\,\bar{y}(x)$ for every $x$. When the low-fidelity model has the correct shape and is only mis-scaled, hierarchical Kriging recovers the scaled model exactly and introduces no spurious bumps between samples. This is the source of its robustness compared with fitting the high-fidelity data alone.
+
+</details>
+
+## References
+
+- Z.-H. Han and S. Görtz, "Hierarchical Kriging model for variable-fidelity surrogate modeling", *AIAA Journal* 50(9), 2012.
+- M. C. Kennedy and A. O'Hagan, "Predicting the output from a complex computer code when fast approximations are available", *Biometrika* 87(1), 2000.
+- A. I. J. Forrester, A. Sóbester and A. J. Keane, "Multi-fidelity optimization via surrogate modelling", *Proceedings of the Royal Society A* 463(2088), 2007.
+- A. I. J. Forrester, A. Sóbester and A. J. Keane, *Engineering Design via Surrogate Modelling: A Practical Guide*, Wiley, 2008.

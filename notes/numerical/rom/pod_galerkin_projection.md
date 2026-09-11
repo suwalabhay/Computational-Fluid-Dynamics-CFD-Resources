@@ -14,7 +14,9 @@ I. **Laminar (Viscous Incompressible)**
 
 $$\frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u} \cdot \nabla)\mathbf{u} 
 = -\,\nabla p + \nu \,\Delta \mathbf{u}$$
+
 $$\nabla \cdot \mathbf{u} = 0$$
+
 where $\mathbf{u}(x,t)$ is the velocity field, $p(x,t)$ is the (kinematic) pressure (often normalized by density), and $\nu$ is the kinematic viscosity.
 
 II. **RANS Equations (Turbulent Flow)**
@@ -23,7 +25,9 @@ For turbulent, time-averaged flows, the Reynolds-Averaged Navier–Stokes (RANS)
 
 $$\frac{\partial \mathbf{u}}{\partial t} + (\mathbf{u} \cdot \nabla)\mathbf{u} 
 = -\,\nabla p + \nabla \cdot \Bigl[\bigl(\nu + \nu_t\bigr)\,\nabla \mathbf{u}\Bigr]$$
+
 $$\nabla \cdot \mathbf{u} = 0$$
+
 where $\nu_t = \nu_t(x,t)$ is determined by a turbulence model (e.g., $k\text{-}\epsilon$, $k\text{-}\omega$), adding spatially and temporally varying eddy viscosity to the laminar component $\nu$.
 
 **Remark**: Although we present the equations in continuous form, **finite volume** implementations discretize these equations by integrating over control volumes and approximating fluxes at cell faces.
@@ -45,13 +49,16 @@ II. **Snapshot Collection**
 III. **Correlation Matrix and Eigenvalue Problem**  
 
    - Define the correlation matrix 
+
      $$C_{ij} = \frac{1}{N_s}\,(\mathbf{u}_i,\,\mathbf{u}_j)_{L^2}, 
        \quad i,j = 1,\ldots,N_s$$
 
    - The inner product $(\cdot,\cdot)_{L^2}$ is approximated in the **finite volume** sense:
+
      $$(\mathbf{u},\,\mathbf{v})_{L^2}
        \approx 
        \sum_{\ell=1}^{n} \mathbf{u}_{\ell}\,\mathbf{v}_{\ell}\,\Delta V_{\ell}$$
+
      where $\Delta V_{\ell}$ is the volume of cell $\ell$, and $\mathbf{u}_\ell \cdot \mathbf{v}_\ell$ is the dot product of velocity components.  
 
    - Solve the eigenvalue problem $C\,g_i = \lambda_i \,g_i$. The eigenvalues $\lambda_i$ measure the “energy” captured by the corresponding eigenvectors $g_i$.
@@ -59,16 +66,19 @@ III. **Correlation Matrix and Eigenvalue Problem**
 IV. **POD Modes**  
 
    - For each eigenvector $g_i$, the **POD mode** $\phi_i \in \mathbb{R}^n$ (in discrete form) is typically obtained by:
+
      $$\phi_i 
        = 
-       \frac{1}{\sqrt{\lambda_i}}
+       \frac{1}{\sqrt{N_s \, \lambda_i}}
        \sum_{k=1}^{N_s} g_{ik}\,\mathbf{u}_k$$
 
    - Choose the first $N$ modes $\{\phi_1, \ldots, \phi_N\}$ with the largest eigenvalues, ensuring $\sum_{i=1}^{N}\lambda_i$ retains a high percentage (e.g., 90-99%) of the total energy $\sum_{i=1}^{N_s}\lambda_i$.  
    - The velocity field is then approximated by
+
      $$\mathbf{u}(x,t) 
        \approx 
        \sum_{i=1}^{N} a_i(t)\,\phi_i(x)$$
+
      where $\phi_i(x)$ is the continuous counterpart of the discrete mode $\phi_i$, and $a_i(t)$ are **time-dependent** modal coefficients.
 
 ## Galerkin Projection in a Finite Volume Context
@@ -86,6 +96,7 @@ $$\int_{V_p} \frac{\partial \mathbf{u}}{\partial t}\, dV
 -\,\int_{V_p} \nabla p\, dV
 +
 \nu \int_{\partial V_p} \nabla \mathbf{u}\cdot \mathbf{n}\, dS$$
+
 where $\mathbf{n}$ is the outward unit normal on $\partial V_p$. For a RANS model, the term $\nu$ becomes $\nu + \nu_t$, and there may be additional modeled stress terms.
 
 ### II. POD Expansions for All Fields
@@ -93,16 +104,19 @@ where $\mathbf{n}$ is the outward unit normal on $\partial V_p$. For a RANS mode
 To apply POD-Galerkin, we typically expand not only $\mathbf{u}$ but also any additional fields that appear in the equations:
 
 - **Velocity**:
+
   $$\mathbf{u}(x,t) 
     \approx 
     \sum_{i=1}^N a_i(t)\,\phi_i(x)$$
 
 - **Pressure** (if needed for strong coupling):
+
   $$p(x,t) 
     \approx 
     \sum_{i=1}^N a_i(t)\,\chi_i(x)$$
 
 - **Turbulent viscosity** $\nu_t$ (RANS case):
+
   $$\nu_t(x,t) 
     \approx 
     \sum_{i=1}^N a_i(t)\,\xi_i(x)$$
@@ -261,10 +275,64 @@ This note specializes POD-Galerkin projection to the finite-volume discretizatio
 | **Inputs** | POD modes for velocity $\boldsymbol{\Phi}_i$, pressure $\chi_i$, and eddy viscosity $\varsigma_i$; FVM-discretized Navier–Stokes operators; number of retained modes |
 | **Outputs** | Reduced ODE system for temporal coefficients $a_i(t)$, reduced matrices encoding convection, diffusion, and pressure terms |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/algorithms/pod/main.py` | Computes the velocity-field POD modes used as input to the Galerkin projection procedure. |
-| `scripts/algorithms/snapshot_pod/main.py` | Builds the snapshot-based POD basis from FVM simulation data. |
+- [Proper Orthogonal Decomposition (POD)](../../../scripts/algorithms/pod/): performs Proper Orthogonal Decomposition on a synthetic spatio-temporal field by taking the singular value decomposition of the mean-subtracted snapshot matrix.
+- [Snapshot Proper Orthogonal Decomposition (Snapshot POD)](../../../scripts/algorithms/snapshot_pod/): computes POD modes of a synthetic spatio-temporal field with the snapshot method, which solves an eigenvalue problem for the $M \times M$ temporal correlation matrix instead of the much larger $N \times N$ spatial one.
 
+## Exercises
+
+**Exercise 1.** A finite volume mesh has three cells with volumes $\Delta V = (1, 2, 1)$. For the cell-centred fields $\mathbf{u} = (1, 2, 1)$ and $\mathbf{v} = (1, -1, 1)$, compute the volume-weighted inner product $(\mathbf{u}, \mathbf{v})_{L^2} \approx \sum_\ell u_\ell v_\ell \Delta V_\ell$ and the unweighted dot product. Are the fields orthogonal?
+
+<details>
+<summary>Answer</summary>
+
+Weighted: $1 \cdot 1 \cdot 1 + 2 \cdot (-1) \cdot 2 + 1 \cdot 1 \cdot 1 = -2$. Unweighted: $1 - 2 + 1 = 0$. The fields are orthogonal in the Euclidean sense but not in the discrete $L^2$ sense. On non-uniform meshes the POD must use the volume-weighted product; otherwise small cells are over-represented and the modes are not $L^2$-orthogonal.
+
+</details>
+
+**Exercise 2.** On the mesh of Exercise 1, take $N_s = 2$ snapshots $\mathbf{u}_1 = (1, 1, 0)$ and $\mathbf{u}_2 = (0, 1, 1)$. Compute $C_{ij} = \frac{1}{N_s}(\mathbf{u}_i, \mathbf{u}_j)_{L^2}$, its eigenpairs, and the first POD mode $\phi_1 = \frac{1}{\sqrt{N_s\lambda_1}}\sum_k g_{1k}\mathbf{u}_k$. Verify that $(\phi_1, \phi_1)_{L^2} = 1$, and find the norm obtained if the factor were $1/\sqrt{\lambda_1}$.
+
+<details>
+<summary>Answer</summary>
+
+$(\mathbf{u}_1, \mathbf{u}_1) = 1 + 2 = 3$, $(\mathbf{u}_2, \mathbf{u}_2) = 2 + 1 = 3$ and $(\mathbf{u}_1, \mathbf{u}_2) = 2$. So $C = \begin{pmatrix} 1.5 & 1 \\ 1 & 1.5 \end{pmatrix}$, with $\lambda_1 = 2.5$, $g_1 = (1, 1)/\sqrt{2}$ and $\lambda_2 = 0.5$.
+
+$\sum_k g_{1k}\mathbf{u}_k = (1, 2, 1)/\sqrt{2}$, whose weighted squared norm is $(1 + 8 + 1)/2 = 5 = N_s\lambda_1$. Hence $\phi_1 = (1, 2, 1)/\sqrt{10}$ and $(\phi_1, \phi_1)_{L^2} = (1 + 8 + 1)/10 = 1$. With the factor $1/\sqrt{\lambda_1}$ the squared norm would be $5/2.5 = 2 = N_s$, so the modes would not be normalized.
+
+</details>
+
+**Exercise 3.** Substituting $\mathbf{u} \approx \sum_i a_i\phi_i$ into the convective term and projecting onto $\phi_m$ gives $\sum_{i,j} a_i a_j C_{mij}$ with a precomputed third-order tensor $C_{mij}$. How many entries does the tensor have for $N = 10$, $50$ and $200$ modes? Compare the online cost of one reduced right-hand-side evaluation, $\mathcal{O}(N^3)$, with one finite volume residual evaluation on $n = 10^6$ cells, $\mathcal{O}(n)$.
+
+<details>
+<summary>Answer</summary>
+
+The tensor has $N^3$ entries: $10^3 = 1000$, $50^3 = 1.25 \times 10^5$ and $200^3 = 8 \times 10^6$. For $N = 10$ or $50$ the reduced evaluation is much cheaper than an $\mathcal{O}(10^6)$ residual. At $N = 200$ it becomes more expensive than the full residual. Quadratic POD-Galerkin models therefore pay off only for small $N$, which motivates hyper-reduction for larger bases or stronger nonlinearities.
+
+</details>
+
+**Exercise 4.** Apply Galerkin projection to the linear system $d\mathbf{u}/dt = A\mathbf{u}$ with
+
+$$
+A = \begin{pmatrix} -2 & 1 & 0 \\ 1 & -2 & 1 \\ 0 & 1 & -2 \end{pmatrix}, \qquad \mathbf{u}(0) = (1, 2, 1),
+$$
+
+using the orthonormal (Euclidean) basis $\phi_1 = (1, 1, 1)/\sqrt{3}$ and $\phi_2 = (1, 0, -1)/\sqrt{2}$. Compute $A_r = \Phi^T A\Phi$ and $a(0) = \Phi^T\mathbf{u}(0)$, solve the reduced system, and compare $\Phi a(1)$ with the exact solution $e^{A}\mathbf{u}(0)$.
+
+<details>
+<summary>Answer</summary>
+
+$A\phi_1 = (-1, 0, -1)/\sqrt{3}$ and $A\phi_2 = (-2, 0, 2)/\sqrt{2}$, so $A_r = \text{diag}(-2/3, -2)$. The initial coefficients are $a(0) = (4/\sqrt{3}, 0)$. The reduced solution is $a_1(t) = (4/\sqrt{3})e^{-2t/3}$ with $a_2(t) = 0$, giving $\Phi a(t) = \tfrac{4}{3}e^{-2t/3}(1, 1, 1)$. At $t = 1$ this is $(0.6846, 0.6846, 0.6846)$.
+
+The exact solution is $e^{A}\mathbf{u}(0) = (0.6651, 0.9599, 0.6651)$. The error norm is $0.277$, a relative error of about 21%.
+
+The basis is poorly chosen: the slowest eigenvector of $A$ is $(1, \sqrt{2}, 1)/2$ (eigenvalue $-2 + \sqrt{2} \approx -0.586$), and it does not lie in the span of $\Phi$. A POD basis built from snapshots of the trajectory would contain that direction and reduce the error sharply.
+
+</details>
+
+## References
+
+- S. Lorenzi, A. Cammi, L. Luzzi and G. Rozza, "POD-Galerkin method for finite volume approximation of Navier–Stokes and RANS equations", *Computer Methods in Applied Mechanics and Engineering* 311, 2016.
+- G. Stabile and G. Rozza, "Finite volume POD-Galerkin stabilised reduced order methods for the parametrised incompressible Navier–Stokes equations", *Computers & Fluids* 173, 2018.
+- C. W. Rowley, T. Colonius and R. M. Murray, "Model reduction for compressible flows using POD and Galerkin projection", *Physica D* 189(1–2), 2004.
+- P. Holmes, J. L. Lumley, G. Berkooz and C. W. Rowley, *Turbulence, Coherent Structures, Dynamical Systems and Symmetry*, 2nd ed., Cambridge University Press, 2012.

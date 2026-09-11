@@ -1,50 +1,65 @@
 # Design Space Distribution via Sobol Sequences
 
-This script generates 500 two-dimensional design-space samples using a scrambled Sobol quasi-random sequence and visualises their distribution as side-by-side scatter plots. By replacing pseudo-random sampling with a low-discrepancy sequence, the script demonstrates how CFD design-space exploration achieves more uniform coverage of the parameter domain $[0,1]^2$, represented here through two aerodynamic shape parameters: `Approach_Angle` and `Decklid_Height`.
+This script draws a four-dimensional scrambled Sobol design of 512 geometry variants and plots two 2D projections of it, showing how evenly a low-discrepancy sequence covers a design space. Each dimension stands for one normalised shape parameter (`Approach_Angle`, `Variable_1`, `Decklid_Height`, `Variable_2`) in $[0, 1]$. In a real CFD workflow each sample would be turned into a deformed mesh and simulated to build a surrogate-model training set.
 
 ## Overview
 
-- Uses `scipy.stats.qmc.Sobol` with `scramble=True` to generate 500 samples in 2D
-- Produces two scatter plots sharing the same sample set under different axis labels
-- Illustrates the space-filling superiority of quasi-random over pseudo-random sampling
-- Serves as a template for driving CFD geometry-variant sweeps or surrogate-model training sets
+- Generates $2^9 = 512$ points of a 4D scrambled Sobol sequence with `scipy.stats.qmc.Sobol` (seeded, so the design is reproducible)
+- Uses a power-of-two sample count, which keeps the balance properties of the Sobol sequence
+- Plots `Approach_Angle` against `Variable_1` in the left panel and `Decklid_Height` against `Variable_2` in the right panel
+- Shows every sample on axes fixed to the unit square
 
 ## Mathematical Background
 
 ### Low-Discrepancy Sequences
 
-Sobol sequences are quasi-random sequences constructed to fill $[0,1]^d$ as uniformly as possible. Their uniformity is measured by the **star discrepancy**:
+Sobol sequences are deterministic sequences built to fill $[0,1]^d$ as evenly as possible. Uniformity is measured by the star discrepancy, where the supremum is taken over boxes $J = [0, a_1) \times \dots \times [0, a_d)$ anchored at the origin:
 
-$$D^*_N = \sup_{J \subseteq [0,1]^d} \left| \frac{\#\{i : x_i \in J\}}{N} - \text{Vol}(J) \right|$$
+$$D^*_N = \sup_{J} \left| \frac{\#\{i : \mathbf{x}_i \in J\}}{N} - \text{Vol}(J) \right|$$
 
-### Discrepancy Comparison
+### Discrepancy Rates
 
-For $N$ samples in $d$ dimensions, Sobol sequences achieve near-optimal discrepancy:
+For $N$ points in $d$ dimensions a Sobol sequence achieves
 
-$$D^*_N \sim \frac{(\log N)^d}{N}$$
+$$D^*_N = \mathcal{O}\!\left(\frac{(\log N)^d}{N}\right)$$
 
-compared to pseudo-random sampling, which converges only as:
+while independent pseudo-random points have a discrepancy that decreases only like $N^{-1/2}$, up to a logarithmic factor.
 
-$$D^*_N \sim \mathcal{O}\!\left(N^{-1/2}\right)$$
+### Why It Matters for Sampling
 
-### Design Space Coverage
+For a response $f$ evaluated at the design points (for example a drag coefficient from CFD), the Koksma–Hlawka inequality bounds the error of the sample mean $\hat{\mu} = \frac{1}{N}\sum_{i=1}^{N} f(\mathbf{x}_i)$:
 
-Each sample $(x_1, x_2) \in [0,1]^2$ maps to a pair of geometry parameters. For a CFD or surrogate evaluation $f(x_1, x_2)$, Sobol sampling minimises the integration error of the quasi-Monte Carlo estimate:
+$$\left|\hat{\mu} - \int_{[0,1]^d} f(\mathbf{x})\, d\mathbf{x}\right| \le V_{HK}(f)\, D^*_N$$
 
-$$\hat{\mu} = \frac{1}{N} \sum_{i=1}^{N} f(x_i^{(1)}, x_i^{(2)})$$
+where $V_{HK}(f)$ is the Hardy–Krause variation of $f$. A lower discrepancy therefore gives a tighter error bound and fewer gaps in the design space.
 
 ## Implementation
 
-1. Instantiate `Sobol(d=2, scramble=True)` from `scipy.stats.qmc`
-2. Draw `N = 500` samples, yielding an array of shape `(500, 2)` in $[0,1]^2$
-3. Treat the sample array directly as mock geometry-variant data
-4. Create a `1 × 2` subplot figure (`figsize=(12, 6)`)
-5. Plot the samples on the left axes with x-label `Approach_Angle` and y-label `Variable_1`
-6. Plot the same samples on the right axes with x-label `Decklid_Height` and y-label `Variable_2`
-7. Add a figure-level super-title and display with `plt.show()`
+- `generate_design(log2_samples, dimension, seed)` creates `Sobol(d=4, scramble=True, rng=SEED)` and calls `random_base2(m=LOG2_SAMPLES)` with `LOG2_SAMPLES = 9`.
+- `make_figure(samples, parameters)` makes a 1 × 2 figure (`figsize=(12, 6)`) and scatters dimensions (0, 1) and (2, 3) using the names in `PARAMETERS`.
+- `main(argv=None)` parses the flags, then shows or saves the figure.
+
+## Usage
+
+```bash
+python main.py                          # open the figure window
+python main.py --no-show --output out   # save design_space_distribution.png into out/
+```
+
+| Flag | Meaning |
+|------|---------|
+| `--no-show` | Do not open a plot window |
+| `--output DIR` | Create `DIR` and save the figure as a PNG |
 
 ## Output
 
-The script displays a figure containing two scatter plots side by side, each showing 500 blue points distributed with high uniformity across the unit square. The left panel uses `Approach_Angle` as the horizontal axis, the right panel uses `Decklid_Height`, and both share `Variable_1` / `Variable_2` on the vertical axis. A super-title notes that 500 geometry variants were generated.
+Two square scatter plots, each showing all 512 blue points spread evenly over the unit square with no visible clusters or large gaps. The title gives the number of variants and the dimension of the design.
 
-![design space distribution](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/assets/37275728/bfe914f2-1543-458e-9f4f-06aa8cff871c)
+![Design space distribution](design_space_distribution.png)
+
+## Related Notes
+
+- [One-Stage Sampling](../../../notes/numerical/surrogates/one_stage_sampling.md)
+- [Surrogate Models: Introduction](../../../notes/numerical/surrogates/intro.md)
+- [Dataset of Meshes](../../../notes/machine_learning/automotive_aerodynamics/dataset_of_meshes.md)
+- [Deformation Parameters](../../../notes/machine_learning/automotive_aerodynamics/deformation_parameters.md)

@@ -64,6 +64,7 @@ The maximum tension occurs at the supports and the minimum tension at the lowest
 ### Equilibrium Method (Statics)
 
 For statically determinate structures, equilibrium equations alone suffice:
+
 $$\sum F_x = 0, \quad \sum F_y = 0, \quad \sum M = 0$$
 
 This is the foundation for analyzing determinate beams, trusses, and frames.
@@ -167,16 +168,20 @@ Determine the shear force and bending moment at the midpoint of a 10 m simply su
 **Solution:**
 
 First, determine support reactions:
+
 $$\sum M_A = 0: \quad B_y(10) - 20(3) = 0 \implies B_y = 6 \text{ kN}$$
+
 $$\sum F_y = 0: \quad A_y + 6 - 20 = 0 \implies A_y = 14 \text{ kN}$$
 
 Cut the beam at the midpoint ($x = 5$ m) and consider the left segment:
 
 Shear force at midpoint:
+
 $$V = A_y - P = 14 - 20 = -6 \text{ kN}$$
 
 Bending moment at midpoint:
-$$M = A_y(5) - P(5 - 3) = 14(5) - 20(2) = 70 - 40 = 30 \text{ kN·m}$$
+
+$$M = A_y(5) - P(5 - 3) = 14(5) - 20(2) = 70 - 40 = 30 \text{ kN}\cdot\text{m}$$
 
 **Results:** $V = -6$ kN and $M = 30$ kN·m at the midpoint.
 
@@ -206,3 +211,74 @@ $$M = A_y(5) - P(5 - 3) = 14(5) - 20(2) = 70 - 40 = 30 \text{ kN·m}$$
 - Check results against physical intuition: reactions should oppose applied loads
 
 Structural analysis provides the essential toolkit for understanding how forces flow through engineered systems. The principles covered here form the basis for more advanced topics including finite element analysis, dynamic structural response, and nonlinear structural behavior.
+
+## Exercises
+
+**Exercise 1.** A three-hinged parabolic arch spans 40 m with a rise of 8 m and carries 20 kN/m uniformly along the horizontal. Find the horizontal thrust, the vertical support reactions and the resultant force at each support.
+
+<details>
+<summary>Answer</summary>
+
+$$H = \frac{wL^2}{8h} = \frac{20 \times 40^2}{8 \times 8} = 500 \text{ kN}$$
+
+$V = wL/2 = 400$ kN at each support, and the resultant is $\sqrt{500^2 + 400^2} = 640$ kN.
+
+For a parabolic arch under this load the internal bending moment is zero everywhere: the arch carries the load in pure compression.
+
+</details>
+
+**Exercise 2.** For a 10 m simply supported beam, use the influence line for the moment at $a = 4$ m to find (a) the largest moment there from a single 50 kN moving load and (b) the moment there from a 5 kN/m load over the whole span. Check (b) directly.
+
+<details>
+<summary>Answer</summary>
+
+The peak ordinate, at $x = a$, is $a(L - a)/L = 4 \times 6/10 = 2.4$ m.
+
+(a) $M = 50 \times 2.4 = 120$ kN·m, with the load placed at the section.
+
+(b) Area under the influence line: $\tfrac{1}{2} \times 10 \times 2.4 = 12$ m², so $M = 5 \times 12 = 60$ kN·m.
+
+Direct check: $M(4) = \dfrac{wL}{2}(4) - \dfrac{w(4)^2}{2} = 100 - 40 = 60$ kN·m.
+
+</details>
+
+**Exercise 3.** A cable spans 100 m between supports at equal height, with 10 m sag, and carries 2 kN/m along the horizontal. Find the tension at the lowest point and at the supports.
+
+<details>
+<summary>Answer</summary>
+
+Moment equilibrium of half the cable about its lowest point gives $H = wL^2/(8h)$:
+
+$$H = \frac{2 \times 100^2}{8 \times 10} = 250 \text{ kN}$$
+
+At a support the vertical component is $wL/2 = 100$ kN, so $T_{max} = \sqrt{250^2 + 100^2} = 269$ kN. $T_{min} = H = 250$ kN at mid-span.
+
+</details>
+
+**Exercise 4.** A propped cantilever (fixed at A, roller at B) of length $L = 6$ m and constant $EI$ carries $w = 10$ kN/m. Use the compatibility (force) method with the roller reaction as the redundant to find all reactions.
+
+<details>
+<summary>Answer</summary>
+
+Remove the roller. The tip deflection of the cantilever under the load is $wL^4/(8EI)$ downward. A tip force $R_B$ deflects it by $R_B L^3/(3EI)$ upward. Compatibility requires zero deflection at B:
+
+$$\frac{wL^4}{8EI} = \frac{R_B L^3}{3EI} \implies R_B = \frac{3wL}{8} = 22.5 \text{ kN}$$
+
+Then $A_y = 60 - 22.5 = 37.5$ kN and $M_A = wL^2/2 - R_B L = 180 - 135 = 45$ kN·m, which equals $wL^2/8$.
+
+</details>
+
+**Exercise 5.** Floor beams spanning 6 m are spaced 3 m apart and support a floor load of 5 kPa (dead plus live). Using tributary areas, find the line load on an interior beam, its end reactions and its maximum moment.
+
+<details>
+<summary>Answer</summary>
+
+The tributary width is 3 m, so $w = 5 \times 3 = 15$ kN/m. Reactions: $wL/2 = 45$ kN each; this load passes on to the girders. Maximum moment: $M_{max} = wL^2/8 = 15 \times 36/8 = 67.5$ kN·m at mid-span.
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Structural Analysis*, Pearson.
+- Kassimali, A., *Structural Analysis*, Cengage Learning.
+- Timoshenko, S. P., and Young, D. H., *Theory of Structures*, 2nd ed., McGraw-Hill, 1965.

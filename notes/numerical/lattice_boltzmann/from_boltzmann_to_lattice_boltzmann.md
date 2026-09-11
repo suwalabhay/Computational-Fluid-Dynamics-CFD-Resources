@@ -27,7 +27,7 @@ III. **Velocity Space:**
 
 The key to bridging kinetic theory and macroscopic fluid dynamics lies in how we treat the velocity space. For solving the NSE, we require only certain moments of the distribution function:
 
-$$\int d^3\xi , f(\xi, x, t) = \rho(x, t), \quad \int d^3\xi , \xi, f(\xi, x, t) = \rho(x, t),\mathbf{u}(x, t)$$
+$$\int d^3\xi \, f(\xi, x, t) = \rho(x, t), \quad \int d^3\xi \, \xi \, f(\xi, x, t) = \rho(x, t)\,\mathbf{u}(x, t)$$
 
 where $\rho(x, t)$ is the fluid density and $\mathbf{u}(x, t)$ is the macroscopic velocity. By replacing these integrals with sums—often helped by a Hermite expansion—we simplify the computation.
 
@@ -41,7 +41,7 @@ For a two-dimensional simulation, the discrete velocities $c_i$ are often given 
 $$(c_i) = \begin{pmatrix}
 0 & 1 & 0 & -1 & 0 & 1 & -1 & 1 & -1 \\
 0 & 0 & 1 & 0 & -1 & 1 & 1 & -1 & -1
-\end{pmatrix} \Delta x$$
+\end{pmatrix} \frac{\Delta x}{\Delta t}$$
 
 These nine velocities include a rest particle (zero velocity) and eight moving directions (cardinal and diagonal).
 
@@ -49,10 +49,10 @@ These nine velocities include a rest particle (zero velocity) and eight moving d
 In three dimensions, a common set is the D3Q19 model:
 
 $$(c_i) = \begin{pmatrix}
-0 & 1 & -1 & 0 & 0 & 0 & 1 & -1 & 1 & -1 & 1 & -1 & 1 & -1 & 1 & -1 & 0 & 0 & 0 \\
-0 & 0 & 0 & 1 & -1 & 0 & 1 & 1 & -1 & -1 & 0 & 0 & 1 & 1 & -1 & -1 & 1 & 1 & -1 \\
-0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & -1 & 1 & -1 & 1 & -1 & -1 & 1 & 1
-\end{pmatrix} \Delta t$$
+0 & 1 & -1 & 0 & 0 & 0 & 0 & 1 & -1 & 1 & -1 & 0 & 0 & 1 & -1 & 1 & -1 & 0 & 0 \\
+0 & 0 & 0 & 1 & -1 & 0 & 0 & 1 & -1 & 0 & 0 & 1 & -1 & -1 & 1 & 0 & 0 & 1 & -1 \\
+0 & 0 & 0 & 0 & 0 & 1 & -1 & 0 & 0 & 1 & -1 & 1 & -1 & 0 & 0 & -1 & 1 & -1 & 1
+\end{pmatrix} \frac{\Delta x}{\Delta t}$$
 
 This set comprises 19 discrete velocities that efficiently capture the directional propagation in three dimensions.
 
@@ -94,10 +94,12 @@ Apply boundary conditions to account for interactions with walls or interfaces. 
 Compute the macroscopic density and velocity from the moments of the distribution functions:
 
 - **Density:**
+
 $$\rho(x, t) = \sum_i f_i(x, t)$$
 
 - **Velocity:**
-$$\mathbf{u}(x, t) = \frac{1}{\rho(x, t)} \sum_i c_i , f_i(x, t)$$
+
+$$\mathbf{u}(x, t) = \frac{1}{\rho(x, t)} \sum_i c_i \, f_i(x, t)$$
 
 ### 3.6. Iterate
 
@@ -238,8 +240,82 @@ This note details how the continuous Boltzmann equation is discretized into the 
 | **Inputs** | Lattice spacing $\Delta x$, time step $\Delta t$, discrete velocity set (e.g., D2Q9), relaxation time $\tau$, initial/boundary conditions |
 | **Outputs** | Post-collision distributions $f_i^{\text{post}}$, streamed distributions, macroscopic density $\rho = \sum_i f_i$, velocity $\mathbf{u} = \sum_i c_i f_i / \rho$ |
 
-## Related Python Scripts
+## Related Scripts
 
-| Script | Description |
-|---|---|
-| `scripts/simulations/lattice_boltzmann_cylinder_flow/main.py` | Implements the D2Q9 collision and streaming steps derived in this note for 2-D flow past a cylinder. |
+- [Lattice Boltzmann Cylinder Flow Simulation](../../../scripts/simulations/lattice_boltzmann_cylinder_flow/): simulates 2D flow past a circular cylinder with the lattice Boltzmann method (D2Q9 lattice, BGK collision operator) and animates the velocity magnitude with Matplotlib.
+- [Maxwell-Boltzmann Speed Distribution of N₂ Molecules](../../../scripts/plots/probability_distribution_function_of_nitrogen_molecules/): plots the Maxwell-Boltzmann speed distribution of nitrogen (N₂) molecules at 300 K, 600 K, 900 K and 1200 K, and marks the most probable, mean and root-mean-square speed on each curve.
+
+## Exercises
+
+**Exercise 1.** A D2Q9 simulation uses $\Delta x = 1$ mm and $\Delta t = 0.1$ ms. Using the velocity matrix in Section 2.1, how many distinct particle speeds does the set contain, and what are they in m/s?
+
+<details>
+<summary>Answer</summary>
+
+The lattice speed is $c = \Delta x/\Delta t = 10^{-3}/10^{-4} = 10$ m/s. The set has three distinct speeds: 0 for the rest particle ($i = 0$), $c = 10$ m/s for the four cardinal directions, and $\sqrt{2}\,c \approx 14.14$ m/s for the four diagonal directions.
+
+</details>
+
+**Exercise 2.** At one D2Q9 node, with the populations ordered as the columns of the velocity matrix ($i = 0, \ldots, 8$), the values in lattice units are $f = (0.40, 0.12, 0.10, 0.08, 0.10, 0.03, 0.02, 0.02, 0.03)$. Compute $\rho$ and $\mathbf{u}$.
+
+<details>
+<summary>Answer</summary>
+
+The column order is $c_0 = (0,0)$, $c_1 = (1,0)$, $c_2 = (0,1)$, $c_3 = (-1,0)$, $c_4 = (0,-1)$, $c_5 = (1,1)$, $c_6 = (-1,1)$, $c_7 = (1,-1)$, $c_8 = (-1,-1)$.
+
+- $\rho = \sum_i f_i = 0.90$.
+- $\rho u_x = f_1 - f_3 + f_5 - f_6 + f_7 - f_8 = 0.12 - 0.08 + 0.03 - 0.02 + 0.02 - 0.03 = 0.04$.
+- $\rho u_y = f_2 - f_4 + f_5 + f_6 - f_7 - f_8 = 0.10 - 0.10 + 0.03 + 0.02 - 0.02 - 0.03 = 0$.
+
+So $\mathbf{u} = (0.04/0.90, 0) \approx (0.0444, 0)$ in lattice units.
+
+</details>
+
+**Exercise 3.** Using the collision rule of Section 3.2, compute $f_1^{\text{post}}$ for $f_1 = 0.12$ and $f_1^{\text{eq}} = 0.11$ with $\tau = 1$ and with $\tau = 0.8$. What does $\tau < 1$ do, and what kinematic viscosity (lattice units, $\nu = (\tau - 1/2)/3$) corresponds to each case?
+
+<details>
+<summary>Answer</summary>
+
+- $\tau = 1$: $f_1^{\text{post}} = 0.12 - (0.12 - 0.11) = 0.11 = f_1^{\text{eq}}$. The population relaxes fully to equilibrium in one step; $\nu = 1/6 \approx 0.167$.
+- $\tau = 0.8$: $f_1^{\text{post}} = 0.12 - 1.25 \times 0.01 = 0.1075$. The population overshoots past equilibrium (over-relaxation, $1 < 1/\tau < 2$); $\nu = 0.3/3 = 0.1$.
+
+Smaller $\tau$ gives lower viscosity. As $\tau \to 1/2$ the viscosity tends to zero and the scheme becomes unstable.
+
+</details>
+
+**Exercise 4.** Show that the Maxwell–Boltzmann distribution of Section 5 satisfies $\int f^{\text{eq}} \, d^3\xi = \rho$ and $\int |\xi - \mathbf{u}|^2 f^{\text{eq}} \, d^3\xi = 3\rho R T$.
+
+<details>
+<summary>Answer</summary>
+
+Substitute $\mathbf{v} = \xi - \mathbf{u}$. The exponential factorises into three one-dimensional Gaussians, each with $\int e^{-v_\alpha^2/(2RT)} dv_\alpha = (2\pi RT)^{1/2}$. Their product $(2\pi RT)^{3/2}$ cancels the prefactor, so the zeroth moment is $\rho$.
+
+For the second moment, $|\mathbf{v}|^2 = v_x^2 + v_y^2 + v_z^2$. Each term contributes $\rho RT$, because the one-dimensional second moment is $RT$ times the normalisation. Hence
+
+$$
+\int |\xi - \mathbf{u}|^2 f^{\text{eq}} \, d^3\xi = 3\rho R T,
+$$
+
+and the thermal energy density $\int \tfrac{1}{2}|\mathbf{v}|^2 f^{\text{eq}} \, d^3\xi = \tfrac{3}{2}\rho R T$ is that of a monatomic ideal gas.
+
+</details>
+
+**Exercise 5.** Verify that the D3Q19 set in Section 2.1 contains one rest velocity, 6 velocities of length $\Delta x/\Delta t$ and 12 of length $\sqrt{2}\,\Delta x/\Delta t$, and that $\sum_i c_i = 0$. With weights $w_0 = 1/3$, $w_i = 1/18$ for the six face neighbours and $w_i = 1/36$ for the twelve edge neighbours, show that $\sum_i w_i c_{i\alpha} c_{i\beta} = c_s^2 \delta_{\alpha\beta}$ with $c_s^2 = 1/3$ in lattice units.
+
+<details>
+<summary>Answer</summary>
+
+Reading the columns: $c_0 = 0$; columns 1–6 are $\pm e_x, \pm e_y, \pm e_z$ (squared length 1); columns 7–18 are the twelve vectors with exactly two entries equal to $\pm 1$ (squared length 2). Every vector appears together with its negative, so $\sum_i c_i = 0$.
+
+For $\alpha = \beta = x$: the face vectors $\pm e_x$ contribute $2 \times 1/18 = 1/9$. The edge vectors with a nonzero $x$ entry are $(\pm 1, \pm 1, 0)$ and $(\pm 1, 0, \pm 1)$, eight vectors contributing $8 \times 1/36 = 2/9$. The total is $1/9 + 2/9 = 1/3$. The $y$ and $z$ directions give the same by symmetry.
+
+For $\alpha = x$, $\beta = y$: only $(\pm 1, \pm 1, 0)$ contribute. $(1,1,0)$ and $(-1,-1,0)$ give $+1/36$ each, while $(1,-1,0)$ and $(-1,1,0)$ give $-1/36$ each, so the sum is zero. The weights also sum to $1/3 + 6/18 + 12/36 = 1$.
+
+</details>
+
+## References
+
+- T. Krüger, H. Kusumaatmaja, A. Kuzmin, O. Shardt, G. Silva and E. M. Viggen, *The Lattice Boltzmann Method: Principles and Practice*, Springer, 2017.
+- S. Succi, *The Lattice Boltzmann Equation for Fluid Dynamics and Beyond*, Oxford University Press, 2001.
+- Y. H. Qian, D. d'Humières and P. Lallemand, "Lattice BGK models for Navier-Stokes equation", *Europhysics Letters* 17(6), 1992.
+- X. He and L.-S. Luo, "Theory of the lattice Boltzmann method: From the Boltzmann equation to the lattice Boltzmann equation", *Physical Review E* 56(6), 1997.

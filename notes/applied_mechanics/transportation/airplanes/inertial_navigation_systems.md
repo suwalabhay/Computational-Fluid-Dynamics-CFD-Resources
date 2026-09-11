@@ -10,7 +10,7 @@ However, dead reckoning had significant limitations. It accumulated errors over 
 
 ### Development of Inertial Navigation Systems
 
-The need for autonomous and accurate navigation systems led to significant advancements in the 20th century. In the 1960s, INS technology was developed for the **F-104 Starfighter** to aid in precise navigation toward mission targets. This development was a significant milestone, addressing the longstanding challenge of autonomous navigation without relying on external references. The INS provided a solution that was both independent and secure, important for military operations where external systems could be disrupted or unavailable.
+The need for autonomous and accurate navigation systems led to significant advancements in the 20th century. In the late 1950s and 1960s, inertial navigation moved from missiles and experimental systems into operational aircraft; the Litton LN-3 fitted to the **F-104G Starfighter** was one of the first inertial navigators in a production fighter, used to navigate precisely toward mission targets. This development was a significant milestone, addressing the longstanding challenge of autonomous navigation without relying on external references. The INS provided a solution that was both independent and secure, important for military operations where external systems could be disrupted or unavailable.
 
 ### Principles of Inertial Navigation Systems
 
@@ -69,7 +69,7 @@ Accelerometers measure the **specific force** $\mathbf{f}$, which is the true ac
 
 $$\mathbf{f} = \mathbf{a} - \mathbf{g}$$
 
-Here, $\mathbf{a}$ is the measured acceleration, and $\mathbf{g}$ is the local gravitational acceleration.
+Here, $\mathbf{a}$ is the true (kinematic) acceleration relative to inertial space, and $\mathbf{g}$ is the local gravitational acceleration.
 
 II. **Rotation Sensing**: 
 
@@ -150,14 +150,15 @@ Transformations between these frames are performed using rotation matrices, such
 **Angular Velocity Transformation**:
 
 $$
-\omega_{in}^n = \omega_{ib}^b + C_b^n \omega_{nb}^b
+\omega_{nb}^b = \omega_{ib}^b - C_n^b \omega_{in}^n, \quad \omega_{in}^n = \omega_{ie}^n + \omega_{en}^n
 $$
 
 where:
 
-- $\boldsymbol{\omega}_{in}^{n}$ is the angular velocity of the navigation frame relative to the inertial frame.
+- $\boldsymbol{\omega}_{in}^{n}$ is the angular velocity of the navigation frame relative to the inertial frame (Earth rate plus transport rate).
 - $\boldsymbol{\omega}_{ib}^{b}$ is the angular velocity measured by the gyroscopes.
-- $\boldsymbol{\omega}_{nb}^{b}$ is the rotation rate of the navigation frame relative to the body frame.
+- $\boldsymbol{\omega}_{nb}^{b}$ is the angular velocity of the body frame relative to the navigation frame, which drives the attitude update.
+- $\mathbf{C}_{n}^{b} = (\mathbf{C}_{b}^{n})^T$ is the inverse of the direction cosine matrix.
 
 **Gravity Modeling**:
 
@@ -167,7 +168,7 @@ $$g = g_0 \left( 1 - 2\frac{h}{R_e} + 5.2885 \times 10^{-3} \sin^2 \phi \right)$
 
 where:
 
-- $g_0$ is the standard gravity (9.80665 m/s²).
+- $g_0$ is the sea-level gravity at the equator (about 9.780 m/s²; not standard gravity, 9.80665 m/s²).
 - $R_e$ is the Earth's mean radius (~6,371 km).
 
 #### Coriolis and Centripetal Forces
@@ -289,3 +290,79 @@ Advancements in technology continue to enhance the capabilities and applications
 
 - AI algorithms assist in real-time error correction by modeling and predicting sensor deviations during operations.
 - Machine learning-based adaptive systems utilize operational data to dynamically adjust to environmental or operational changes, thereby improving performance over time.
+
+### Exercises
+
+**Exercise 1.** Compute the Schuler period from $T_s = 2\pi\sqrt{R_e/g}$ with $R_e = 6371$ km and $g = 9.81$ m/s². What physical system has this period?
+
+<details>
+<summary>Answer</summary>
+
+$$T_s = 2\pi\sqrt{\frac{6.371 \times 10^6}{9.81}} = 5063 \text{ s} = 84.4 \text{ min}$$
+
+It is the period of a pendulum whose length equals the Earth's radius, which is also the orbital period of a satellite skimming the surface. A platform tuned to this period stays level as the vehicle moves over the curved Earth.
+
+</details>
+
+**Exercise 2.** A horizontal accelerometer has an uncompensated bias of $b = 1 \times 10^{-3}$ m/s² (about 100 μg). (a) Treating the error as a simple double integration, find the position error after 1 min, 10 min and 1 h. (b) With Schuler tuning the error instead follows $\delta x = (b/\omega_s^2)(1 - \cos\omega_s t)$. What is its maximum?
+
+<details>
+<summary>Answer</summary>
+
+(a) $\delta x = \tfrac{1}{2}bt^2$ gives 1.8 m after 1 min, 180 m after 10 min and 6.48 km after 1 h, growing quadratically.
+
+(b) $\omega_s = \sqrt{g/R_e} = 1.24 \times 10^{-3}$ rad/s:
+
+$$\delta x_{max} = \frac{2b}{\omega_s^2} = \frac{2bR_e}{g} = \frac{2 \times 10^{-3} \times 6.371 \times 10^6}{9.81} = 1.30 \text{ km}$$
+
+The maximum is reached after half a Schuler period (about 42 min). Schuler tuning bounds the error caused by accelerometer bias; gyro drift still makes errors grow with time.
+
+</details>
+
+**Exercise 3.** A stabilized platform is tilted by $0.05^\circ$ from local level. What apparent horizontal acceleration does gravity produce, and what position error would it cause in 10 minutes without Schuler tuning?
+
+<details>
+<summary>Answer</summary>
+
+$a_{err} = g\sin 0.05^\circ = 9.81 \times 8.73 \times 10^{-4} = 8.56 \times 10^{-3}$ m/s², about 870 μg.
+
+$$\delta x = \tfrac{1}{2}(8.56 \times 10^{-3})(600)^2 = 1.54 \text{ km}$$
+
+A tiny tilt is as harmful as a large accelerometer bias, which is why alignment and levelling matter so much.
+
+</details>
+
+**Exercise 4.** Use $\mathbf{f} = \mathbf{a} - \mathbf{g}$, with a north-east-down navigation frame in which $\mathbf{g} = (0, 0, +9.81)$ m/s², to find the specific force measured by an ideal triad of accelerometers (a) at rest on a runway (ignoring Earth rotation) and (b) in free fall. Explain the result.
+
+<details>
+<summary>Answer</summary>
+
+(a) $\mathbf{a} = 0$, so $\mathbf{f} = (0, 0, -9.81)$ m/s². The accelerometers read 9.81 m/s² upward: they sense the runway's reaction force, not gravity.
+
+(b) In free fall $\mathbf{a} = \mathbf{g}$, so $\mathbf{f} = 0$ and the accelerometers read zero.
+
+Accelerometers cannot distinguish gravitation from acceleration. The INS must therefore add a gravity model back in, and errors in that model feed straight into the velocity.
+
+</details>
+
+**Exercise 5.** An aircraft flies north at 250 m/s at latitude $45^\circ$. Using $\Omega_{ie} = 7.292 \times 10^{-5}$ rad/s, find the magnitude of the Coriolis term $2\boldsymbol{\Omega}_{ie} \times \mathbf{v}$. What position error would ignoring it produce after 10 minutes, treating it as a constant acceleration?
+
+<details>
+<summary>Answer</summary>
+
+Only the vertical component of Earth rate, $\Omega\sin\phi$, is perpendicular to a northward velocity in the horizontal plane:
+
+$$|2\boldsymbol{\Omega} \times \mathbf{v}| = 2 \times 7.292 \times 10^{-5} \times 250 \times \sin 45^\circ = 0.0258 \text{ m/s}^2$$
+
+$$\delta x = \tfrac{1}{2}(0.0258)(600)^2 = 4.6 \text{ km}$$
+
+The error is directed east-west. The term is small compared with $g$ but far larger than the bias of a navigation-grade accelerometer, so it must be included in the velocity update.
+
+</details>
+
+### References
+
+- Titterton, D. H., and Weston, J. L., *Strapdown Inertial Navigation Technology*, 2nd ed., Institution of Electrical Engineers, 2004.
+- Groves, P. D., *Principles of GNSS, Inertial, and Multisensor Integrated Navigation Systems*, 2nd ed., Artech House, 2013.
+- Britting, K. R., *Inertial Navigation Systems Analysis*, Wiley-Interscience, 1971.
+- Farrell, J. A., *Aided Navigation: GPS with High Rate Sensors*, McGraw-Hill, 2008.

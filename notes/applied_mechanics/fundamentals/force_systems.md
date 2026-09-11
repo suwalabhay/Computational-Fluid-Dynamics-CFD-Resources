@@ -10,6 +10,7 @@ A force is a vector quantity that represents the action of one body on another, 
 - **Point of application**: Where the force acts on the body
 
 Mathematically, a force vector in 3D space is expressed as:
+
 $$\mathbf{F} = F_x\mathbf{i} + F_y\mathbf{j} + F_z\mathbf{k}$$
 
 where $F_x$, $F_y$, and $F_z$ are the rectangular components, and $\mathbf{i}$, $\mathbf{j}$, $\mathbf{k}$ are unit vectors.
@@ -20,7 +21,9 @@ where $F_x$, $F_y$, and $F_z$ are the rectangular components, and $\mathbf{i}$, 
 Forces that require physical contact between bodies:
 
 **Normal Forces**: Perpendicular to the contact surface
+
 $$F_N = mg\cos\theta$$
+
 where $\theta$ is the angle of the surface from horizontal.
 
 **Friction Forces**: Parallel to the contact surface
@@ -33,7 +36,9 @@ where $\theta$ is the angle of the surface from horizontal.
 Forces acting throughout the volume of a body:
 
 **Gravitational Force**: 
+
 $$\mathbf{W} = m\mathbf{g}$$
+
 where $\mathbf{g} = 9.81$ m/s² downward.
 
 **Electromagnetic Forces**: Forces due to electric and magnetic fields
@@ -44,7 +49,9 @@ where $\mathbf{g} = 9.81$ m/s² downward.
 Forces spread over an area or volume:
 
 **Pressure Forces**: 
+
 $$dF = p \, dA$$
+
 where $p$ is pressure and $dA$ is differential area.
 
 **Hydrostatic Pressure**: $p = \rho gh$ (varies linearly with depth)
@@ -98,6 +105,7 @@ A body is in equilibrium when the resultant force and resultant moment are both 
 For a rigid body to be in static equilibrium:
 
 $$\sum \mathbf{F} = 0$$
+
 $$\sum \mathbf{M} = 0$$
 
 This provides up to six scalar equations in 3D:
@@ -164,27 +172,34 @@ This provides up to six scalar equations in 3D:
 ## Example: Crane Analysis
 
 Consider a crane with:
-- Boom length: $L = 10$ m at angle $\theta = 30°$
-- Load: $W = 5000$ N at the end
-- Find support reactions
+- Boom length: $L = 10$ m, pinned at its base, at angle $\theta = 30^\circ$ above the horizontal
+- Load: $W = 5000$ N hanging from the tip
+- A horizontal tie cable attached at the tip holds the boom (boom weight neglected)
+- Find the cable tension and the support reactions
 
 **Solution**:
 
-**Free Body Diagram**: Shows boom, load, and support reactions at the base.
+**Free Body Diagram**: Shows the boom, the load $W$ and the cable tension $T$ (horizontal, pulling back toward the mast) at the tip, and the pin reactions $R_x$, $R_y$ at the base.
 
 **Force Equilibrium**:
-$$\sum F_x = R_x - T\cos\theta = 0$$
-$$\sum F_y = R_y + T\sin\theta - W = 0$$
 
-**Moment Equilibrium** (about base):
+$$\sum F_x = R_x - T = 0$$
+
+$$\sum F_y = R_y - W = 0$$
+
+**Moment Equilibrium** (about base; the tip is at height $L\sin\theta$ and horizontal distance $L\cos\theta$):
+
 $$\sum M = WL\cos\theta - TL\sin\theta = 0$$
 
 From moment equation:
-$$T = W\cot\theta = 5000 \times \cot(30°) = 8660 \text{ N}$$
+
+$$T = W\cot\theta = 5000 \times \cot(30^\circ) = 8660 \text{ N}$$
 
 From force equations:
-$$R_x = T\cos\theta = 8660 \times \cos(30°) = 7500 \text{ N}$$
-$$R_y = W - T\sin\theta = 5000 - 8660 \times \sin(30°) = 670 \text{ N}$$
+
+$$R_x = T = 8660 \text{ N}$$
+
+$$R_y = W = 5000 \text{ N}$$
 
 ## Distributed Force Systems
 
@@ -254,6 +269,7 @@ Any general force system can be reduced to:
 
 ### Principle of Virtual Work
 Alternative approach to equilibrium using energy methods:
+
 $$\delta W = \sum \mathbf{F}_i \cdot \delta \mathbf{r}_i = 0$$
 
 This principle is particularly useful for systems with multiple degrees of freedom.
@@ -265,3 +281,78 @@ Understanding force systems and equilibrium provides the foundation for all stru
 - Optimizing engineering designs
 
 The next chapter will build on these concepts to explore moments and couples, which are crucial for understanding rotational effects in engineering systems.
+
+## Exercises
+
+**Exercise 1.** Three concurrent coplanar forces act at a point: 300 N at $0^\circ$, 400 N at $90^\circ$ and 250 N at $225^\circ$ (angles measured counterclockwise from the $+x$ axis). Find the magnitude and direction of the resultant.
+
+<details>
+<summary>Answer</summary>
+
+$R_x = 300 + 250\cos 225^\circ = 300 - 176.8 = 123.2$ N and $R_y = 400 + 250\sin 225^\circ = 400 - 176.8 = 223.2$ N.
+
+$$R = \sqrt{123.2^2 + 223.2^2} = 255 \text{ N at } \arctan(223.2/123.2) = 61.1^\circ$$
+
+</details>
+
+**Exercise 2.** A 1000 N weight hangs from two cables: cable 1 pulls up and to the left at $30^\circ$ above the horizontal, and cable 2 pulls up and to the right at $45^\circ$. Find both tensions.
+
+<details>
+<summary>Answer</summary>
+
+$$\sum F_x = 0: \quad -T_1\cos 30^\circ + T_2\cos 45^\circ = 0$$
+
+$$\sum F_y = 0: \quad T_1\sin 30^\circ + T_2\sin 45^\circ = 1000$$
+
+Solving: $T_1 = 732$ N and $T_2 = 897$ N. The steeper cable carries more load.
+
+</details>
+
+**Exercise 3.** A beam carries a distributed load $w(x) = 2 + x^2$ kN/m for $0 \leq x \leq 3$ m. Find the resultant force and its location.
+
+<details>
+<summary>Answer</summary>
+
+$$R = \int_0^3 (2 + x^2)\,dx = 6 + 9 = 15 \text{ kN}$$
+
+$$\bar{x} = \frac{\int_0^3 x(2 + x^2)\,dx}{15} = \frac{9 + 20.25}{15} = 1.95 \text{ m}$$
+
+</details>
+
+**Exercise 4.** Classify each planar beam as statically determinate, indeterminate (give the degree) or improperly constrained: (a) pin at one end, roller at the other; (b) fixed at one end, roller at the other; (c) pins at both ends; (d) three vertical rollers.
+
+<details>
+<summary>Answer</summary>
+
+A planar rigid body has 3 equilibrium equations.
+
+(a) 2 + 1 = 3 unknowns: determinate.
+
+(b) 3 + 1 = 4 unknowns: indeterminate to the first degree.
+
+(c) 2 + 2 = 4 unknowns: indeterminate to the first degree (the horizontal reactions cannot be separated by statics alone).
+
+(d) 3 unknowns, but all reactions are parallel, so no horizontal force can be resisted. The beam is improperly (partially) constrained even though the count matches.
+
+</details>
+
+**Exercise 5.** A ring at the origin supports a 600 N weight and is held by three cables to anchor points $A(-2, -1, 4)$ m, $B(2, -1, 4)$ m and $C(0, 2, 4)$ m. Find the cable tensions.
+
+<details>
+<summary>Answer</summary>
+
+The unit vectors from the ring are $\hat{\mathbf{u}}_A = (-2, -1, 4)/4.583$, $\hat{\mathbf{u}}_B = (2, -1, 4)/4.583$ and $\hat{\mathbf{u}}_C = (0, 2, 4)/4.472$. Equilibrium $T_A\hat{\mathbf{u}}_A + T_B\hat{\mathbf{u}}_B + T_C\hat{\mathbf{u}}_C = 600\mathbf{k}$ gives:
+
+- $x$: $-2T_A/4.583 + 2T_B/4.583 = 0$, so $T_A = T_B$.
+- $y$: $-2T_A/4.583 + 2T_C/4.472 = 0$.
+- $z$: $8T_A/4.583 + 4T_C/4.472 = 600$.
+
+Solving: $T_A = T_B = 229$ N and $T_C = 224$ N. Each cable carries 200 N of the vertical load.
+
+</details>
+
+## References
+
+- R. C. Hibbeler, *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- J. L. Meriam, L. G. Kraige, *Engineering Mechanics: Statics*, Wiley.
+- F. P. Beer, E. R. Johnston, D. F. Mazurek, *Vector Mechanics for Engineers: Statics*, McGraw-Hill.

@@ -80,13 +80,7 @@ $$\sum F_y = A_y + C_y = 0 \implies A_y = -9 \text{ kN}$$
 
 **Joint B** (two unknowns: $F_{AB}$, $F_{BC}$):
 
-The direction from B to C is $(4, -3)/5$. Assume both members in tension.
-
-$$\sum F_x = 12 + F_{BC}\frac{4}{5} = 0 \implies F_{BC} = -15 \text{ kN (compression)}$$
-
-$$\sum F_y = F_{AB} + F_{BC}\frac{-3}{5} = 0 \implies F_{AB} = F_{BC}\frac{3}{5} = -9 \text{ kN}$$
-
-Wait — re-examine directions. Tension in AB means force pulls B toward A, i.e., downward. Tension in BC pulls B toward C.
+The direction from B to C is $(4, -3)/5$. Assume both members in tension: tension in AB pulls B toward A (downward), and tension in BC pulls B toward C.
 
 $$\sum F_x = 12 + F_{BC}\frac{4}{5} = 0 \implies F_{BC} = -15 \text{ kN (compression)}$$
 
@@ -132,7 +126,9 @@ A Pratt truss has a span of 16 m with four equal panels of 4 m each. The height 
 **Solution:**
 
 **Support reactions:**
+
 $$\sum M_A = 0: \quad E_y(16) - 24(8) = 0 \implies E_y = 12 \text{ kN}$$
+
 $$A_y = 24 - 12 = 12 \text{ kN}$$
 
 **Section cut:** Cut through the second panel, slicing the top chord, a diagonal, and the bottom chord. Consider the left portion.
@@ -140,6 +136,7 @@ $$A_y = 24 - 12 = 12 \text{ kN}$$
 Taking moments about the bottom chord joint directly below the top chord member (at $x = 8$ m from A) eliminates the bottom chord and diagonal forces:
 
 $$\sum M_{bottom} = A_y(8) - F_{top}(3) = 0$$
+
 $$F_{top} = \frac{12 \times 8}{3} = 32 \text{ kN (compression)}$$
 
 The top chord member carries 32 kN in compression.
@@ -210,3 +207,78 @@ At a pin connecting two members, the forces on each member are equal and opposit
 - Check your work by verifying equilibrium of the portion not directly analyzed
 
 Trusses and frames are among the most widely used structural systems in engineering. The analytical methods presented here — method of joints, method of sections, and frame disassembly — provide the tools for understanding and designing these essential structures.
+
+## Exercises
+
+**Exercise 1.** Check the determinacy of (a) the triangular truss of Worked Example 1 and (b) the Pratt truss of Worked Example 2, modelled as a rectangular truss with 5 bottom and 5 top joints, 4 top-chord and 4 bottom-chord members, 5 verticals and 4 diagonals, on a pin and a roller.
+
+<details>
+<summary>Answer</summary>
+
+(a) $m = 3$, $r = 3$, $j = 3$: $m + r = 6 = 2j$, so the truss is determinate. It is also $m = 2j - 3$, the basic simple truss.
+
+(b) $m = 4 + 4 + 5 + 4 = 17$, $r = 3$, $j = 10$: $m + r = 20 = 2j$, so it is determinate. The count is necessary but not sufficient: the geometry must also be stable, which holds here because every panel is triangulated.
+
+</details>
+
+**Exercise 2.** An unloaded joint on the bottom chord of a truss connects two collinear chord members and a single vertical member. What is the force in the vertical, and how do the two chord forces compare? What changes if a load hangs from that joint?
+
+<details>
+<summary>Answer</summary>
+
+Taking $x$ along the chord, $\sum F_y = 0$ involves only the vertical, so its force is zero (Rule 2). $\sum F_x = 0$ then makes the two chord forces equal.
+
+If a load $P$ hangs from the joint, the vertical carries exactly $P$ in tension. That is why such members, although zero-force under some loadings, are still needed.
+
+</details>
+
+**Exercise 3.** A symmetric triangular roof truss has supports A (pin) and C (roller) 6 m apart and apex B 2 m above mid-span. A 30 kN vertical load acts at B. Find the forces in AB and AC.
+
+<details>
+<summary>Answer</summary>
+
+By symmetry $A_y = C_y = 15$ kN. $AB = \sqrt{3^2 + 2^2} = 3.606$ m.
+
+At joint A, with members assumed in tension:
+
+$$\sum F_y = 15 + F_{AB}\frac{2}{3.606} = 0 \implies F_{AB} = -27.0 \text{ kN (compression)}$$
+
+$$\sum F_x = F_{AC} + F_{AB}\frac{3}{3.606} = 0 \implies F_{AC} = 22.5 \text{ kN (tension)}$$
+
+The tie AC keeps the rafters from spreading. A shallower roof increases both forces.
+
+</details>
+
+**Exercise 4.** In Worked Example 2, the panel-2 diagonal runs from the top joint at $x = 4$ m down to the bottom joint at $x = 8$ m (length 5 m). Using the same section, find the forces in the bottom chord and the diagonal of panel 2, and check the top-chord result.
+
+<details>
+<summary>Answer</summary>
+
+Consider the left portion, which carries only $A_y = 12$ kN.
+
+Bottom chord: take moments about the top joint at $x = 4$ m, which eliminates the top chord and the diagonal:
+
+$$-12(4) + F_{bot}(3) = 0 \implies F_{bot} = 16 \text{ kN (tension)}$$
+
+Diagonal: $\sum F_y = 12 - F_d(3/5) = 0$, so $F_d = 20$ kN (tension), as expected for a Pratt diagonal.
+
+Check with $\sum F_x = F_{top} + F_d(4/5) + F_{bot} = 0$: $F_{top} = -(16 + 16) = -32$ kN, i.e. 32 kN compression, as found above.
+
+</details>
+
+**Exercise 5.** A pair of pliers is squeezed with 100 N applied 90 mm from the pivot, and the object is gripped 20 mm from the pivot. Treating one handle-jaw piece as a multi-force member, find the gripping force and the force on the pivot pin.
+
+<details>
+<summary>Answer</summary>
+
+Moments about the pin: $F_{grip}(20) = 100(90)$, so $F_{grip} = 450$ N.
+
+On one member both the hand force and the reaction from the object act in the same direction, on opposite sides of the pin. Force balance therefore gives a pin force of $100 + 450 = 550$ N in the opposite direction. The pin carries more than either applied force, which is typical of machine members.
+
+</details>
+
+## References
+
+- Hibbeler, R. C., *Engineering Mechanics: Statics*, 14th ed., Pearson, 2016.
+- Hibbeler, R. C., *Structural Analysis*, Pearson.
+- Meriam, J. L., and Kraige, L. G., *Engineering Mechanics: Statics*, Wiley.

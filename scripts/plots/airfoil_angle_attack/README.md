@@ -1,49 +1,74 @@
 # Airfoil Angle of Attack
 
-This script plots a NACA 4-digit airfoil (m = 0.02, p = 0.4, t = 0.12, chord c = 2.0) at two angles of attack — $10^\circ$ and $60^\circ$ — to contrast attached and fully separated flow regimes. The airfoil geometry is constructed from the standard NACA thickness distribution, then rotated using a 2D rotation matrix. Dashed chord-line arrows indicate the direction of each angle of attack, and a free-stream arrow marks the oncoming flow direction.
-
-![angle_of_attack](https://github.com/user-attachments/assets/ec38fb22-8c04-4947-a911-e17eaec8e178)
+This script draws a NACA 2412 airfoil pitched nose-up about its leading edge to several angles of attack, $10^\circ$ and $60^\circ$ by default, relative to a free stream flowing left to right. The geometry comes from the NACA 4-digit camber line and thickness distribution, and dashed arrows mark each chord line and the free-stream direction.
 
 ## Overview
 
-- NACA 4-digit airfoil geometry (m=0.02, p=0.4, t=0.12, c=2.0)
-- Two overlaid airfoil outlines at $\alpha = 10^\circ$ (attached) and $\alpha = 60^\circ$ (stalled)
-- 2D rotation matrix applied to transform airfoil coordinates
-- Chord-line arrows and free-stream direction annotation
+- Builds the NACA 4-digit geometry with $m = 0.02$, $p = 0.4$ and $t = 0.12$ (NACA 2412), chord $c = 2$ and 200 stations per surface.
+- Offsets the upper and lower surfaces perpendicular to the camber line.
+- Rotates the airfoil clockwise about the leading edge by each angle of attack, so the trailing edge drops below the leading edge.
+- Draws each airfoil in its own colour, with a dashed chord-line arrow from leading edge to trailing edge.
+- Draws a dashed free-stream arrow along $+x$.
+- Accepts other angles with `--angles`.
 
 ## Mathematical Background
 
-### NACA 4-Digit Thickness Distribution
+### Camber Line
 
-The half-thickness at chordwise position $x$ is given by:
+$$
+y_c = \begin{cases} \dfrac{m c}{p^2}\left(2p\dfrac{x}{c} - \left(\dfrac{x}{c}\right)^2\right), & x < pc, \\ \dfrac{m c}{(1-p)^2}\left((1-2p) + 2p\dfrac{x}{c} - \left(\dfrac{x}{c}\right)^2\right), & x \geq pc. \end{cases}
+$$
 
-$$y_t = \frac{t}{0.2}\,c\!\left(0.2969\sqrt{\frac{x}{c}} - 0.1260\frac{x}{c} - 0.3516\!\left(\frac{x}{c}\right)^{\!2} + 0.2843\!\left(\frac{x}{c}\right)^{\!3} - 0.1015\!\left(\frac{x}{c}\right)^{\!4}\right)$$
+### Thickness Distribution
 
-where $t$ is the maximum thickness-to-chord ratio.
+$$
+y_t = \frac{t}{0.2}\,c\left(0.2969\sqrt{\frac{x}{c}} - 0.1260\frac{x}{c} - 0.3516\left(\frac{x}{c}\right)^{2} + 0.2843\left(\frac{x}{c}\right)^{3} - 0.1015\left(\frac{x}{c}\right)^{4}\right)
+$$
 
-### Rotation by Angle of Attack
+### Surfaces
 
-The airfoil is rotated about the origin by angle $\alpha$ using the standard 2D rotation matrix:
+With $\theta = \arctan(dy_c/dx)$:
 
-$$\begin{pmatrix}x'\\y'\end{pmatrix} = \begin{pmatrix}\cos\alpha & -\sin\alpha\\\sin\alpha & \cos\alpha\end{pmatrix}\begin{pmatrix}x\\y\end{pmatrix}$$
+$$
+x_u = x - y_t\sin\theta, \quad y_u = y_c + y_t\cos\theta, \qquad x_l = x + y_t\sin\theta, \quad y_l = y_c - y_t\cos\theta.
+$$
 
-### Thin-Airfoil Lift and Stall
+### Pitching by the Angle of Attack
 
-Thin-airfoil theory predicts the lift coefficient as a linear function of angle of attack:
+The free stream flows in the $+x$ direction. A positive angle of attack $\alpha$ is therefore a clockwise rotation about the leading edge at the origin:
 
-$$C_L = 2\pi\sin\alpha$$
+$$
+\begin{pmatrix}x'\\ y'\end{pmatrix} = \begin{pmatrix}\cos\alpha & \sin\alpha\\ -\sin\alpha & \cos\alpha\end{pmatrix}\begin{pmatrix}x\\ y\end{pmatrix}
+$$
 
-This relationship breaks down near the critical stall angle (${\sim}15^\circ$ for typical airfoils), beyond which flow separates and lift drops sharply.
+This moves the trailing edge to $(c\cos\alpha,\, -c\sin\alpha)$.
+
+### Context
+
+The script draws geometry only and computes no forces. For reference, thin-airfoil theory gives $C_L = 2\pi(\alpha - \alpha_{L=0})$ for small angles. Real airfoils of this type stall at roughly $15^\circ$, so $10^\circ$ is normally attached flow and $60^\circ$ is far beyond stall.
 
 ## Implementation
 
-1. Generate chordwise stations $x \in [0, c]$ and evaluate the NACA thickness formula.
-2. Construct upper and lower surface coordinates from camber line and thickness.
-3. Apply the rotation matrix to both surfaces for each angle of attack.
-4. Plot the rotated airfoils, chord lines, and a free-stream direction arrow.
-5. Annotate each airfoil with its angle of attack and label the stall regime.
+- `naca4_airfoil(m, p, t, c, n)` returns the upper and lower surface coordinates.
+- `pitch_airfoil(x, y, angle_of_attack)` applies the clockwise rotation above.
+- `plot_multiple_airfoils(angles_of_attack)` draws the airfoils, chord arrows and free-stream arrow with equal axis scaling.
+- `MAX_CAMBER`, `CAMBER_POSITION`, `THICKNESS`, `CHORD`, `N_POINTS` and `DEFAULT_ANGLES` hold the parameters.
+
+## Usage
+
+```bash
+python main.py                            # 10 and 60 degrees
+python main.py --angles 0 5 15            # any list of angles in degrees
+python main.py --no-show --output .       # save the figure as a PNG in the current directory
+```
 
 ## Output
 
-The script displays and saves `airfoil_angle_attack.png`: two NACA airfoil outlines rotated to $10^\circ$ and $60^\circ$ angles of attack, with chord-line dashed arrows and a free-stream indicator, illustrating attached versus post-stall configurations.
+![NACA 2412 at 10 and 60 degrees angle of attack](airfoil_angle_attack.png)
 
+The blue outline is the airfoil at $10^\circ$ and the orange outline at $60^\circ$. Both are pitched nose-up relative to the free-stream arrow above them, and the dashed arrows inside each outline are the chord lines.
+
+## Related Notes
+
+- [Airfoil Design](../../../notes/applied_mechanics/transportation/airplanes/airfoil_design.md)
+- [How Airplanes Work](../../../notes/applied_mechanics/transportation/airplanes/how_airplanes_work.md)

@@ -2,1050 +2,335 @@
 
 ![CFD Resources Banner](https://github.com/user-attachments/assets/ac0cec05-abb0-4f8e-ae68-3df6bbb53308)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/actions/workflows/ci.yml/badge.svg)](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![GitHub Stars](https://img.shields.io/github/stars/djeada/Computational-Fluid-Dynamics-CFD-Resources?style=social)](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/stargazers)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-### A structured resource for learning, implementing, and applying computational fluid dynamics
+Notes, runnable Python scripts, tool guides, and curated references for learning computational fluid dynamics. The material connects the physics of fluid flow with the numerical methods used to simulate it, the software used in practice, and data-driven techniques such as reduced-order models and machine learning.
 
-This repository provides a structured collection of notes, examples, scripts, tutorials, and references for Computational Fluid Dynamics (CFD). It is designed for learners and practitioners who want to connect the physical theory of fluid flow with numerical methods, software workflows, simulation practice, and modern data-driven techniques.
+[Quick start](#quick-start) • [Learning paths](#learning-paths) • [Notes](#notes) • [Practice](#practice) • [Scripts](#scripts) • [References](#references) • [Contributing](#contributing)
 
-[Quick Start](#getting-started) • [Documentation](#content-organization) • [Research](#advanced-research-topics) • [Code](#scripts) • [Contribute](#contributing)
+## What's here
 
----
+<!-- BEGIN GENERATED: stats -->
+| Content | Count | Location |
+|---------|------:|----------|
+| Theory notes | 134 | [`notes/`](notes/) |
+| Notes with exercises | 134 | [`notes/`](notes/) |
+| Practice guides | 14 | [`practice/`](practice/) |
+| Algorithm scripts | 7 | [`scripts/algorithms/`](scripts/algorithms/) |
+| Plot scripts | 35 | [`scripts/plots/`](scripts/plots/) |
+| Simulations | 15 | [`scripts/simulations/`](scripts/simulations/) |
+<!-- END GENERATED: stats -->
 
-## Vision and Scope
+Every script runs headless in CI, and every relative link in the repository is checked. Topics that are planned but not written yet are tracked in the [roadmap](ROADMAP.md).
 
-This repository is a community-driven resource for Computational Fluid Dynamics (CFD) education, implementation, and applied research. It serves as a structured learning environment, a practical implementation reference, and a curated gateway to important CFD literature, workflows, and tools.
+## Quick start
 
-### Purpose and Audience
+```bash
+git clone https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources.git
+cd Computational-Fluid-Dynamics-CFD-Resources
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 
-The repository consolidates theory notes, implementation examples, visualization tools, simulation cases, and external references into a coherent progression. It is designed to support several audiences:
-
-- **Students** beginning their study of fluid mechanics and numerical simulation
-- **Researchers** developing, comparing, or validating computational methods
-- **Engineers** applying CFD to practical design, analysis, and validation problems
-- **Machine learning practitioners** exploring physics-informed and data-driven methods
-- **Educators** assembling structured teaching material, examples, and exercises
-
-### Educational Philosophy
-
-CFD is not only a collection of equations and algorithms. It is a synthesis of physics, mathematics, numerical analysis, computer science, and engineering judgment. The repository is organized around the following principles:
-
-1. **Theory-practice integration**: Concepts are connected to mathematical foundations, implementation details, and practical consequences.
-2. **Iterative learning**: Material is organized so readers can revisit topics at increasing levels of depth.
-3. **Interdisciplinary context**: Connections are made between CFD and adjacent fields such as optimization, machine learning, high-performance computing, and applied mechanics.
-4. **Modern relevance**: The content includes current topics such as physics-informed learning, surrogate models, reduced-order modeling, and scalable computation.
-5. **Community development**: Contributions are welcome from practitioners, researchers, students, and educators.
-
----
-
-## Repository Statistics
-
-| Category | Count | Description |
-|----------|-------|-------------|
-| Theory Documents | 103+ | Comprehensive markdown documents covering all aspects of CFD |
-| Python Scripts | 57+ | Ready-to-use implementations and visualizations |
-| Simulation Examples | 15+ | Complete simulation setups from basic to advanced |
-| Algorithm Implementations | 9+ | Core computational algorithms with detailed explanations |
-| Visualization Scripts | 30+ | Professional plotting and analysis tools |
-| External References | 80+ | Curated links to papers, books, courses, and tools |
-| Topics Covered | 50+ | From fundamentals to specialized advanced topics |
-
----
-
-## How to Use This Repository
-
-This repository can support several workflows:
-
-- **Self-study curriculum:** Follow one of the learning pathways and work through the recommended notes, scripts, and examples in sequence.
-- **Course companion:** Use the notes as reference material and the scripts as demonstrations, assignments, or validation exercises.
-- **Engineering reference:** Consult the practice guides, numerical method notes, and troubleshooting sections when setting up or reviewing CFD workflows.
-- **Research starting point:** Use the advanced topics, references, and algorithms as entry points into areas such as turbulence modeling, model reduction, optimization, and physics-informed machine learning.
-
-The material is intentionally modular. Readers can begin with fundamentals, move directly into simulations, or focus on specific tools such as Gmsh, ParaView, or Python-based analysis.
-
-## Learning Pathways and Navigation
-
-Use the pathways below to choose a route through the material based on your background and goals. The timelines are approximate and can be adapted for course schedules, self-study, or project-driven learning.
-
-### Path 1: Academic Foundation for Students and Researchers
-**Timeline: 6-12 months**| **Prerequisites: Calculus, Linear Algebra, Basic Programming**
-
-```
-Week 1-4:   Fluid Mechanics Fundamentals → Conservation Laws → Dimensional Analysis
-Week 5-8:   Navier-Stokes Equations → Boundary Conditions → Analytical Solutions
-Week 9-12:  Finite Difference Methods → Stability Analysis → Basic 1D Problems
-Week 13-16: Finite Volume Methods → 2D Simulations → Turbulence Introduction
-Week 17-20: Advanced Discretization → Complex Geometries → Mesh Generation
-Week 21-24: Turbulence Modeling → RANS/LES → Practical Applications
-Beyond:     Specialized Topics → Research Problems → Novel Methods
+cd scripts/simulations/lid_driven_cavity
+python main.py                                  # interactive window
+python main.py --no-show --output figures       # save the figure instead
 ```
 
-### Path 2: Industrial Practitioner
-**Timeline: 3-6 months**| **Prerequisites: Engineering Background, CFD Software Experience**
+Every script accepts `--no-show` and `--output DIR`. Time-stepping and interactive scripts also accept `--steps N`. Each script folder has a README explaining the maths, the implementation, and the output.
 
-```
-Week 1-2:   Quick Theory Refresh → Key Dimensionless Numbers → Common Pitfalls
-Week 3-4:   Meshing Best Practices → Boundary Condition Selection → Solver Settings
-Week 5-6:   Turbulence Model Selection → Wall Functions → Y+ Calculations
-Week 7-8:   Convergence Strategies → Result Validation → Post-Processing
-Week 9-10:  Industry-Specific Applications → Case Studies → Optimization
-Week 11-12: Advanced Topics → Custom Functions → Automation Workflows
-```
+## Learning paths
 
-### Path 3: Machine Learning and AI Integration
-**Timeline: 4-8 months**| **Prerequisites: Machine Learning, Python, CFD Basics**
+Each path is a suggested reading order through material that exists in this repository.
 
-```
-Week 1-3:   CFD Fundamentals for ML → Data Generation → Feature Engineering
-Week 4-6:   Physics-Informed Neural Networks (PINNs) → Implementation → Training
-Week 7-9:   Surrogate Modeling → ROM Techniques → POD/DMD Methods
-Week 10-12: ML-Enhanced Turbulence → RANS Closures → LES Subgrid Models
-Week 13-16: Shape Optimization → Generative Design → Topology Optimization
-Beyond:     Research Frontiers → Novel Architectures → Industry Applications
-```
+### 1. First steps in CFD
+*Prerequisites: calculus, basic physics, some Python.*
 
-### Path 4: Quick Start
-**Timeline: 4-8 weeks**| **Prerequisites: Basic Physics, Programming Interest**
+1. [Introduction to fluid mechanics](notes/fluid_mechanics/intro.md) and [dimensional analysis](notes/fluid_mechanics/dimensions.md)
+2. [Navier–Stokes equations](notes/fluid_mechanics/governing_equations/navier_stokes.md)
+3. [Why CFD is needed](notes/numerical/cfd/intro.md) and [the strategy of CFD](notes/numerical/cfd/cfd_process.md)
+4. [Finite difference method](notes/numerical/fdm/intro.md), then run the [1D heat and wave equations](scripts/simulations/1d_heat_and_wave_equations/)
+5. [Numerical stability](notes/numerical/cfd/numerical_stability.md)
+6. Run the [lid-driven cavity](scripts/simulations/lid_driven_cavity/) and read the [lid-driven cavity tutorial](practice/manual_projects/lid_driven_cavity.md)
 
-```
-Week 1: What is CFD? → Simple Examples → Visualization Introduction
-Week 2: Basic Equations → Flow Patterns → Hands-on Simulations
-Week 3: Software Tools → ParaView/Gmsh → Running Your First Simulation
-Week 4: Practical Problems → Learning Resources → Next Steps
-```
+### 2. Numerical methods in depth
+*Prerequisites: path 1, linear algebra.*
 
----
+1. [Finite-difference discretization](notes/numerical/fdm/discretization.md)
+2. [Finite volume method](notes/numerical/fvm/intro.md) and [finite-volume discretization](notes/numerical/fvm/discretization.md)
+3. [Finite element method](notes/numerical/fem/intro.md) and [weak formulations](notes/numerical/fem/weak_formulation_pde.md)
+4. [Dealing with nonlinearity](notes/numerical/cfd/dealing_with_nonlinearity.md), [direct and iterative solvers](notes/numerical/cfd/direct_and_iterative_solvers.md), and [iterative convergence](notes/numerical/cfd/iterative_convergence.md)
+5. [Lattice Boltzmann method](notes/numerical/lattice_boltzmann/intro.md), then run the [lattice Boltzmann cylinder flow](scripts/simulations/lattice_boltzmann_cylinder_flow/)
 
-## Advanced Research Topics
+### 3. Engineering practice
+*Prerequisites: an engineering background.*
 
-### Current Developments in CFD
+1. [Boundary layers](notes/fluid_mechanics/viscous_flow/boundary_layers.md) and [turbulence](notes/fluid_mechanics/turbulence/)
+2. [Turbulence modeling in CFD](notes/numerical/cfd/turbulence_modeling.md)
+3. [Mesh quality](practice/mesh_generation/mesh_quality.md) and [boundary-layer meshing](practice/mesh_generation/boundary_layers.md)
+4. [Gmsh](practice/gmsh/intro.md), [OpenFOAM](practice/openfoam/getting_started.md), and [ParaView](practice/paraview/intro.md)
+5. [Flow over a cylinder](practice/manual_projects/flow_over_cylinder.md) end to end
+6. [Solver comparison](practice/cfd_tools/solver_comparison.md) and [workflow automation](practice/cfd_tools/automation.md)
 
-The repository includes material on advanced and emerging topics that are increasingly relevant in research and industrial practice:
+### 4. Data-driven methods
+*Prerequisites: linear algebra, Python, CFD basics.*
 
-#### Artificial Intelligence and Machine Learning
-- **Physics-Informed Neural Networks (PINNs)**: Embedding physical laws directly into neural network architectures for solving PDEs
-- **Deep Learning for Turbulence**: Using CNNs and GANs to model subgrid-scale turbulence in LES
-- **Reinforcement Learning**: Adaptive flow control and optimization strategies
-- **Graph Neural Networks**: For unstructured mesh processing and solution prediction
-- **Operator Learning**: Neural operators (DeepONet, FNO) for learning solution operators
-- **Generative Models**: VAEs and GANs for design space exploration and flow field generation
+1. [Proper orthogonal decomposition](notes/numerical/pod/pod_intro.md), [POD and the SVD](notes/numerical/pod/pod_vs_svd.md), and [snapshot POD](notes/numerical/pod/snapshot_pod.md), with the [POD](scripts/algorithms/pod/) and [snapshot POD](scripts/algorithms/snapshot_pod/) scripts
+2. [Reduced-order modeling](notes/numerical/rom/rom.md) and [POD–Galerkin projection](notes/numerical/rom/pod_galerkin_projection.md)
+3. [Surrogate models](notes/numerical/surrogates/intro.md), [kriging](notes/numerical/surrogates/kriging.md), and [radial basis functions](notes/numerical/surrogates/radial_basis_functions.md), with the [kriging](scripts/algorithms/kriging_interpolation/) and [RBF](scripts/algorithms/radial_basis_functions/) scripts
+4. [Machine learning for CFD](notes/machine_learning/intro.md), [neural networks in aerodynamics](notes/machine_learning/neural_networks/intro.md), and [machine learning on meshes](notes/machine_learning/geometry/ml_with_meshes.md)
 
-#### High-Performance Computing
-- **GPU Acceleration**: CUDA-based CFD solvers and acceleration techniques
-- **Parallel Computing**: MPI, OpenMP, and hybrid parallelization strategies
-- **Cloud Computing**: Scalable CFD workflows on AWS, Azure, and GCP
-- **Quantum Computing**: Exploratory quantum algorithms for fluid dynamics
-- **Exascale Computing**: Preparing for next-generation supercomputers
+## Notes
 
-#### Numerical Methods
-- **Meshless Methods**: SPH, meshless Galerkin, and particle-based approaches
-- **High-Order Methods**: Spectral methods, DG, and HDG for accuracy
-- **Adaptive Methods**: hp-refinement, AMR, and error-driven adaptation
-- **Multiscale Methods**: HMM, heterogeneous multiscale methods
-- **Immersed Boundary Methods**: For complex moving geometries
-- **Cut-Cell Methods**: Cartesian grid methods for complex boundaries
+Theory notes are grouped by subject. Most notes end with exercises (with worked answers) and references.
 
-#### Specialized Flow Phenomena
-- **Multiphase Flows**: VOF, Level Set, Phase Field methods
-- **Reacting Flows**: Combustion modeling, chemical kinetics coupling
-- **Fluid-Structure Interaction**: Two-way coupling, aeroelasticity
-- **Microfluidics**: Low Reynolds number phenomena, electrokinetics
-- **Rarefied Gas Dynamics**: DSMC, kinetic theory approaches
-- **Non-Newtonian Fluids**: Viscoelastic, thixotropic, and complex rheology
+### [Fluid mechanics](notes/fluid_mechanics/)
 
-#### Data-Driven Approaches
-- **Model Order Reduction**: POD, DMD, balanced truncation
-- **Sparse Identification**: SINDy for discovering governing equations
-- **Bayesian Methods**: Uncertainty quantification and inverse problems
-- **Transfer Learning**: Domain adaptation for CFD applications
-- **Active Learning**: Intelligent sampling for expensive simulations
+| Topic | Notes |
+|-------|-------|
+| Fundamentals | [Introduction](notes/fluid_mechanics/intro.md), [dimensional analysis](notes/fluid_mechanics/dimensions.md) |
+| [Governing equations](notes/fluid_mechanics/governing_equations/) | [Continuity](notes/fluid_mechanics/governing_equations/continuity.md), [Navier–Stokes](notes/fluid_mechanics/governing_equations/navier_stokes.md), [energy](notes/fluid_mechanics/governing_equations/energy.md), [equation of state](notes/fluid_mechanics/governing_equations/equation_of_state.md) |
+| [Fluid properties](notes/fluid_mechanics/fluid_properties/) | [Viscosity](notes/fluid_mechanics/fluid_properties/viscosity.md), [pressure and compressibility](notes/fluid_mechanics/fluid_properties/pressure_and_compressibility.md), [surface tension](notes/fluid_mechanics/fluid_properties/surface_tension.md) |
+| [Flow kinematics](notes/fluid_mechanics/flow_kinematics/) | [Flow kinematics](notes/fluid_mechanics/flow_kinematics/flow_kinematics.md), [Eulerian and Lagrangian descriptions](notes/fluid_mechanics/flow_kinematics/eulerian_lagrangian_flows.md) |
+| [Fluid statics](notes/fluid_mechanics/fluid_statics/) | [Hydrostatics](notes/fluid_mechanics/fluid_statics/hydrostatics.md) |
+| [Inviscid flow](notes/fluid_mechanics/inviscid_flow/) | [Bernoulli's equation](notes/fluid_mechanics/inviscid_flow/bernoulli.md), [potential flow](notes/fluid_mechanics/inviscid_flow/potential_flow.md) |
+| [Viscous flow](notes/fluid_mechanics/viscous_flow/) | [Boundary layers](notes/fluid_mechanics/viscous_flow/boundary_layers.md), [drag](notes/fluid_mechanics/viscous_flow/drag.md) |
+| [Internal flow](notes/fluid_mechanics/internal_flow/) | [Pipe flow](notes/fluid_mechanics/internal_flow/pipes.md) |
+| [Compressible flow](notes/fluid_mechanics/compressible_flow/) | [Thermodynamics](notes/fluid_mechanics/compressible_flow/thermodynamics.md), [speed of sound](notes/fluid_mechanics/compressible_flow/speed_of_sound.md), [isentropic flow](notes/fluid_mechanics/compressible_flow/isentropic_flow.md), [shock waves](notes/fluid_mechanics/compressible_flow/shock_waves.md), [Rayleigh and Fanno flow](notes/fluid_mechanics/compressible_flow/rayleigh_fanno.md) |
+| [Turbulence](notes/fluid_mechanics/turbulence/) | [Reynolds decomposition](notes/fluid_mechanics/turbulence/reynolds_decomposition.md), [statistics](notes/fluid_mechanics/turbulence/statistics.md), [energy cascade](notes/fluid_mechanics/turbulence/energy_cascade.md), [RANS equations](notes/fluid_mechanics/turbulence/rans_equations.md), [modeling](notes/fluid_mechanics/turbulence/modeling.md) |
+| [Specialized topics](notes/fluid_mechanics/specialized_topics/) | [Fluid–structure interaction](notes/fluid_mechanics/specialized_topics/fluid_structure_interaction.md) |
 
----
+### [Numerical methods](notes/numerical/)
+
+| Topic | Notes |
+|-------|-------|
+| [CFD fundamentals](notes/numerical/cfd/) | [The need for CFD](notes/numerical/cfd/intro.md), [strategy of CFD](notes/numerical/cfd/cfd_process.md), [governing equations](notes/numerical/cfd/governing_equations.md), [nonlinearity](notes/numerical/cfd/dealing_with_nonlinearity.md), [direct and iterative solvers](notes/numerical/cfd/direct_and_iterative_solvers.md), [iterative convergence](notes/numerical/cfd/iterative_convergence.md), [numerical stability](notes/numerical/cfd/numerical_stability.md), [turbulence modeling](notes/numerical/cfd/turbulence_modeling.md) |
+| [Finite differences](notes/numerical/fdm/) | [Introduction](notes/numerical/fdm/intro.md), [discretization](notes/numerical/fdm/discretization.md) |
+| [Finite volumes](notes/numerical/fvm/) | [Introduction](notes/numerical/fvm/intro.md), [discretization](notes/numerical/fvm/discretization.md) |
+| [Finite elements](notes/numerical/fem/) | [Introduction](notes/numerical/fem/intro.md), [weak formulation](notes/numerical/fem/weak_formulation_pde.md) |
+| [Lattice Boltzmann](notes/numerical/lattice_boltzmann/) | [Introduction](notes/numerical/lattice_boltzmann/intro.md), [Boltzmann equation](notes/numerical/lattice_boltzmann/boltzmann_equation.md), [from Newton to Navier–Stokes](notes/numerical/lattice_boltzmann/from_newton_to_nse.md), [from Boltzmann to lattice Boltzmann](notes/numerical/lattice_boltzmann/from_boltzmann_to_lattice_boltzmann.md), [algorithm](notes/numerical/lattice_boltzmann/lattice_boltzmann_algorithm.md), [in practice](notes/numerical/lattice_boltzmann/practical_lbm.md) |
+| [Proper orthogonal decomposition](notes/numerical/pod/) | [Introduction](notes/numerical/pod/pod_intro.md), [POD and SVD](notes/numerical/pod/pod_vs_svd.md), [derivation in 2D](notes/numerical/pod/derivation_in_2d.md), [derivation in N dimensions](notes/numerical/pod/derivation_in_n_dim.md), [snapshot POD](notes/numerical/pod/snapshot_pod.md), [gappy POD](notes/numerical/pod/gappy_pod.md) |
+| [Reduced-order models](notes/numerical/rom/) | [Overview](notes/numerical/rom/rom.md), [discretization techniques](notes/numerical/rom/discretization_techniques.md), [parameterized variational problems](notes/numerical/rom/parameterized_variational_problems.md), [reduced basis approximation](notes/numerical/rom/reduced_basis_approximation.md), [POD–Galerkin projection](notes/numerical/rom/pod_galerkin_projection.md) |
+| [Surrogate models](notes/numerical/surrogates/) | [Introduction](notes/numerical/surrogates/intro.md), [kriging](notes/numerical/surrogates/kriging.md), [hierarchical kriging](notes/numerical/surrogates/hierarchical_kriging.md), [radial basis functions](notes/numerical/surrogates/radial_basis_functions.md), [one-stage sampling](notes/numerical/surrogates/one_stage_sampling.md), [adaptive sampling](notes/numerical/surrogates/adaptive_sampling.md) |
+
+### [Machine learning](notes/machine_learning/)
+
+| Topic | Notes |
+|-------|-------|
+| Overview | [Introduction to machine learning for CFD](notes/machine_learning/intro.md) |
+| [Neural networks](notes/machine_learning/neural_networks/) | [Neural networks in aerodynamics](notes/machine_learning/neural_networks/intro.md), [datasets](notes/machine_learning/neural_networks/datasets.md), [generating CFD datasets](notes/machine_learning/neural_networks/generating_cfd_datasets.md), [model training](notes/machine_learning/neural_networks/model_training.md), [graph neural network example](notes/machine_learning/neural_networks/example_work_for_gnn.md) |
+| [Flow](notes/machine_learning/flow/) | [Feature extraction](notes/machine_learning/flow/feature_extraction.md), [flow dynamics](notes/machine_learning/flow/flow_dynamics.md), [optimization](notes/machine_learning/flow/optimization.md), [particle image velocimetry](notes/machine_learning/flow/particle_image_velocimetry.md), [superresolution and flow cleansing](notes/machine_learning/flow/superresolution_and_flow_cleansing.md) |
+| [Geometry](notes/machine_learning/geometry/) | [Machine learning on CAD](notes/machine_learning/geometry/ml_on_cad.md), [machine learning on meshes](notes/machine_learning/geometry/ml_with_meshes.md) |
+| [Automotive aerodynamics](notes/machine_learning/automotive_aerodynamics/) | [ML process](notes/machine_learning/automotive_aerodynamics/ml_process.md), [dataset of meshes](notes/machine_learning/automotive_aerodynamics/dataset_of_meshes.md), [deformation parameters](notes/machine_learning/automotive_aerodynamics/deformation_parameters.md), [output data](notes/machine_learning/automotive_aerodynamics/output_data.md) |
+
+### [Applied mechanics](notes/applied_mechanics/)
+
+| Topic | Notes |
+|-------|-------|
+| [Fundamentals](notes/applied_mechanics/fundamentals/) | Force systems, moments and couples, free body diagrams, vector analysis |
+| [Statics](notes/applied_mechanics/statics/) | Particle and rigid-body equilibrium, structural analysis, trusses and frames, friction, centroids |
+| [Dynamics](notes/applied_mechanics/dynamics/) | Kinematics and kinetics of particles and rigid bodies, work–energy, impulse–momentum, vibrations |
+| [Strength of materials](notes/applied_mechanics/strength_materials/) | Stress and strain, material properties, axial loading, torsion, bending, shear and moment diagrams, combined loading, buckling |
+| [Fluid loading](notes/applied_mechanics/fluid_loading/) | Pressure forces, wind loading, wave loading, flow-induced vibrations, hydroelasticity |
+| [Control systems](notes/applied_mechanics/control_systems/) | System modeling, stability analysis, feedback control, PID controllers |
+| [Mechanical systems](notes/applied_mechanics/mechanical_systems/) | Mechanisms, gears, bearings, rotating machinery, hydraulics and pneumatics |
+| [Transportation](notes/applied_mechanics/transportation/) | [Airplanes](notes/applied_mechanics/transportation/airplanes/) (airfoils, stability, inertial navigation, Reynolds number, design process) and [cars](notes/applied_mechanics/transportation/cars/) |
+
+## Practice
+
+Guides for the tools used in day-to-day CFD work. See the [practice overview](practice/README.md) for a suggested order.
+
+| Area | Guides |
+|------|--------|
+| [Gmsh](practice/gmsh/) | [Introduction](practice/gmsh/intro.md), [volume meshes from STL](practice/gmsh/generate_volume_mesh.md), [boolean operations](practice/gmsh/boolean_operations.md) |
+| [Mesh generation](practice/mesh_generation/) | [Boundary-layer meshing](practice/mesh_generation/boundary_layers.md), [mesh quality](practice/mesh_generation/mesh_quality.md) |
+| [OpenFOAM](practice/openfoam/) | [Getting started](practice/openfoam/getting_started.md), [turbulence modeling](practice/openfoam/turbulence_modeling.md) |
+| [ParaView](practice/paraview/) | [ParaView and OpenFOAM](practice/paraview/intro.md), [external Python packages](practice/paraview/import_external_packages.md), [batch visualization](practice/paraview/batch_visualization.md) |
+| [CFD tools](practice/cfd_tools/) | [Solver comparison](practice/cfd_tools/solver_comparison.md), [workflow automation](practice/cfd_tools/automation.md) |
+| [Manual projects](practice/manual_projects/) | [Lid-driven cavity](practice/manual_projects/lid_driven_cavity.md), [flow over a cylinder](practice/manual_projects/flow_over_cylinder.md) |
+
+## Scripts
+
+Each script lives in its own folder with a `main.py` and a README covering the mathematical background, the implementation, and the output. The index below is generated from those READMEs by [`tools/generate_index.py`](tools/generate_index.py).
+
+<!-- BEGIN GENERATED: scripts -->
+### Algorithms
+
+| Script | Description |
+|--------|-------------|
+| [Condition Number of the Correlation Matrix](scripts/algorithms/condition_number_of_the_correlation_matrix/) | This script plots how the condition number of a kriging correlation matrix changes with the correlation parameter $\theta$ for the linear, exponential, Gaussian and cubic spline correlation functions. |
+| [Correlation Functions](scripts/algorithms/correlation_functions/) | This script plots four correlation functions used in kriging surrogate models (linear, exponential, Gaussian and cubic spline) for several values of the correlation parameter $\theta$. |
+| [Image Compression Using SVD](scripts/algorithms/image_compression_using_svd/) | This script compresses a grayscale image by keeping only its $r$ largest singular values and the matching singular vectors, then compares the rank-$r$ reconstructions with the original. |
+| [Kriging Interpolation](scripts/algorithms/kriging_interpolation/) | This script interpolates 11 samples of $y(x) = (3x-3)^2 \sin(2x-10)$ with a kriging-type predictor built on the cubic spline correlation function, for four values of the correlation parameter $\theta$. |
+| [Proper Orthogonal Decomposition (POD)](scripts/algorithms/pod/) | This script performs Proper Orthogonal Decomposition on a synthetic spatio-temporal field by taking the singular value decomposition of the mean-subtracted snapshot matrix. |
+| [Radial Basis Functions](scripts/algorithms/radial_basis_functions/) | This script fits a multiquadric radial basis function (RBF) interpolant through 11 data points on $[0, 1]$ using SciPy's `Rbf` class and plots it on a fine grid. |
+| [Snapshot Proper Orthogonal Decomposition (Snapshot POD)](scripts/algorithms/snapshot_pod/) | This script computes POD modes of a synthetic spatio-temporal field with the snapshot method, which solves an eigenvalue problem for the $M \times M$ temporal correlation matrix instead of the much larger $N \times N$ spatial one. |
+
+### Plots
+
+| Script | Description |
+|--------|-------------|
+| [Airfoil Angle of Attack](scripts/plots/airfoil_angle_attack/) | This script draws a NACA 2412 airfoil pitched nose-up about its leading edge to several angles of attack, $10^\circ$ and $60^\circ$ by default, relative to a free stream flowing left to right. |
+| [NACA 4-Digit Airfoil Profile](scripts/plots/airfoil_profile/) | This script draws an annotated NACA 4-digit airfoil profile (NACA 4412 by default) from its four-digit designation, labelling the leading edge, trailing edge, chord line and mean camber line. |
+| [Archimedes' Principle Visualisation](scripts/plots/archimedes_principle/) | This script draws a block in a tank of fluid with its weight and buoyant force shown as arrows, and states whether the block floats or sinks according to Archimedes' principle. |
+| [Generating Synthetic Data for Boundary Layer Simulation](scripts/plots/boundary_layer_problem/) | This script generates noisy synthetic velocity samples across a boundary layer from a simple square-root profile, saves them to a CSV file and plots them against the wall-normal distance. |
+| [Turbulent Boundary Layer Velocity Profile](scripts/plots/boundary_layer_velocity_profile/) | This script plots the one-seventh power-law velocity profile of a turbulent boundary layer in normalised form, $u/U_\infty$ against $y/\delta$. |
+| [Grid Convergence Comparison](scripts/plots/comparing_grid_convergence/) | This script illustrates grid convergence by plotting the model numerical solutions $u_N(x) = e^{-x(1 + x/N)}$ for $N = 4, 8, 16$ against the exact solution $u(x) = e^{-x}$ on $[0, 1]$. |
+| [Compressible vs. Incompressible Duct Flow](scripts/plots/compressible_vs_incompressible/) | This script draws prescribed incompressible and compressible velocity fields in a 2D duct side by side, so the constant downstream profile of the first can be compared with the accelerating profile of the second. |
+| [Design Space Distribution via Sobol Sequences](scripts/plots/design_space_distribution/) | This script draws a four-dimensional scrambled Sobol design of 512 geometry variants and plots two 2D projections of it, showing how evenly a low-discrepancy sequence covers a design space. |
+| [Drag Coefficient Prediction](scripts/plots/drag_coefficient_prediction/) | This script compares two synthetic drag-coefficient predictors with reference values in a predicted-vs-reference plot, adding a regression line and $R^2$ for each. |
+| [Eigenvector Projection of Velocity Fluctuations](scripts/plots/eigenvector_projection/) | This script finds the principal directions of correlated 2D velocity fluctuations from the eigenvectors of their covariance matrix and projects the data onto them. |
+| [Eulerian and Lagrangian Flow Descriptions](scripts/plots/eulerian_lagrangian_flows/) | This script contrasts the Eulerian and Lagrangian descriptions of fluid motion using the time-dependent Double Gyre flow. |
+| [Flow Rate Through a Circular Pipe](scripts/plots/flow_rate_pipe/) | This script computes the volumetric flow rate $Q = \pi r^2 v$ of a circular pipe and draws a labelled side view of the pipe with flow arrows. |
+| [Flow Separation in a Boundary Layer](scripts/plots/flow_separation_boundary_layer/) | This script draws a schematic of boundary-layer separation: an attached layer that thickens downstream, a separation point, and a recirculation region under the separated shear layer. |
+| [Froude Number vs. Flow Velocity](scripts/plots/froude_number/) | This script plots the length-based Froude number $Fr = U/\sqrt{gL}$ against speed for hulls of 5, 10, 15, and 20 m, with reference lines at hull speed and at the approximate start of planing. |
+| [Laminar vs. Turbulent Boundary Layer Profiles](scripts/plots/laminar_vs_turbulent_boundary_layer/) | This script plots normalised laminar and turbulent boundary-layer velocity profiles on the same axes to show how much fuller the turbulent profile is. |
+| [Laminar vs Turbulent Pipe Flow](scripts/plots/laminar_vs_turbulent_pipe/) | This script plots laminar and turbulent radial velocity profiles of pipe flow in side-by-side panels to show how much flatter the turbulent profile is. |
+| [Longitudinal Velocity Fluctuations and Projections](scripts/plots/longitudinal_velocity_fluctuations_and_projections/) | This script plots synthetic two-point velocity fluctuations as time traces, as a scatter cloud, and projected onto a unit vector, which are the first steps of the two-point POD example. |
+| [Mean Pressure Coefficient Along Vehicle Centreline](scripts/plots/mean_pressure_coefficient/) | This script plots a mock validation figure of mean pressure coefficient $C_P$ against streamwise position, comparing "experimental" data with a "CFD SRS" (scale-resolving simulation) curve that under-predicts a separation plateau. |
+| [Mean Velocity Magnitude: Experiment vs CFD Comparison](scripts/plots/mean_velocity_magnitude/) | This script plots a mock experimental profile and a mock CFD scale-resolving simulation (SRS) profile of the normalised mean velocity magnitude $\|U\|/U_0$ along an under-body centreline. |
+| [Meniscus Behavior](scripts/plots/meniscus_behavior/) | This script sketches the meniscus of water and of mercury in a glass tube, showing how wetting determines whether the free surface curves up or down at the wall. |
+| [Microscopic vs. Macroscopic View of a Fluid](scripts/plots/microscopic_view/) | This script draws two side-by-side panels that contrast the microscopic (molecular) and macroscopic (continuum) views of a fluid. |
+| [Converging-Diverging Nozzle Flow](scripts/plots/nozzle_flow/) | This script plots quasi-one-dimensional isentropic flow through a converging-diverging (de Laval) nozzle, with streamlines coloured by Mach number. |
+| [Numerical vs. Exact Solution Comparison](scripts/plots/numerical_vs_exact_solution/) | This script solves $du/dx + u = 0$ with $u(0) = 1$ by a first-order finite-difference scheme and compares the result with the exact solution $u(x) = e^{-x}$, plotting the pointwise error. |
+| [POD Analysis for Flow Fields](scripts/plots/pod_analysis_for_flow_fields/) | This script performs Proper Orthogonal Decomposition (POD) on a synthetic 100 × 50 snapshot matrix with the singular value decomposition (SVD) and plots the eigenvalue spectrum with the share of turbulent kinetic energy (TKE) in each mode. |
+| [POD Modes of a Two-Point Velocity Signal](scripts/plots/pod_modes_2d/) | This script applies Proper Orthogonal Decomposition to velocity signals measured at two points, a and b, and plots how much each of the two POD modes contributes to each signal. |
+| [POD Spatial Modes and Temporal Coefficients](scripts/plots/pod_modes_and_temporal_coefficients/) | This script extracts the first three POD spatial modes and their temporal coefficients from a synthetic two-dimensional, time-dependent field and plots them. |
+| [Pressure Difference Across a Spherical Droplet](scripts/plots/pressure_difference_across_spherical_droplet/) | This script draws an annotated schematic of the Young-Laplace pressure jump across the surface of a spherical droplet. |
+| [Pressure Variation with Depth](scripts/plots/pressure_variation_with_depth/) | This script plots how hydrostatic pressure increases linearly with depth below the free surface of a fluid at rest. |
+| [Maxwell-Boltzmann Speed Distribution of N₂ Molecules](scripts/plots/probability_distribution_function_of_nitrogen_molecules/) | This script plots the Maxwell-Boltzmann speed distribution of nitrogen (N₂) molecules at 300 K, 600 K, 900 K and 1200 K, and marks the most probable, mean and root-mean-square speed on each curve. |
+| [Ship Hull in Water](scripts/plots/ship_hull_in_water/) | This script draws a side-view sketch of a ship hull sitting in a sinusoidal free-surface wave and annotates it with the Froude number $Fr = U/\sqrt{gL}$. |
+| [Time-Averaged Velocity Field](scripts/plots/time_averaged_velocity_field/) | This script generates a synthetic noisy longitudinal velocity field on a 200 × 60 grid and compares it with its mean field, the first step of a Reynolds decomposition. |
+| [Turbulent Flow: Reynolds Decomposition](scripts/plots/turbulent_flow/) | This script splits a synthetic velocity signal into its time mean and fluctuation, following the Reynolds decomposition used in turbulence modelling. |
+| [Variation of Residual with Iteration](scripts/plots/variation_of_residual/) | This script solves the 1D Laplace equation with Gauss-Seidel iteration on a 100-point grid and plots the normalised residual against iteration number on a logarithmic scale. |
+| [Velocity Layers and Viscosity](scripts/plots/velocity_layers_viscosity/) | This script draws a schematic of three stacked fluid layers moving at different speeds to illustrate Newton's law of viscosity, $\tau = \mu\, du/dy$. |
+| [Wall Shear in Pipe Cross-Section](scripts/plots/wall_shear_pipe_cross_section/) | This script sketches fully developed laminar (Hagen-Poiseuille) flow in a circular pipe, with velocity arrows whose lengths follow the parabolic profile $u(r) = u_{max}(1 - (r/R)^2)$. |
+
+### Simulations
+
+| Script | Description |
+|--------|-------------|
+| [1D Heat and Wave Equation Simulations](scripts/simulations/1d_heat_and_wave_equations/) | This script solves the 1D heat equation with the implicit Crank–Nicolson scheme and the 1D wave equation with the explicit leapfrog scheme, animating both from the same initial Gaussian pulse. |
+| [2D Wave Equation Simulation](scripts/simulations/2d_wave_simulation/) | This script solves the 2D scalar wave equation on a square domain with an explicit leapfrog finite difference scheme and animates the result as a 3D surface. |
+| [Backward-Facing Step Flow (SIMPLE Algorithm)](scripts/simulations/backward_facing_step_simple/) | This script solves steady 2D laminar incompressible flow over a backward-facing step with the finite volume method and the SIMPLE pressure–velocity coupling algorithm. |
+| [Bak–Tang–Wiesenfeld Sandpile Model (3D)](scripts/simulations/bak_tang_wiesenfeld_sandpile_model_3d/) | This script simulates the two-dimensional Bak–Tang–Wiesenfeld (BTW) sandpile on a 20×20 lattice and animates its height field as a 3D surface. |
+| [Charged Particle Dynamics in a Magnetic Field](scripts/simulations/charged_particle_dynamics_in_a_magnetic_field_using_runge_kutta_methods/) | This script integrates the motion of a charged particle in a uniform magnetic field with the classical fourth-order Runge–Kutta (RK4) method and animates the resulting helical trajectory in 3D. |
+| [Eulerian Cylinder Flow](scripts/simulations/eulerian_cylinder_flow/) | This script simulates 2D incompressible, inviscid flow past a circular cylinder on a fixed Eulerian grid and renders a dye tracer in real time with Pygame. |
+| [Ising Model Simulation](scripts/simulations/ising_model/) | This script simulates the two-dimensional Ising model with the Metropolis Monte Carlo algorithm and animates the spin lattice together with its magnetization and energy. |
+| [Kelvin-Helmholtz Instability Simulation](scripts/simulations/kelvin_helmholtz_instability/) | This script simulates the Kelvin-Helmholtz instability, the rolling-up of a shear layer between fluid streams moving in opposite directions, in a periodic 2D incompressible flow drawn in real time with Pygame. |
+| [Laplace Equation Maze Solver](scripts/simulations/laplace_equation_maze_solver/) | This script solves a randomly generated maze by computing a potential that satisfies Laplace's equation in the maze passages and then following the potential uphill from the entrance to the exit. |
+| [Lattice Boltzmann Cylinder Flow Simulation](scripts/simulations/lattice_boltzmann_cylinder_flow/) | This script simulates 2D flow past a circular cylinder with the lattice Boltzmann method (D2Q9 lattice, BGK collision operator) and animates the velocity magnitude with Matplotlib. |
+| [Lid-Driven Cavity Flow Simulation](scripts/simulations/lid_driven_cavity/) | This script solves the 2D incompressible Navier-Stokes equations for flow in a square cavity driven by a moving lid at a Reynolds number of 100 and animates the velocity field. |
+| [Rayleigh-Bénard Convection Simulation](scripts/simulations/rayleigh_benard_convection/) | This script simulates Rayleigh-Bénard convection, the buoyancy-driven flow in a fluid layer heated from below and cooled from above, and draws the temperature field in real time with Pygame. |
+| [2D Schrödinger Equation Simulation](scripts/simulations/schroedinger_equation/) | This script solves the time-dependent Schrödinger equation for a free particle in two dimensions with the split-step Fourier method and animates the probability density of the spreading wavepacket as a 3D surface. |
+| [Simplified Real-Time Fluid Dynamics Simulator](scripts/simulations/simplified_real_time_fluid_dynamics_simulator/) | This script is an interactive 2D smoke simulation that uses Jos Stam's Stable Fluids algorithm (1999) to approximate the incompressible Navier-Stokes equations fast enough to run in real time in a Pygame window. |
+| [Steady and Unsteady Pathlines Around a Cylinder with Vortex Shedding](scripts/simulations/steady_and_unsteady_pathlines_with_vortex_shedding/) | This script compares streamlines and particle pathlines for steady potential flow past a cylinder with circulation and for an unsteady version of the same flow with a kinematic vortex-shedding model. |
+<!-- END GENERATED: scripts -->
+
+## FAQ
+
+<details>
+<summary><b>My simulation diverges. What should I check?</b></summary>
+
+Common causes, roughly in order of frequency:
+1. Time step too large for the stability limit (reduce it and retry)
+2. Boundary conditions that are incorrect or conflicting
+3. Initial conditions far from the solution
+4. Poor mesh quality (high skewness or aspect ratio)
+5. A numerical scheme unsuited to the problem
+
+See [numerical stability](notes/numerical/cfd/numerical_stability.md) and [iterative convergence](notes/numerical/cfd/iterative_convergence.md).
+</details>
+
+<details>
+<summary><b>How do I know if my mesh is fine enough?</b></summary>
+
+Run a mesh independence study: solve on at least three systematically refined meshes, compare the quantities you care about (drag, pressure drop, reattachment length), and estimate the discretization error, for example with Richardson extrapolation. Also check mesh quality metrics. See [mesh quality](practice/mesh_generation/mesh_quality.md) and the [grid convergence](scripts/plots/comparing_grid_convergence/) script.
+</details>
+
+<details>
+<summary><b>What is the difference between DNS, LES, and RANS?</b></summary>
+
+- **DNS** resolves all turbulent scales. It is accurate but its cost grows steeply with Reynolds number, so it is mainly a research tool.
+- **LES** resolves the large eddies and models the smaller ones. It gives unsteady detail at considerably higher cost than RANS.
+- **RANS** solves time-averaged equations and models all turbulence through a closure. It is the workhorse of industrial CFD.
+
+See [turbulence modeling](notes/fluid_mechanics/turbulence/modeling.md).
+</details>
+
+<details>
+<summary><b>What is y+ and why does it matter?</b></summary>
+
+$y^+$ is the wall distance of the first cell centre in viscous units. It decides how the near-wall region must be treated:
+- $y^+ \lesssim 1$: the viscous sublayer is resolved (low-Reynolds-number models)
+- $30 \lesssim y^+ \lesssim 300$: wall functions bridge the log layer
+- $5 < y^+ < 30$: the buffer layer, where neither approach is accurate
+
+See [RANS equations](notes/fluid_mechanics/turbulence/rans_equations.md) and [boundary-layer meshing](practice/mesh_generation/boundary_layers.md).
+</details>
+
+## References
+
+### Online courses and resources
+- [CFD Python: 12 Steps to Navier-Stokes](https://lorenabarba.com/blog/cfd-python-12-steps-to-navier-stokes/) by Lorena Barba: a hands-on introduction to CFD in Python, built up in small steps
+- [CFD General Principles](https://doc.cfd.direct/notes/cfd-general-principles/) by CFD Direct: fundamental concepts from the maintainers of OpenFOAM
+- [Scientific Computing (Chasnov): Computational Fluid Dynamics](https://math.libretexts.org/Bookshelves/Scientific_Computing_Simulations_and_Modeling/Scientific_Computing_(Chasnov)/III%3A_Computational_Fluid_Dynamics/14%3A_The_Governing_Equations): governing equations and numerical methods
+- [National Committee for Fluid Mechanics Films](https://youtube.com/playlist?list=PL0EC6527BE871ABA3): classic educational films on fluid phenomena
+
+### Validation and benchmark data
+- [NASA Turbulence Modeling Resource](https://turbmodels.larc.nasa.gov/): verification and validation cases for turbulence models
+- [Wall-Modeled LES Resource](https://wmles.umd.edu/): WMLES database and guidelines
+- [Airfoil Tools](http://www.airfoiltools.com/): airfoil geometry and performance data
+- [NWTF Experimental Database](https://www.nwtf.ac.uk/dataset/2687/): Airbus wind tunnel dataset for the RAE2822 transonic aerofoil
+- [DepositOnce (TU Berlin)](https://depositonce.tu-berlin.de/): research data repository
+
+### Textbooks
+
+| Book | Authors | Best for | Level |
+|------|---------|----------|-------|
+| [Computational Fluid Dynamics: The Basics with Applications](https://amzn.to/42iuJNV) | John D. Anderson | Introduction with an aerospace emphasis | Beginner–intermediate |
+| [An Introduction to Computational Fluid Dynamics: The Finite Volume Method](https://amzn.to/3EbEMfG) | H. K. Versteeg & W. Malalasekera | Clear introduction to the finite volume method | Beginner–intermediate |
+| [Computational Methods for Fluid Dynamics](https://amzn.to/3FSZ9iq) | J. H. Ferziger, M. Perić & R. L. Street | Comprehensive graduate-level treatment | Advanced |
+| [Numerical Heat Transfer and Fluid Flow](https://amzn.to/42qd0o1) | Suhas V. Patankar | The classic text on the SIMPLE algorithm | Intermediate |
+| [Computational Fluid Dynamics: Principles and Applications](https://amzn.to/4j7adqY) | J. Blazek | Practical guidance for industrial CFD codes | Intermediate–advanced |
+| [Data-Driven Science and Engineering](https://amzn.to/3RHJncw) | S. L. Brunton & J. N. Kutz | Machine learning for dynamical systems, POD, DMD | Intermediate–advanced |
+| [Machine Learning Control](https://amzn.to/4jeggJC) | T. Duriez, S. L. Brunton & B. R. Noack | Machine learning for flow control | Advanced |
+
+### Papers
+- [Machine Learning for Fluid Mechanics](https://arxiv.org/abs/1905.11075) (Brunton, Noack & Koumoutsakos): review of machine learning in fluid mechanics
+- [Machine Learning-Based CFD Simulations: A Review](https://link.springer.com/article/10.1007/s00521-022-07838-6): models, open problems, and future directions (2022)
+- [Physics-Informed Neural Networks](https://www.brown.edu/research/projects/crunch/sites/brown.edu.research.projects.crunch/files/uploads/Physics-informed%20neural%20networks_A%20deep%20learning%20framwork%20fir%20solving%20forward%20and%20inverse%20probelms%20involving%20nonlinear%20partial%20differential%20equations.pdf) (Raissi, Perdikaris & Karniadakis): the original PINN paper
+- [Machine Learning in CFD: Recent Advances](https://www.tandfonline.com/doi/full/10.1080/10618562.2023.2175788) (2023)
+- [Nature Reviews article from the Karniadakis group](https://www.brown.edu/research/projects/crunch/sites/brown.edu.research.projects.crunch/files/uploads/Nature-REviews_GK.pdf): review of physics-informed computational methods
+- [CFD of the Future: Year 2025 and Beyond](https://www.researchgate.net/publication/339808378_CFD_of_the_Future_Year_2025_and_Beyond): perspectives on AI, HPC, and uncertainty quantification
+- [Pratt & Whitney: The Aircraft Engine and Its Operation (1949)](https://www.scribd.com/document/307072703/Pratt-Whitney-The-Aircraft-Engine-and-Its-Operation-Rev1949-BZ): historical engineering reference
+
+### Code
+- [Machine Learning and Simulation](https://github.com/Ceyron/machine-learning-and-simulation) by Ceyron: ML techniques combined with physics simulations
+- [NVIDIA Modulus airfoil optimisation](https://github.com/neo-fetch/nvidia-modulus-airfoil-optimisation): GPU-accelerated physics-informed ML, including a [2D lid-driven cavity example](https://github.com/neo-fetch/nvidia-modulus-airfoil-optimisation/blob/master/Dr-Yang_ldc_2d.py)
+- [Introductory Finite Elements (EAFIT)](https://github.com/AppliedMechanics-EAFIT/Introductory-Finite-Elements): FEM course material with Python implementations
+- [DOLFINx tutorial](https://jsdokken.com/dolfinx-tutorial/fem.html): finite elements with FEniCSx
+- [David Penner's CFD projects](https://davidpenner74.wixsite.com/davidpenner/projects): portfolio of applied CFD projects
+
+### Video lectures
+- [AeroCFD lecture series](https://www.youtube.com/@AeroCFD): university-level CFD lectures
+- [Computational Fluid Dynamics, ME615, IIT Mandi](https://youtube.com/playlist?list=PLOUcBDsCNnMweTuft1qq25CQbyyKqZKvI): a complete university CFD course
+- [Qiqi Wang's CFD lectures](https://www.youtube.com/c/QiqiWangGG): numerical analysis for CFD
+- [The Perić lectures on CFD](https://youtu.be/8a0j2DQiTVQ): an industry perspective
+- [Numerical methods by hand](https://youtube.com/playlist?list=PL5_Bm_WH1i3fAQP6G2_SaazjNIy3m8QbH): algorithms worked through manually
+- [Mechanics problems solved by hand](https://youtube.com/playlist?list=PL7FF084F8C414D602)
+- [Postcard Professor](https://www.youtube.com/c/PostcardProfessor/playlists): step-by-step mechanics problem solving
+- [Additional worked solutions](https://www.youtube.com/watch?v=PPt_FfoUqBQ&list=PLD45F0FD958B864AD)
+- [Theoretical mechanics and numerical methods](https://www.youtube.com/channel/UCcqQi9LT0ETkRoUu8eYaEkg)
+- [Data-Driven Methods for Science and Engineering seminar](https://youtube.com/playlist?list=PLWL3MaEZQ5I0x5SoN-whc6wfxvZr4E5v9)
+- [Gentle introduction to fluid concepts](https://www.youtube.com/watch?v=zGuVWSKBc4Y&list=PLyYlZ2ZyWpnh6Xy8xsqIFQKPiMzVkUkdG)
 
 ## Contributing
 
-Contributions are welcome from researchers, engineers, educators, and students. High-quality additions should improve accuracy, clarity, reproducibility, or coverage.
-
-### How to Contribute
-
-1. **Fork** this repository
-2. **Create** a feature branch (`git checkout -b feature/YourContribution`)
-3. **Make** your changes with clear, descriptive commits
-4. **Test** your additions and ensure documentation is updated
-5. **Push** to your fork (`git push origin feature/YourContribution`)
-6. **Open** a Pull Request with detailed description
-
-### Contribution Guidelines
-
-- **Documentation**: Use clear, technical language with proper mathematical notation (LaTeX where appropriate)
-- **Code**: Include comments, validation examples, and performance considerations
-- **Formatting**: Follow existing structure and markdown conventions
-- **References**: Cite sources and provide links to supporting material
-- **Quality**: Ensure accuracy through peer review and testing
-- **Accessibility**: Write for international audiences, avoid jargon without explanation
-
-### Types of Contributions Welcome
-
-| Category | Examples | Impact Level |
-|----------|----------|--------------|
-| **Bug Fixes** | Equation corrections, code errors, broken links | Critical |
-| **Content** | New tutorials, expanded explanations, case studies | High |
-| **Code** | New algorithms, optimizations, implementations | High |
-| **Examples** | Practical demonstrations, validation cases | Medium |
-| **Tools** | Scripts, integrations, workflow improvements | Medium |
-| **Translations** | Multilingual content, accessibility | Medium |
-| **Visualizations** | Plots, diagrams, animations | Medium |
-| **References** | New papers, books, courses, resources | Low |
-
-### Quality Standards
-
-Contributions should be technically correct, reproducible, and useful to readers with different backgrounds. When adding new material, include enough context to explain why the topic matters, what assumptions are being made, how the method is implemented, and how the result can be checked. For code contributions, prefer clear structure, documented inputs and outputs, reproducible examples, and validation against analytical solutions, benchmark cases, or trusted references where possible.
-
-### Recognition and Credits
-
-All contributors are acknowledged in our [Contributors](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/graphs/contributors) page. Significant contributions may be highlighted in release notes and documentation.
-
----
-
-## Content Organization
-
-The repository is organized into notes, practice material, scripts, simulations, and external references. Each section supports a different mode of learning: conceptual study, hands-on implementation, software workflow development, or further reading.
-
-### [Notes](./notes/)
-**Theoretical foundations** — More than 103 documents covering CFD theory, applied fluid mechanics, numerical methods, and related computational approaches.
-
-#### [Fluid Mechanics](./notes/fluid_mechanics/)
-**Coverage across more than 15 major topic areas**
-
-<details>
-<summary><b>Fluid mechanics topics</b></summary>
-
-##### **[Fundamentals](./notes/fluid_mechanics/intro.md)**
-- **Continuum Hypothesis**: When and why we treat fluids as continuous media
-- **Conservation Principles**: Mass, momentum, and energy in fluid systems
-- **Mathematical Framework**: Vector calculus, tensors, and field theory
-- **Material vs. Spatial Description**: Lagrangian and Eulerian perspectives
-- **Control Volume Analysis**: Integral and differential forms
-
-##### **[Governing Equations](./notes/fluid_mechanics/governing_equations/)**
-- **Navier-Stokes Equations**: Complete derivation from first principles
-- **Continuity Equation**: Mass conservation in differential form
-- **Momentum Equations**: Newton's second law for fluids
-- **Energy Equation**: First law of thermodynamics for moving fluids
-- **Constitutive Relations**: Stress-strain relationships for various fluids
-- **Simplified Forms**: Euler equations, Stokes flow, potential flow
-
-##### **[Dimensional Analysis](./notes/fluid_mechanics/dimensions.md)**
-- **Buckingham Pi Theorem**: Systematic approach to dimensionless groups
-- **Dimensionless Numbers**: Reynolds, Mach, Froude, Prandtl, and dozens more
-- **Similarity Theory**: Physical and mathematical similarity
-- **Scaling Laws**: From laboratory to full-scale applications
-- **Model Testing**: Wind tunnel and water channel experiments
-
-##### **[Fluid Properties](./notes/fluid_mechanics/fluid_properties/)**
-- **Viscosity**: Dynamic and kinematic, temperature dependence
-- **Surface Tension**: Capillary effects, wetting phenomena
-- **Compressibility**: Equation of state, speed of sound
-- **Thermal Properties**: Conductivity, specific heat, expansion
-- **Non-Newtonian Behavior**: Shear-thinning, shear-thickening, viscoelasticity
-
-##### **[Fluid Statics](./notes/fluid_mechanics/fluid_statics/)**
-- **Hydrostatic Pressure**: Pressure variation in static fluids
-- **Buoyancy**: Archimedes' principle and applications
-- **Stability**: Floating bodies, metacentric height
-- **Pressure Measurement**: Manometers and pressure gauges
-- **Surfaces Under Pressure**: Forces on submerged surfaces
-
-##### **[Flow Kinematics](./notes/fluid_mechanics/flow_kinematics/)**
-- **Velocity Fields**: Eulerian vs. Lagrangian descriptions
-- **Streamlines, Pathlines, Streaklines**: Flow visualization concepts
-- **Vorticity and Circulation**: Rotational aspects of flow
-- **Deformation Tensor**: Strain rate and rotation rate
-- **Reynolds Transport Theorem**: Moving control volumes
-
-##### **[Inviscid Flow](./notes/fluid_mechanics/inviscid_flow/)**
-- **Potential Flow Theory**: Velocity potential and stream function
-- **Elementary Solutions**: Uniform flow, sources, sinks, doublets, vortices
-- **Superposition**: Building complex flows from simple solutions
-- **Bernoulli's Equation**: Energy conservation in inviscid flows
-- **Airfoil Theory**: Thin airfoil theory, Kutta condition
-- **Complex Analysis**: Conformal mapping for 2D flows
-
-##### **[Viscous Flow](./notes/fluid_mechanics/viscous_flow/)**
-- **Boundary Layer Theory**: Prandtl's revolutionary concept
-- **Laminar Boundary Layers**: Blasius solution, Falkner-Skan flows
-- **Boundary Layer Separation**: Adverse pressure gradients
-- **Drag Analysis**: Friction drag, pressure drag, form drag
-- **Exact Solutions**: Couette flow, Poiseuille flow, Stokes flow
-- **Internal Flows**: Fully developed pipe and channel flows
-
-##### **[Compressible Flow](./notes/fluid_mechanics/compressible_flow/)**
-- **Gas Dynamics**: Thermodynamics of high-speed flows
-- **Shock Waves**: Normal shocks, oblique shocks, expansion waves
-- **Isentropic Flow**: Nozzles and diffusers
-- **Fanno Flow**: Adiabatic flow with friction
-- **Rayleigh Flow**: Frictionless flow with heat transfer
-- **Supersonic Aerodynamics**: Mach cones, wave drag
-
-##### **[Turbulence Theory](./notes/fluid_mechanics/turbulence/)**
-- **Nature of Turbulence**: Characteristics and causes
-- **Reynolds Decomposition**: Mean and fluctuating components
-- **Turbulent Kinetic Energy**: Production, transport, dissipation
-- **Energy Cascade**: Richardson's concept, Kolmogorov theory
-- **Statistical Description**: Correlations, spectra, structure functions
-- **Modeling Approaches**: RANS, LES, DNS - when to use each
-
-##### **[Internal Flow](./notes/fluid_mechanics/internal_flow/)**
-- **Pipe Flow**: Friction factors, Moody diagram
-- **Network Analysis**: Multiple pipes, junctions
-- **Minor Losses**: Bends, valves, fittings
-- **Pumps and Fans**: Performance curves, system curves
-- **Ventilation**: HVAC applications
-
-##### **[Specialized Topics](./notes/fluid_mechanics/specialized_topics/)**
-- **Fluid-Structure Interaction**: Vortex-induced vibration, flutter
-- **Multiphase Flows**: Gas-liquid, liquid-solid interactions
-- **Microfluidics**: Lab-on-a-chip, electrokinetics
-- **Geophysical Flows**: Atmospheric and oceanic circulation
-- **Biological Flows**: Blood flow, respiratory systems
-- **Environmental Flows**: Pollution dispersion, river hydraulics
-
-</details>
-
-#### [Applied Mechanics](./notes/applied_mechanics/)
-**Engineering applications and design methodologies**
-
-<details>
-<summary><b>Engineering discipline integration</b></summary>
-
-- **Control Systems**: Feedback loops for flow control, active flow management
-- **Dynamics**: Vibration analysis, modal testing, dynamic response
-- **Fluid Loading**: Pressure distributions, force calculations, moment analysis
-- **Mechanical Systems**: Component design, optimization, failure analysis
-- **Statics**: Equilibrium, free body diagrams, stress analysis
-- **Strength of Materials**: Material selection, fatigue, fracture mechanics
-- **Transportation**: Vehicle aerodynamics, marine hydrodynamics, railway applications
-
-</details>
-
-#### [Machine Learning](./notes/machine_learning/)
-**Data-driven and physics-informed approaches to fluid mechanics**
-
-<details>
-<summary><b>AI and machine learning integration in CFD</b></summary>
-
-- **Physics-Informed Neural Networks (PINNs)**: Embedding PDEs in loss functions
-- **Neural Network Architectures**: CNNs for spatial data, RNNs for temporal sequences
-- **Flow Pattern Recognition**: Unsupervised learning for turbulent structures
-- **Geometry Optimization**: AI-driven shape optimization and generative design
-- **Reduced Order Modeling**: Autoencoders, variational autoencoders
-- **Automotive Aerodynamics**: ML for drag reduction and downforce optimization
-- **Surrogate Modeling**: Fast approximations of expensive simulations
-- **Active Learning**: Intelligent sampling strategies for parameter spaces
-
-</details>
-
-#### [Numerical Methods](./notes/numerical/)
-**Computational methods and algorithm implementation**
-
-<details>
-<summary><b>Numerical methods coverage</b></summary>
-
-##### **[CFD Methods Overview](./notes/numerical/cfd/)**
-Comparative analysis of major discretization approaches, when to use each method, advantages and limitations
-
-##### **[Finite Difference Methods (FDM)](./notes/numerical/fdm/)**
-- Grid generation and stencil operations
-- Central, forward, backward differences
-- Accuracy and stability analysis
-- Explicit vs. implicit schemes
-- Applications to simple geometries
-
-##### **[Finite Element Methods (FEM)](./notes/numerical/fem/)**
-- Variational formulations and weak forms
-- Element types and shape functions
-- Assembly of global matrices
-- Galerkin and Petrov-Galerkin methods
-- Applications to complex geometries
-
-##### **[Finite Volume Methods (FVM)](./notes/numerical/fvm/)**
-- Conservation-based discretization
-- Flux calculation and reconstruction
-- SIMPLE, SIMPLER, PISO algorithms
-- Pressure-velocity coupling
-- Industry-standard approach in CFD
-
-##### **[Lattice Boltzmann Methods (LBM)](./notes/numerical/lattice_boltzmann/)**
-- Kinetic theory foundations
-- Collision and streaming steps
-- Boundary conditions in LBM
-- Advantages for complex geometries
-- Parallel implementation
-
-##### **[Proper Orthogonal Decomposition (POD)](./notes/numerical/pod/)**
-- SVD-based mode extraction
-- Energy-optimal basis functions
-- Modal decomposition of flow fields
-- Reduced order model construction
-
-##### **[Reduced Order Models (ROM)](./notes/numerical/rom/)**
-- Galerkin projection methods
-- POD-Galerkin approach
-- Dynamic mode decomposition (DMD)
-- Real-time simulation capabilities
-
-##### **[Surrogate Models](./notes/numerical/surrogates/)**
-- Gaussian processes and kriging
-- Radial basis functions
-- Response surface methodologies
-- Uncertainty quantification
-
-</details>
-
----
-
-### [Practice](./practice/)
-**Tutorials, software guides, and implementation examples**
-
-The practice section connects theory to implementation through tutorials for standard CFD and scientific computing tools.
-
-#### [Gmsh: Mesh Generation](./practice/gmsh/)
-
-<details>
-<summary><b>Computational meshing topics</b></summary>
-
-- **[Introduction to Gmsh](./practice/gmsh/intro.md)**: Installation, interface overview, basic concepts
-- **[Volume Mesh Generation](./practice/gmsh/generate_volume_mesh.md)**: Tetrahedral, hexahedral, hybrid meshes
-- **Mesh Quality Metrics**: Skewness, aspect ratio, orthogonality
-- **Advanced Techniques**: Boundary layers, refinement regions, anisotropic meshing
-- **Scripting**: Automating mesh generation with .geo files
-- **Integration**: Exporting meshes for OpenFOAM, Fluent, SU2
-
-</details>
-
-#### [ParaView: Scientific Visualization](./practice/paraview/)
-
-<details>
-<summary><b>Post-processing topics</b></summary>
-
-- **[ParaView Introduction](./practice/paraview/intro.md)**: Interface navigation, basic operations
-- **[External Package Integration](./practice/paraview/import_external_packages.md)**: Custom filters and plugins
-- **Advanced Visualization**: Streamlines, isosurfaces, volume rendering
-- **Quantitative Analysis**: Line plots, histogram, statistical tools
-- **Animation**: Time-series visualization, camera paths
-- **Python Scripting**: Automating visualization workflows
-- **High-Quality Rendering**: Publication-ready images
-
-</details>
-
-#### [Manual Projects](./practice/manual_projects/)
-
-Detailed end-to-end project implementations, from problem definition to validated results:
-- Flow over cylinders with vortex shedding analysis
-- Lid-driven cavity benchmark validation
-- Airfoil analysis at various angles of attack
-- Heat exchanger optimization studies
-- Turbulent pipe flow comparisons
-
-#### [OpenFOAM Tutorials](./practice/openfoam/)
-
-Step-by-step guides for the world's most popular open-source CFD software (coming soon)
-
-#### [CFD Tools Ecosystem](./practice/cfd_tools/)
-
-Comprehensive guide to the CFD software landscape (coming soon)
-
----
-
-### [Scripts](./scripts/)
-**Computational tools, algorithms, simulations, and visualizations**
-
-The scripts provide reusable implementations and examples for numerical methods, post-processing, visualization, and complete simulation workflows.
-
-#### [Algorithms](./scripts/algorithms/)
-**Mathematical and computational implementations**
-
-<details>
-<summary><b>Available algorithms</b></summary>
-
-| Algorithm | Description | Applications |
-|-----------|-------------|--------------|
-| **[Correlation Functions](./scripts/algorithms/correlation_functions/)** | Spatial and temporal correlations | Turbulence statistics, pattern analysis |
-| **[Kriging Interpolation](./scripts/algorithms/kriging_interpolation/)** | Gaussian process regression | Surrogate modeling, optimization |
-| **[SVD Image Compression](./scripts/algorithms/image_compression_using_svd/)** | Singular value decomposition | Data compression, feature extraction |
-| **[POD Analysis](./scripts/algorithms/pod/)** | Proper orthogonal decomposition | Modal analysis, ROM construction |
-| **[Snapshot POD](./scripts/algorithms/snapshot_pod/)** | Efficient POD for large datasets | Flow field decomposition |
-| **[Radial Basis Functions](./scripts/algorithms/radial_basis_functions/)** | RBF interpolation and approximation | Mesh morphing, optimization |
-| **[Condition Number Analysis](./scripts/algorithms/condition_number_of_the_correlation_matrix/)** | Matrix conditioning assessment | Numerical stability, kriging | Each algorithm includes:
-- Theoretical background and mathematical formulation
-- Well-commented, modular implementation
-- Validation against analytical/benchmark solutions
-- Visualization of results
-- Performance considerations and optimization tips
-
-</details>
-
-#### [Visualization Scripts](./scripts/plots/)
-**Plotting and analysis tools with more than 30 scripts**
-
-<details>
-<summary><b>Visualization suite</b></summary>
-
-**Aerodynamics & External Flows:**
-- [Airfoil Profile Analysis](./scripts/plots/airfoil_profile/) - Geometry and pressure distribution
-- [Airfoil Angle of Attack Studies](./scripts/plots/airfoil_angle_attack/) - Performance curves
-- [Drag Coefficient Prediction](./scripts/plots/drag_coefficient_prediction/) - Validation cases
-- [Mean Pressure Coefficient](./scripts/plots/mean_pressure_coefficient/) - Surface pressure plots
-
-**Boundary Layer Phenomena:**
-- [Boundary Layer Velocity Profiles](./scripts/plots/boundary_layer_velocity_profile/) - u+ vs y+
-- [Laminar vs Turbulent Boundary Layers](./scripts/plots/laminar_vs_turbulent_boundary_layer/) - Comparison
-- [Flow Separation Analysis](./scripts/plots/flow_separation_boundary_layer/) - Separation prediction
-- [Boundary Layer Problems](./scripts/plots/boundary_layer_problem/) - Classic solutions
-
-**Internal Flows:**
-- [Laminar vs Turbulent Pipe Flow](./scripts/plots/laminar_vs_turbulent_pipe/) - Friction factors
-- [Flow Rate in Pipes](./scripts/plots/flow_rate_pipe/) - Moody diagram applications
-
-**Turbulence Analysis:**
-- [Turbulent Flow Statistics](./scripts/plots/turbulent_flow/) - Reynolds stresses
-- [POD Modes Visualization](./scripts/plots/pod_modes_2d/) - Energy-ranked modes
-- [POD Modes and Temporal Coefficients](./scripts/plots/pod_modes_and_temporal_coefficients/) - Time evolution
-- [POD Analysis for Flow Fields](./scripts/plots/pod_analysis_for_flow_fields/) - Complete workflow
-- [Time-Averaged Velocity Field](./scripts/plots/time_averaged_velocity_field/) - Mean flow extraction
-- [Longitudinal Velocity Fluctuations](./scripts/plots/longitudinal_velocity_fluctuations_and_projections/) - Turbulence intensity
-
-**Compressible Flows:**
-- [Compressible vs Incompressible](./scripts/plots/compressible_vs_incompressible/) - Mach number effects
-- [Nozzle Flow Analysis](./scripts/plots/nozzle_flow/) - Isentropic relations
-
-**Multiphase & Surface Tension:**
-- [Meniscus Behavior](./scripts/plots/meniscus_behavior/) - Capillary effects
-- [Pressure Difference Across Droplet](./scripts/plots/pressure_difference_across_spherical_droplet/) - Young-Laplace
-- [Ship Hull in Water](./scripts/plots/ship_hull_in_water/) - Wave resistance
-
-**Fundamentals & Dimensionless Numbers:**
-- [Froude Number Analysis](./scripts/plots/froude_number/) - Free surface flows
-- [Velocity Layers and Viscosity](./scripts/plots/velocity_layers_viscosity/) - Rheology
-- [Archimedes Principle](./scripts/plots/archimedes_principle/) - Buoyancy demonstration
-
-**Flow Visualization & Kinematics:**
-- [Eulerian vs Lagrangian Flows](./scripts/plots/eulerian_lagrangian_flows/) - Description comparison
-- [Mean Velocity Magnitude](./scripts/plots/mean_velocity_magnitude/) - Vector field visualization
-
-**Numerical Methods:**
-- [Grid Convergence Studies](./scripts/plots/comparing_grid_convergence/) - Mesh independence
-- [Residual Variation](./scripts/plots/variation_of_residual/) - Convergence monitoring
-
-**Statistical & Molecular:**
-- [Probability Distribution of N₂ Molecules](./scripts/plots/probability_distribution_function_of_nitrogen_molecules/) - Kinetic theory
-
-**Design Space Exploration:**
-- [Design Space Distribution](./scripts/plots/design_space_distribution/) - Parameter studies
-
-</details>
-
-#### [Simulations](./scripts/simulations/)
-**Complete simulation setups from problem definition to results**
-
-<details>
-<summary><b>Simulation cases</b></summary>
-
-**Classical CFD Benchmarks:**
-- **[Lid-Driven Cavity](./scripts/simulations/lid_driven_cavity/)**: The CFD "Hello World" - Validation of incompressible solvers
-- **[Backward-Facing Step](./scripts/simulations/backward_facing_step_simple/)**: Flow separation and reattachment
-
-**External Flow Problems:**
-- **[Flow Past Cylinder (Eulerian)](./scripts/simulations/eulerian_cylinder_flow/)**: Vortex shedding, Strouhal number
-- **[Cylinder Flow (Lattice Boltzmann)](./scripts/simulations/lattice_boltzmann_cylinder_flow/)**: LBM implementation
-
-**Complex Phenomena:**
-- **[Kelvin-Helmholtz Instability](./scripts/simulations/kelvin_helmholtz_instability/)**: Shear layer instabilities
-- **[Rayleigh-Bénard Convection](./scripts/simulations/rayleigh_benard_convection/)**: Natural convection, pattern formation
-- **[Vortex Shedding & Pathlines](./scripts/simulations/steady_and_unsteady_pathlines_with_vortex_shedding/)**: Unsteady visualization
-
-**Heat Transfer:**
-- **[1D Heat & Wave Equations](./scripts/simulations/1d_heat_and_wave_equations/)**: Fundamental PDE solutions
-- **[2D Wave Simulation](./scripts/simulations/2d_wave_simulation/)**: Wave propagation
-
-**Fluid Dynamics Simulator:**
-- **[Real-Time Fluid Simulator](./scripts/simulations/simplified_real_time_fluid_dynamics_simulator/)**: Interactive visualization
-
-**Interdisciplinary Applications:**
-- **[Charged Particle in Magnetic Field](./scripts/simulations/charged_particle_dynamics_in_a_magnetic_field_using_runge_kutta_methods/)**: Runge-Kutta methods
-- **[Schrödinger Equation](./scripts/simulations/schroedinger_equation/)**: Quantum mechanics analogy
-
-**Statistical Physics:**
-- **[Ising Model](./scripts/simulations/ising_model/)**: Phase transitions
-- **[Bak-Tang-Wiesenfeld Sandpile](./scripts/simulations/bak_tang_wiesenfeld_sandpile_model_3d/)**: Self-organized criticality
-
-**Creative Applications:**
-- **[Laplace Equation Maze Solver](./scripts/simulations/laplace_equation_maze_solver/)**: Potential flow in complex domains
-
-Each simulation includes:
-- Problem description and physical significance
-- Learning objectives
-- Setup instructions and parameter files
-- Numerical method details
-- Post-processing scripts
-- Validation data and expected results
-- Extensions and research directions
-
-</details>
-
----
-
-## Getting Started
-
-### Prerequisites and Skill Assessment
-
-<details>
-<summary><b>Core knowledge requirements</b></summary>
-
-**Mathematics (Essential):**
-- Vector Calculus: Gradients, divergence, curl, line/surface integrals
-- Differential Equations: ODEs, PDEs, classification of PDEs
-- Linear Algebra: Matrices, eigenvalues, SVD, norms
-- Numerical Analysis: Truncation error, stability, convergence
-
-**Physics (Essential):**
-- Classical Mechanics: Newton's laws, conservation principles
-- Thermodynamics: First/second laws, equations of state
-- Fluid Mechanics: Basic concepts, Bernoulli, viscosity
-
-**Programming (Recommended):**
-- Python: NumPy, SciPy, Matplotlib basics
-- MATLAB: Or compatible alternatives (Octave, Julia)
-- Version Control: Git fundamentals for collaboration
-
-**Software (Will Learn):**
-- ParaView: Scientific visualization (we'll teach you)
-- Gmsh: Mesh generation (tutorials provided)
-- Text Editor/IDE: VS Code, PyCharm, or similar
-
-</details>
-
-### Quick Start Guide: First Two Weeks
-
-#### **Week 1: Foundation Building**
-
-**Day 1-2: Understanding the Basics**
-```
- Read: Fluid Mechanics Fundamentals (./notes/fluid_mechanics/intro.md)
- Learn: What is CFD? When do we need it? What can it do?
- Goal: Understand continuum hypothesis and conservation laws
-```
-
-**Day 3-4: Mathematical Framework**
-```
- Read: Governing Equations introduction
- Learn: Navier-Stokes equations conceptually
- Goal: Recognize the equations, understand each term physically
- Exercise: Identify terms in simple flow problems
-```
-
-**Day 5-7: First Computational Experience**
-```
- Install: Python, NumPy, Matplotlib
- Run: Simple 1D heat equation script (./scripts/simulations/1d_heat_and_wave_equations/)
- Visualize: Temperature evolution over time
- Goal: See how equations become code become solutions
-```
-
-#### **Week 2: Hands-On Application**
-
-**Day 8-9: Visualization Tools**
-```
- Install: ParaView (free, powerful)
- Follow: ParaView Introduction (./practice/paraview/intro.md)
- Load: Example dataset, create streamlines
- Goal: Visualize flow fields professionally
-```
-
-**Day 10-12: Your First Complete Simulation**
-```
- Run: Lid-driven cavity (./scripts/simulations/lid_driven_cavity/)
- Understand: Problem setup, boundary conditions
- Analyze: Velocity profiles, vortex formation
- Goal: Complete simulation start-to-finish
- Validate: Compare against benchmark data
-```
-
-**Day 13-14: Consolidation & Next Steps**
-```
- Review: What you've learned
- Plan: Choose your learning pathway
- Engage: Join CFD communities, ask questions
- Document: Your learning journey
-```
-
-### Recommended Learning Sequence
-
-**For Complete Beginners:**
-1. Start with [Fluid Mechanics Fundamentals](./notes/fluid_mechanics/intro.md)
-2. Read [Dimensional Analysis](./notes/fluid_mechanics/dimensions.md) - understand Reynolds number
-3. Run [1D Heat Equation](./scripts/simulations/1d_heat_and_wave_equations/) to see numerics in action
-4. Try [Lid-Driven Cavity](./scripts/simulations/lid_driven_cavity/) as first CFD problem
-5. Learn [ParaView](./practice/paraview/intro.md) for visualization
-6. Explore [Finite Volume Methods](./notes/numerical/fvm/) for industry-standard approach
-
-**For Students with Fluid Mechanics Background:**
-1. Review [Governing Equations](./notes/fluid_mechanics/governing_equations/)
-2. Deep dive into [Turbulence Theory](./notes/fluid_mechanics/turbulence/)
-3. Study [Finite Volume Methods](./notes/numerical/fvm/) in detail
-4. Implement [Backward-Facing Step](./scripts/simulations/backward_facing_step_simple/)
-5. Analyze results with [Visualization Scripts](./scripts/plots/)
-6. Explore [POD Analysis](./scripts/algorithms/pod/) for data-driven methods
-
-**For Practicing Engineers:**
-1. Review [CFD Methods Overview](./notes/numerical/cfd/) to understand solver internals
-2. Master [Gmsh](./practice/gmsh/) for custom geometries
-3. Study industry-relevant cases in [Manual Projects](./practice/manual_projects/)
-4. Automate workflows with [Scripts](./scripts/)
-5. Learn [Advanced Turbulence Modeling](./notes/fluid_mechanics/turbulence/)
-6. Explore [Optimization Methods](./notes/machine_learning/) for design
-
-**For ML/AI Practitioners:**
-1. Quick CFD overview: [Fundamentals](./notes/fluid_mechanics/intro.md)
-2. Understand [Navier-Stokes Equations](./notes/fluid_mechanics/governing_equations/)
-3. Learn [POD/ROM](./notes/numerical/pod/) for dimensionality reduction
-4. Study [Machine Learning Notes](./notes/machine_learning/)
-5. Implement [Physics-Informed Neural Networks](./notes/machine_learning/)
-6. Apply to [Optimization Problems](./scripts/algorithms/)
-
----
-
-## Key Features and Differentiators
-
-### Comprehensive Coverage
-- **103+ Theory Documents**: Every concept explained from first principles to advanced applications
-- **57+ Python Scripts**: Production-ready, validated implementations
-- **30+ Visualization Tools**: Professional-quality plots and animations
-- **15+ Complete Simulations**: From setup to validated results
-- **9+ Core Algorithms**: Mathematical implementations with theory
-
-### Educational Design
-- **Progressive Complexity**: Carefully ordered from basics to cutting-edge research
-- **Multiple Learning Styles**: Theory, code, visualizations, hands-on projects
-- **Cross-Referenced**: Navigate seamlessly between related concepts
-- **Validated Content**: Benchmarked against literature and standard cases
-- **Active Maintenance**: Regular updates with latest developments
-
-### Practical Applicability
-- **Industry-Standard Tools**: ParaView, Gmsh, OpenFOAM integration
-- **Real-World Problems**: Not just toy examples, actual engineering challenges
-- **Performance Optimized**: Efficient implementations with profiling
-- **Reproducible Results**: Complete documentation for every script
-- **Extensible Codebase**: Modular design for easy customization
-
-### Research-Grade Content
-- **Latest Developments**: ML/AI integration, modern numerical methods
-- **Literature Connected**: 80+ references to papers, books, courses
-- **Novel Methods**: Cutting-edge techniques not in textbooks
-- **Open Problems**: Guidance on current research frontiers
-- **Citation Ready**: Properly formatted, academically rigorous
-
-### Community Focus
-- **Open Source**: MIT license, use anywhere for any purpose
-- **Collaborative**: Contributions welcome from all skill levels
-- **Diverse Perspectives**: Global community of contributors
-- **Supportive**: Detailed docs, examples, troubleshooting guides
-- **Growing**: New content added regularly based on community needs
-
----
-
-## Troubleshooting and FAQ
-
-<details>
-<summary><b>Common issues and solutions</b></summary>
-
-### Getting Started Problems
-
-**Q: I'm overwhelmed. Where should I actually start?**
-A: Begin with the [Fundamentals](./notes/fluid_mechanics/intro.md), then run the [Lid-Driven Cavity](./scripts/simulations/lid_driven_cavity/) simulation. This provides a manageable first step before deeper study.
-
-**Q: I don't have a strong math background. Can I still learn CFD?**
-A: Yes, but it will take more time. Start with the fundamentals and use online resources (Khan Academy, MIT OpenCourseWare) to fill gaps as needed. Focus on physical understanding first.
-
-**Q: What programming language should I use?**
-A: Python is recommended for beginners (used in this repo). MATLAB is also common in academia. For production CFD, C/C++ and Fortran are standard but not necessary for learning.
-
-### Technical Issues
-
-**Q: My simulation diverges. What should I check?**
-A: Common causes (in order of frequency):
-1. Time step too large (reduce by 10x and try)
-2. Boundary conditions incorrect or conflicting
-3. Initial conditions far from solution
-4. Mesh quality poor (high skewness, aspect ratio)
-5. Numerical scheme inappropriate for the problem
-
-**Q: Results don't match theory/experiments. Why?**
-A: Systematic debugging:
-1. Verify geometry and mesh are correct
-2. Check boundary conditions carefully
-3. Ensure proper units and scaling
-4. Verify convergence (residuals, monitors)
-5. Compare turbulence model predictions
-6. Assess if flow regime matches assumptions
-
-**Q: Simulation runtime is too long. How can I improve performance?**
-A:
-1. Start with coarser mesh, refine only where needed
-2. Use symmetry to reduce domain size
-3. Choose efficient solver settings (multigrid, etc.)
-4. Parallelize (MPI) if available
-5. Consider steady-state instead of transient if appropriate
-6. Use better initial guess (from similar case)
-
-### Conceptual Questions
-
-**Q: What's the difference between RANS, LES, and DNS?**
-A:
-- **DNS** (Direct Numerical Simulation): Resolves all relevant turbulence scales. It is highly accurate for appropriate problem settings, but computationally expensive and primarily used in research.
-- **LES** (Large Eddy Simulation): Resolves large eddies and models smaller scales. It can provide detailed unsteady information, but generally requires substantially more computation than RANS.
-- **RANS** (Reynolds-Averaged Navier-Stokes): Models turbulence effects through averaged equations. It is widely used in industry because it balances accuracy, robustness, and cost.
-
-**Q: Which turbulence model should I use?**
-A: Quick guide:
-- **k-ε**: General purpose, external flows, high Reynolds number
-- **k-ω SST**: Boundary layers, separation, most versatile
-- **Spalart-Allmaras**: Aerospace, external aerodynamics
-- **LES**: Unsteady, complex geometries, when RANS fails
-When in doubt, start with k-ω SST.
-
-**Q: How do I know if my mesh is good enough?**
-A: Perform mesh independence study:
-1. Run simulation on your mesh
-2. Refine mesh (2x points in each direction)
-3. Compare key results (drag, pressure, etc.)
-4. If <1-2% difference, original mesh is acceptable
-5. Always check mesh quality metrics (skewness < 0.85, aspect ratio < 100)
-
-**Q: What's Y+ and why does everyone talk about it?**
-A: Y+ is a dimensionless wall distance. Critical for turbulence modeling:
-- **Y+ < 1**: Resolve viscous sublayer (best accuracy, expensive)
-- **30 < Y+ < 300**: Use wall functions (industry standard)
-- **1 < Y+ < 30**: "Buffer layer" - avoid this range!
-
-</details>
-
----
-
-## References and Further Reading
-
-**A curated, categorized collection of more than 80 resources spanning textbooks, research papers, online courses, code repositories, and visualization tools.**
-
-### Essential Online Resources
-
-**Interactive Learning Platforms:**
-- [CFD Python: 12 Steps to Navier-Stokes by Lorena Barba](https://lorenabarba.com/blog/cfd-python-12-steps-to-navier-stokes/) - A widely used hands-on introduction to CFD through Python, structured in incremental steps.
-- [CFD General Principles by CFD Direct](https://doc.cfd.direct/notes/cfd-general-principles/) - Fundamental concepts explained by the makers of OpenFOAM
-- [Scientific Computing by Chasnov](https://math.libretexts.org/Bookshelves/Scientific_Computing_Simulations_and_Modeling/Scientific_Computing_(Chasnov)/III%3A_Computational_Fluid_Dynamics/14%3A_The_Governing_Equations) - Complete theoretical foundations with clear explanations
-
-**Validation & Benchmark Databases:**
-- [NASA Turbulence Modeling Resource](https://turbmodels.larc.nasa.gov/) - A major database for turbulence model validation cases
-- [Wall-Modeled Large Eddy Simulation Resource](https://wmles.umd.edu/) - Comprehensive WMLES database and guidelines
-- [Airfoil Tools Database](http://www.airfoiltools.com/) - Extensive airfoil geometry and performance data
-- [NWTF Experimental Database](https://www.nwtf.ac.uk/dataset/2687/) - Airbus Wind Tunnel Dataset on RAE2822 transonic aerofoil
-
-**Academic Repositories:**
-- [DepositOnce - TU Berlin](https://depositonce.tu-berlin.de/) - Academic repository with cutting-edge CFD research
-- [National Committee for Fluid Mechanics Film Series](https://youtube.com/playlist?list=PL0EC6527BE871ABA3) - Classic educational films, timeless fluid mechanics visualization
-
----
-
-### Essential Textbooks
-
-**Foundational CFD Theory** *(Start Here)*
-
-| Book | Authors | Best For | Level |
-|------|---------|----------|-------|
-| [**Computational Fluid Dynamics: The Basics with Applications**](https://amzn.to/42iuJNV) | **John D. Anderson** | Comprehensive introduction, aerospace emphasis | Beginner-Intermediate |
-| [**An Introduction to Computational Fluid Dynamics: The Finite Volume Method**](https://amzn.to/3EbEMfG) | **H.K. Versteeg & W. Malalasekera** | Industry-standard FVM approach, very clear | Beginner-Intermediate |
-| [**Computational Methods for Fluid Dynamics**](https://amzn.to/3FSZ9iq) | **Ferziger, Peric & Street** | Advanced, comprehensive, graduate-level | Advanced | **Numerical Methods & Implementation**
-
-| Book | Authors | Best For | Level |
-|------|---------|----------|-------|
-| [**Numerical Heat Transfer and Fluid Flow**](https://amzn.to/42qd0o1) | **Suhas V. Patankar** | Classic text, SIMPLE algorithm, still relevant | Intermediate |
-| [**Computational Fluid Dynamics: Principles and Applications**](https://amzn.to/4j7adqY) | **J. Blazek** | Industrial CFD, practical guidelines | Intermediate-Advanced | **Modern Data-Driven Approaches**
-
-| Book | Authors | Best For | Level |
-|------|---------|----------|-------|
-| [**Data-Driven Science and Engineering**](https://amzn.to/3RHJncw) | **J. Nathan Kutz** | ML for dynamical systems, POD, DMD | Intermediate-Advanced |
-| [**Machine Learning Control**](https://amzn.to/4jeggJC) | **Steven L. Brunton & Bernd R. Noack** | ML for flow control, cutting-edge | Advanced |
-
----
-
-### Key Research Papers
-
-**Machine Learning in CFD** *(The Future)*
-
-- [**Machine Learning for Fluid Dynamics: An Overview**](https://arxiv.org/abs/1905.11075)
-  *Comprehensive review of ML applications in fluid mechanics. Essential reading for anyone entering the field.*
-
-- [**Machine Learning-Based CFD Simulations: A Review**](https://link.springer.com/article/10.1007/s00521-022-07838-6)
-  *State-of-the-art analysis, models, open threats, and future tactics. 2022 comprehensive survey.*
-
-- [**Physics-Informed Neural Networks: A Deep Learning Framework for Solving Forward and Inverse Problems**](https://www.brown.edu/research/projects/crunch/sites/brown.edu.research.projects.crunch/files/uploads/Physics-informed%20neural%20networks_A%20deep%20learning%20framwork%20fir%20solving%20forward%20and%20inverse%20probelms%20involving%20nonlinear%20partial%20differential%20equations.pdf)
-  *The foundational PINN paper by Raissi, Perdikaris & Karniadakis. Revolutionized scientific ML.*
-
-- [**Machine Learning in CFD - Recent Advances**](https://www.tandfonline.com/doi/full/10.1080/10618562.2023.2175788)
-  *2023 update on ML integration in computational fluid dynamics.*
-
-- [**Nature Reviews - GK**](https://www.brown.edu/research/projects/crunch/sites/brown.edu.research.projects.crunch/files/uploads/Nature-REviews_GK.pdf)
-  *High-impact review paper on computational methods*
-
-**Future Directions & Vision**
-
-- [**CFD of the Future: Year 2025 and Beyond**](https://www.researchgate.net/publication/339808378_CFD_of_the_Future_Year_2025_and_Beyond)
-  *Expert perspectives on where the field is heading. Insightful predictions on AI, HPC, uncertainty quantification.*
-
-**Historical & Classical References**
-
-- [**Pratt & Whitney: The Aircraft Engine and Its Operation (1949)**](https://www.scribd.com/document/307072703/Pratt-Whitney-The-Aircraft-Engine-and-Its-Operation-Rev1949-BZ)
-  *Classic engineering reference showing the foundations of aerospace CFD applications.*
-
----
-
-### Code Repositories and Open Source Projects
-
-**Educational Implementations** *(Learn by Doing)*
-
-- [**Machine Learning and Simulation by Ceyron**](https://github.com/Ceyron/machine-learning-and-simulation)
-  *Excellent integration of ML techniques with physics simulations. Clean code, great documentation.*
-
-- [**NVIDIA Modulus Airfoil Optimization**](https://github.com/neo-fetch/nvidia-modulus-airfoil-optimisation)
-  *Modern GPU-accelerated CFD with AI. Shows the cutting edge of physics-informed ML.*
-  - [Dr. Yang's LDC 2D Implementation](https://github.com/neo-fetch/nvidia-modulus-airfoil-optimisation/blob/master/Dr-Yang_ldc_2d.py)
-
-**Finite Element Resources**
-
-- [**Introductory Finite Elements - EAFIT**](https://github.com/AppliedMechanics-EAFIT/Introductory-Finite-Elements)
-  *Comprehensive FEM course materials with Python implementations.*
-
-- [**Dolfin X FEM Tutorial**](https://jsdokken.com/dolfinx-tutorial/fem.html)
-  *Modern FEM with FEniCS/DolfinX. Excellent for complex geometries and multiphysics.*
-
-**Project Showcases**
-
-- [**David Penner's CFD Projects**](https://davidpenner74.wixsite.com/davidpenner/projects)
-  *Inspiring portfolio of practical CFD applications and visualizations.*
-
----
-
-### Video Learning Resources
-
-**University-Level Courses** *(Structured Learning)*
-
-- [**MIT Lecture Series on CFD**](https://www.youtube.com/@AeroCFD)
-  *Academic-level instruction from one of the world's premier aerospace programs.*
-
-- [**Computational Fluid Dynamics - ME615 IIT Mandi**](https://youtube.com/playlist?list=PLOUcBDsCNnMweTuft1qq25CQbyyKqZKvI)
-  *Complete university CFD course. Theory, numerics, applications - all covered systematically.*
-
-- [**Qiqi Wang's CFD Lectures**](https://www.youtube.com/c/QiqiWangGG)
-  *MIT professor's extensive collection. Advanced numerical analysis, deep mathematical insights.*
-
-- [**The Perić Lectures on CFD**](https://youtu.be/8a0j2DQiTVQ)
-  *Industry perspective from a leading contributor to commercial CFD development.*
-
-**Numerical Methods Fundamentals**
-
-- [**Numerical Methods by Hand**](https://youtube.com/playlist?list=PL5_Bm_WH1i3fAQP6G2_SaazjNIy3m8QbH)
-  *Understanding algorithms by working through them manually. Builds deep intuition.*
-
-- [**Mechanics Problems Solved by Hand**](https://youtube.com/playlist?list=PL7FF084F8C414D602)
-  *Analytical problem-solving techniques. Valuable for validation and understanding.*
-
-- [**Postcard Professor's Solution Methods**](https://www.youtube.com/c/PostcardProfessor/playlists)
-  *Step-by-step problem solving across various mechanics topics.*
-
-- [**Additional Hand Solutions**](https://www.youtube.com/watch?v=PPt_FfoUqBQ&list=PLD45F0FD958B864AD)
-  *More worked examples across fluid mechanics and applied mathematics.*
-
-- [**Theoretical Mechanics and Numerical Methods Channel**](https://www.youtube.com/channel/UCcqQi9LT0ETkRoUu8eYaEkg)
-  *Various topics from theoretical mechanics to computational methods.*
-
-**Specialized Topics**
-
-- [**Data-Driven Methods for Science and Engineering Seminar**](https://youtube.com/playlist?list=PLWL3MaEZQ5I0x5SoN-whc6wfxvZr4E5v9)
-  *Cutting-edge seminars on ML, ROM, and modern computational methods.*
-
-- [**Gentle Introduction to Fluid Concepts**](https://www.youtube.com/watch?v=zGuVWSKBc4Y&list=PLyYlZ2ZyWpnh6Xy8xsqIFQKPiMzVkUkdG)
-  *Visual, intuitive explanations of complex fluid phenomena. Excellent for beginners.*
-
----
+Corrections, new notes, and new scripts are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the conventions and the checks to run, and see the [roadmap](ROADMAP.md) for topics that still need writing. Bug reports and suggestions go in [issues](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/issues); open-ended ideas can go in [discussions](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/discussions).
 
 ## License
 
-This project is licensed under the **[MIT License](LICENSE)** - see the LICENSE file for full details.
-
-**What this means:**
-- **Free to use** for any purpose (personal, educational, commercial)
-- **Free to modify** and create derivative works
-- **Free to distribute** original or modified versions
-- **Attribution required**: Credit the original authors
-- **No warranty**: Provided "as is" without guarantees
-
-This ensures the content remains **open and accessible** for educational and research purposes worldwide.
-
----
-
-## Acknowledgments
-
-This repository stands on the shoulders of giants. We are deeply grateful to:
-
-- **The Global CFD Community**: Researchers, engineers, and educators who generously share knowledge
-- **Academic Institutions**: Universities worldwide advancing CFD science and educating future practitioners
-- **Open-Source Contributors**: Developers of OpenFOAM, ParaView, Python scientific stack, and countless other tools
-- **Textbook Authors**: Who have distilled complex concepts into accessible learning materials
-- **Pioneering Researchers**: From Navier and Stokes to modern ML practitioners, advancing the field
-- **Direct Contributors**: Everyone who has submitted PRs, reported issues, or suggested improvements
-
-**Special recognition to foundational works:**
-- Ludwig Prandtl's boundary layer theory (1904)
-- The SIMPLE algorithm by Patankar & Spalding (1972)
-- Direct Numerical Simulation pioneers (1970s-1980s)
-- Large Eddy Simulation development (1980s-1990s)
-- Recent Physics-Informed Neural Networks revolution (2017-present)
-
-This repository builds upon **decades of collective research and development** in computational fluid dynamics. Every concept, method, and insight has a rich history we strive to honor and preserve.
-
----
-
-## Contact and Support
-
-**Questions, suggestions, or collaboration requests**
-
-- **Bug Reports**: [Open an issue](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/issues) with details
-- **Feature Requests**: [Propose enhancements](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/issues) with use cases
-- **Collaboration**: [Open a discussion](https://github.com/djeada/Computational-Fluid-Dynamics-CFD-Resources/discussions) for projects
-- **Direct Contact**: Create an issue for private matters (will move to email if needed)
-
----
-
-## Support This Project
-
-**If this repository has helped you**, please:
-- **Star the repository** to show support and boost visibility
-- **Share with colleagues** and students
-- **Provide feedback** through issues or discussions
-- **Contribute back** to help others on their journey
-
-### Building a comprehensive CFD learning resource
-
-*Maintained by the global CFD community*
-
-**Last Updated**: December 2024
-**Content**: 103+ theory docs, 57+ scripts, 15+ simulations, 80+ references
-**Global Reach**: Used by students and professionals worldwide
-
-[Back to Top](#computational-fluid-dynamics-cfd-resources)
-
----
-
-*"In CFD, as in engineering practice, mastery develops through consistent work across theory, implementation, validation, and interpretation. This repository is intended to support that process."*
+Released under the [MIT License](LICENSE).

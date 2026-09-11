@@ -110,3 +110,71 @@ Flow kinematics offers different concepts for visualizing fluid motion:
 These concepts often coincide in steady flows, where the flow pattern does not change with time. In unsteady flows, streamlines, pathlines, and streaklines can differ, providing insights into how the flow evolves and how particles navigate through it.
 
 ![steady_vs_unsteady_flow](https://github.com/user-attachments/assets/10e6d8fa-2f8b-4a24-97fa-63ae9ac01f14)
+
+### Related Scripts
+
+- [Eulerian and Lagrangian Flow Descriptions](../../../scripts/plots/eulerian_lagrangian_flows/): contrasts the Eulerian and Lagrangian descriptions of fluid motion using the time-dependent Double Gyre flow.
+- [Steady and Unsteady Pathlines Around a Cylinder with Vortex Shedding](../../../scripts/simulations/steady_and_unsteady_pathlines_with_vortex_shedding/): compares streamlines and particle pathlines for steady potential flow past a cylinder with circulation and for an unsteady version of the same flow with a kinematic vortex-shedding model.
+
+### Exercises
+
+**Exercise 1.** Explain why streamlines, pathlines and streaklines coincide in a steady flow, and give an everyday example where they differ.
+
+<details>
+<summary>Answer</summary>
+
+In a steady flow the velocity field does not change with time. A particle therefore keeps following the instantaneous streamline through its current position, so its pathline is that streamline. Every particle released from the same point follows the same path, so the streakline coincides too.
+
+In an unsteady flow they differ. One example is smoke from a chimney when the wind keeps changing direction: the smoke plume (the streakline) curls, while the streamline pattern at any one instant looks quite different.
+
+</details>
+
+**Exercise 2.** For the steady two-dimensional field $u = x^2$, $v = -2xy$: (a) check that it satisfies $\partial u/\partial x + \partial v/\partial y = 0$; (b) compute the particle acceleration $D\vec{v}/Dt$ at the point $(1, 2)$.
+
+<details>
+<summary>Answer</summary>
+
+(a) $\partial u/\partial x = 2x$ and $\partial v/\partial y = -2x$. They sum to zero.
+
+(b) The flow is steady, so only the convective terms remain:
+
+$$a_x = u\frac{\partial u}{\partial x} + v\frac{\partial u}{\partial y} = x^2(2x) + (-2xy)(0) = 2x^3$$
+
+$$a_y = u\frac{\partial v}{\partial x} + v\frac{\partial v}{\partial y} = x^2(-2y) + (-2xy)(-2x) = 2x^2 y$$
+
+At $(1,2)$: $\vec{a} = (2, 4)$ in the units of the field.
+
+</details>
+
+**Exercise 3.** For simple shear, $u = \dot{\gamma} y$ and $v = 0$. Split the velocity gradient tensor into its symmetric part (strain rate) and antisymmetric part (rotation), and find the vorticity.
+
+<details>
+<summary>Answer</summary>
+
+The only nonzero velocity gradient is $\partial u/\partial y = \dot{\gamma}$. Write $\nabla \vec{v} = \mathbf{S} + \mathbf{W}$, with $S_{ij} = \frac{1}{2}(\partial u_i/\partial x_j + \partial u_j/\partial x_i)$ and $W_{ij} = \frac{1}{2}(\partial u_i/\partial x_j - \partial u_j/\partial x_i)$:
+
+- Strain rate: $S_{xy} = S_{yx} = \dot{\gamma}/2$, and $S_{xx} = S_{yy} = 0$.
+- Rotation: $W_{xy} = \dot{\gamma}/2$ and $W_{yx} = -\dot{\gamma}/2$.
+
+The vorticity is $\omega_z = \partial v/\partial x - \partial u/\partial y = -\dot{\gamma}$, so fluid elements spin clockwise at the angular velocity $\omega_z/2 = -\dot{\gamma}/2$. At the same time they are stretched along the $45^\circ$ diagonal and compressed along the other diagonal.
+
+</details>
+
+**Exercise 4.** Consider the unsteady flow $u = 1$, $v = t$ (nondimensional units). (a) Find the streamlines at time $t$. (b) Find the pathline of the particle that is at the origin when $t = 0$. (c) Compare the two.
+
+<details>
+<summary>Answer</summary>
+
+(a) Streamlines satisfy $dy/dx = v/u = t$. At a fixed instant they are straight lines $y = t x + C$ with slope $t$.
+
+(b) $dx/dt = 1$ and $dy/dt = t$ with $x(0) = y(0) = 0$ give $x = t$ and $y = t^2/2$. Eliminating $t$, the pathline is the parabola $y = x^2/2$.
+
+(c) The particle moves along a parabola, but every instantaneous streamline is a straight line. At each instant the particle's path is tangent to the streamline through its current position, yet the two curves differ, as expected in unsteady flow.
+
+</details>
+
+### References
+
+- P. K. Kundu, I. M. Cohen, D. R. Dowling, *Fluid Mechanics*, 6th ed., Academic Press, 2016.
+- R. L. Panton, *Incompressible Flow*, 4th ed., Wiley, 2013.
+- R. Aris, *Vectors, Tensors, and the Basic Equations of Fluid Mechanics*, Prentice-Hall, 1962.
